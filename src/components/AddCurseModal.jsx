@@ -107,8 +107,8 @@ function AddCurseModal({ trucks, onClose, onSave }) {
           background: 'var(--bg-page)',
           border: '1px solid var(--gray-2)',
           borderRadius: '16px',
-          padding: '20px 26px',
-          maxWidth: '1020px',
+          padding: '22px 32px',
+          maxWidth: '1100px',
           width: '100%',
           boxShadow: '0 24px 48px rgba(0,0,0,0.3)'
         }}
@@ -126,7 +126,7 @@ function AddCurseModal({ trucks, onClose, onSave }) {
 
         <form onSubmit={handleSubmit}>
           {/* Client & Nr. Comandă */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
             <div>
               <label style={labelStyle}>Client *</label>
               <input type="text" required value={formData.client}
@@ -146,7 +146,7 @@ function AddCurseModal({ trucks, onClose, onSave }) {
           </div>
 
           {/* Încărcare & Descărcare */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '16px' }}>
             {/* ÎNCĂRCARE */}
             <div>
               <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', color: '#ff7a3d', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
@@ -239,7 +239,7 @@ function AddCurseModal({ trucks, onClose, onSave }) {
           </div>
 
           {/* Km Gol | Km Plin | Preț | Camion | Șoferi — un singur rând */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 2fr', gap: '12px', marginBottom: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 2fr', gap: '12px', marginBottom: '16px' }}>
             <div>
               <label style={labelStyle}>Km Gol *</label>
               <input type="number" required min="0" value={formData.km_empty}
@@ -287,11 +287,11 @@ function AddCurseModal({ trucks, onClose, onSave }) {
           </div>
 
           {/* PDF Upload — orizontal compact */}
-          <div style={{ marginBottom: '12px' }}>
+          <div style={{ marginBottom: '16px' }}>
             <label htmlFor="pdf-upload"
               style={{
-                display: 'flex', alignItems: 'center', gap: '12px',
-                padding: '10px 16px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px',
+                padding: '12px 20px',
                 border: `2px dashed ${pdfFileName ? '#ff7a3d' : 'var(--gray-3)'}`,
                 borderRadius: '10px',
                 background: pdfFileName ? 'rgba(255, 122, 61, 0.05)' : 'var(--gray-1)',

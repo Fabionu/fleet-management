@@ -4,10 +4,14 @@ function AddTripModal({ truck, onClose, onSave }) {
   const [formData, setFormData] = useState({
     client: '',
     order_number: '',
+    load_firm: '',
+    load_street: '',
     load_location: '',
     load_date: '',
     load_time: '',
     load_coords: '',
+    unload_firm: '',
+    unload_street: '',
     unload_location: '',
     unload_date: '',
     unload_time: '',
@@ -103,9 +107,8 @@ function AddTripModal({ truck, onClose, onSave }) {
         padding: '20px',
         backdropFilter: 'blur(4px)'
       }}
-      onClick={onClose}
     >
-      <div 
+      <div
         style={{
           background: 'var(--bg-page)',
           border: '1px solid var(--gray-2)',
@@ -222,34 +225,39 @@ function AddTripModal({ truck, onClose, onSave }) {
             Încărcare
           </div>
 
-          {/* Locație Încărcare */}
+          {/* Locație Încărcare — 3 câmpuri */}
+          <div style={{ marginBottom: '8px' }}>
+            <input
+              type="text"
+              value={formData.load_firm}
+              onChange={(e) => setFormData({ ...formData, load_firm: e.target.value })}
+              placeholder="Nume firmă (opțional)"
+              style={{ width: '100%', padding: '12px 14px', border: '1px solid var(--gray-3)', borderRadius: '8px', fontSize: '14px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+              onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+            />
+          </div>
+          <div style={{ marginBottom: '8px' }}>
+            <input
+              type="text"
+              value={formData.load_street}
+              onChange={(e) => setFormData({ ...formData, load_street: e.target.value })}
+              placeholder="Stradă / Zonă industrială (opțional)"
+              style={{ width: '100%', padding: '12px 14px', border: '1px solid var(--gray-3)', borderRadius: '8px', fontSize: '14px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+              onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+            />
+          </div>
           <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '13px',
-              fontWeight: 500,
-              marginBottom: '8px',
-              color: 'var(--black)',
-              fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
-            }}>
-              Locație
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '8px', color: 'var(--black)', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+              Țară, cod poștal, oraș
             </label>
             <input
               type="text"
               value={formData.load_location}
               onChange={(e) => setFormData({ ...formData, load_location: e.target.value })}
-              placeholder="Ex: București, România"
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '1px solid var(--gray-3)',
-                borderRadius: '8px',
-                fontSize: '14px',
-                background: 'var(--bg-page)',
-                color: 'var(--black)',
-                outline: 'none',
-                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
-              }}
+              placeholder="Ex: DE 40599 Düsseldorf"
+              style={{ width: '100%', padding: '12px 14px', border: '1px solid var(--gray-3)', borderRadius: '8px', fontSize: '14px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
               onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
               onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
             />
@@ -393,34 +401,39 @@ function AddTripModal({ truck, onClose, onSave }) {
             Descărcare
           </div>
 
-          {/* Locație Descărcare */}
+          {/* Locație Descărcare — 3 câmpuri */}
+          <div style={{ marginBottom: '8px' }}>
+            <input
+              type="text"
+              value={formData.unload_firm}
+              onChange={(e) => setFormData({ ...formData, unload_firm: e.target.value })}
+              placeholder="Nume firmă (opțional)"
+              style={{ width: '100%', padding: '12px 14px', border: '1px solid var(--gray-3)', borderRadius: '8px', fontSize: '14px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+              onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+            />
+          </div>
+          <div style={{ marginBottom: '8px' }}>
+            <input
+              type="text"
+              value={formData.unload_street}
+              onChange={(e) => setFormData({ ...formData, unload_street: e.target.value })}
+              placeholder="Stradă / Zonă industrială (opțional)"
+              style={{ width: '100%', padding: '12px 14px', border: '1px solid var(--gray-3)', borderRadius: '8px', fontSize: '14px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+              onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
+              onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+            />
+          </div>
           <div style={{ marginBottom: '20px' }}>
-            <label style={{
-              display: 'block',
-              fontSize: '13px',
-              fontWeight: 500,
-              marginBottom: '8px',
-              color: 'var(--black)',
-              fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
-            }}>
-              Locație
+            <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '8px', color: 'var(--black)', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+              Țară, cod poștal, oraș
             </label>
             <input
               type="text"
               value={formData.unload_location}
               onChange={(e) => setFormData({ ...formData, unload_location: e.target.value })}
-              placeholder="Ex: Timișoara, România"
-              style={{
-                width: '100%',
-                padding: '12px 14px',
-                border: '1px solid var(--gray-3)',
-                borderRadius: '8px',
-                fontSize: '14px',
-                background: 'var(--bg-page)',
-                color: 'var(--black)',
-                outline: 'none',
-                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
-              }}
+              placeholder="Ex: DE 10117 Berlin"
+              style={{ width: '100%', padding: '12px 14px', border: '1px solid var(--gray-3)', borderRadius: '8px', fontSize: '14px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
               onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
               onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
             />
