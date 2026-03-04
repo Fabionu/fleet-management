@@ -4,10 +4,14 @@ function AddCurseModal({ trucks, onClose, onSave }) {
   const [formData, setFormData] = useState({
     client: '',
     order_number: '',
+    load_firm: '',
+    load_street: '',
     load_location: '',
     load_date: '',
     load_time: '',
     load_coords: '',
+    unload_firm: '',
+    unload_street: '',
     unload_location: '',
     unload_date: '',
     unload_time: '',
@@ -208,16 +212,58 @@ function AddCurseModal({ trucks, onClose, onSave }) {
                 Încărcare
               </div>
 
+              <div style={{ marginBottom: '8px' }}>
+                <input
+                  type="text"
+                  value={formData.load_firm}
+                  onChange={(e) => handleChange('load_firm', e.target.value)}
+                  placeholder="Nume firmă (ex: METRO AG)"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid var(--gray-3)',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    background: 'var(--bg-page)',
+                    color: 'var(--black)',
+                    outline: 'none',
+                    fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+                />
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                <input
+                  type="text"
+                  value={formData.load_street}
+                  onChange={(e) => handleChange('load_street', e.target.value)}
+                  placeholder="Stradă / Zonă industrială (ex: Industriestrasse 15)"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid var(--gray-3)',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    background: 'var(--bg-page)',
+                    color: 'var(--black)',
+                    outline: 'none',
+                    fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+                />
+              </div>
               <div style={{ marginBottom: '16px' }}>
                 <input
                   type="text"
                   required
                   value={formData.load_location}
                   onChange={(e) => handleChange('load_location', e.target.value)}
-                  placeholder="Locație completă (ex: Strada Aviatorilor 42, București, România)"
+                  placeholder="Țară, cod poștal, oraș (ex: DE 40599 Düsseldorf)"
                   style={{
                     width: '100%',
-                    padding: '12px 14px',
+                    padding: '10px 12px',
                     border: '1px solid var(--gray-3)',
                     borderRadius: '6px',
                     fontSize: '13px',
@@ -310,16 +356,58 @@ function AddCurseModal({ trucks, onClose, onSave }) {
                 Descărcare
               </div>
 
+              <div style={{ marginBottom: '8px' }}>
+                <input
+                  type="text"
+                  value={formData.unload_firm}
+                  onChange={(e) => handleChange('unload_firm', e.target.value)}
+                  placeholder="Nume firmă (ex: Amazon EU SARL)"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid var(--gray-3)',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    background: 'var(--bg-page)',
+                    color: 'var(--black)',
+                    outline: 'none',
+                    fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+                />
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                <input
+                  type="text"
+                  value={formData.unload_street}
+                  onChange={(e) => handleChange('unload_street', e.target.value)}
+                  placeholder="Stradă / Zonă industrială (ex: Unter den Linden 77)"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    border: '1px solid var(--gray-3)',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    background: 'var(--bg-page)',
+                    color: 'var(--black)',
+                    outline: 'none',
+                    fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
+                  onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+                />
+              </div>
               <div style={{ marginBottom: '16px' }}>
                 <input
                   type="text"
                   required
                   value={formData.unload_location}
                   onChange={(e) => handleChange('unload_location', e.target.value)}
-                  placeholder="Locație completă (ex: Unter den Linden 77, Berlin, Germania)"
+                  placeholder="Țară, cod poștal, oraș (ex: DE 10117 Berlin)"
                   style={{
                     width: '100%',
-                    padding: '12px 14px',
+                    padding: '10px 12px',
                     border: '1px solid var(--gray-3)',
                     borderRadius: '6px',
                     fontSize: '13px',
