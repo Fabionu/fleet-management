@@ -69,14 +69,6 @@ useEffect(() => {
   };
 }, [openMenuId]);
 
-  useEffect(() => {
-    loadTrucks();
-    const interval = setInterval(() => {
-      loadTrucks();
-    }, 2000); // 2 secunde
-    return () => clearInterval(interval);
-  }, []);
-
   const loadTrucks = async () => {
     try {
       const response = await api.getTrucks();
@@ -87,6 +79,12 @@ useEffect(() => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadTrucks();
+    const interval = setInterval(loadTrucks, 2000); // 2 secunde
+    return () => clearInterval(interval);
+  }, []);
 
 const handleUpdate = async (truck, field, value) => {
   try {
@@ -1462,51 +1460,6 @@ onSave={async (data) => {
     </svg>
     {showToast === 'delete' ? 'Cursă ștearsă cu succes' : 'Salvat cu succes'}
   </div>
-)}
-{modalType === 'addNext' && selectedTruck && (
-  <AddTripModal
-    truck={selectedTruck}
-    onClose={() => {
-      setModalType(null);
-      setSelectedTruck(null);
-    }}
-    onSave={async (newTrips) => {
-      try {
-        // Parse existing next trips
-        let existingTrips = [];
-        try {
-          existingTrips = typeof selectedTruck.next_trip === 'string' 
-            ? JSON.parse(selectedTruck.next_trip) 
-            : (selectedTruck.next_trip || []);
-        } catch (e) {
-          existingTrips = [];
-        }
-
-        // Combine existing + new trips
-        const allTrips = [...existingTrips, newTrips];
-
-        const truckData = {
-          ...selectedTruck,
-          next_trip: JSON.stringify(allTrips),
-          vignettes: typeof selectedTruck.vignettes === 'string' 
-            ? selectedTruck.vignettes 
-            : JSON.stringify(selectedTruck.vignettes || []),
-          amazon_account: selectedTruck.amazon_account === true || selectedTruck.amazon_account === 1 ? 1 : 0
-        };
-        
-        await api.updateTruck(selectedTruck.id, truckData);
-        
-        // Update local
-        setTrucks(trucks.map(t => 
-          t.id === selectedTruck.id 
-            ? { ...t, next_trip: allTrips } 
-            : t
-        ));
-      } catch (error) {
-        console.error('Error adding trips:', error);
-      }
-    }}
-  />
 )}
 
     </div>
