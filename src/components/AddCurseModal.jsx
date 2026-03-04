@@ -84,7 +84,6 @@ function AddCurseModal({ trucks, onClose, onSave }) {
         padding: '20px',
         backdropFilter: 'blur(4px)'
       }}
-      onClick={onClose}
     >
       <div 
         style={{
