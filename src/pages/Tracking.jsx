@@ -70,15 +70,12 @@ useEffect(() => {
 }, [openMenuId]);
 
   useEffect(() => {
-  loadTrucks();
-  //const interval = setInterval(() => {
-    // Nu reîncărca dacă e un modal deschis
-    //if (!modalType) {
-      //loadTrucks();
-    //}
-  //}, 2000); // 2 secunde
-  //return () => clearInterval(interval);
-}, []);
+    loadTrucks();
+    const interval = setInterval(() => {
+      loadTrucks();
+    }, 2000); // 2 secunde
+    return () => clearInterval(interval);
+  }, []);
 
   const loadTrucks = async () => {
     try {
