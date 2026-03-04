@@ -72,7 +72,9 @@ useEffect(() => {
   const loadTrucks = async () => {
     try {
       const response = await api.getTrucks();
-      setTrucks(response.data);
+      if (Array.isArray(response.data)) {
+        setTrucks(response.data);
+      }
     } catch (error) {
       console.error('Error loading trucks:', error);
     } finally {
