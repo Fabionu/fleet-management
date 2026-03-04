@@ -593,6 +593,6 @@ initDb()
     });
   })
   .catch(err => {
-    console.error('❌ Eroare inițializare DB:', err.message);
+    console.error('❌ Eroare inițializare DB:', err);
     process.exit(1);
   });
