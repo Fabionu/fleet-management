@@ -12,7 +12,7 @@ const SECRET = process.env.JWT_SECRET || 'fleet-management-secret-key-2026';
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // ── Middleware auth ─────────────────────────────────────────
 function authMiddleware(req, res, next) {
@@ -578,6 +578,11 @@ app.delete('/api/driver-documents/:id', authMiddleware, async (req, res) => {
     console.error('❌ DELETE /api/driver-documents/:id error:', err.message);
     res.status(500).json({ error: err.message });
   }
+});
+
+// ── SPA fallback (React Router) ─────────────────────────────
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 // ── START ───────────────────────────────────────────────────
