@@ -581,7 +581,7 @@ app.delete('/api/driver-documents/:id', authMiddleware, async (req, res) => {
 });
 
 // ── SPA fallback (React Router) ─────────────────────────────
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
