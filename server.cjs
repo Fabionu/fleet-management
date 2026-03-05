@@ -209,19 +209,19 @@ app.post('/api/trips', authMiddleware, requirePermission('addTrip'), async (req,
     const result = await pool.query(`
       INSERT INTO trips (
         client, order_number, load_date, unload_date,
-        load_location, unload_location,
+        load_firm, load_street, load_location, unload_firm, unload_street, unload_location,
         price, km_empty, km_loaded, tolls, truck_number, driver,
         invoiced, file_name, file_data, file_type, load_coords, unload_coords,
         cmr_file_name, cmr_file_data, cmr_file_type,
         invoice_file_name, invoice_file_data, invoice_file_type,
         created_by, organization_id
       ) VALUES (
-        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
-        $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26
+        $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,
+        $17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30
       ) RETURNING id
     `, [
       t.client, t.order_number, t.load_date, t.unload_date,
-      t.load_location, t.unload_location,
+      t.load_firm ?? null, t.load_street ?? null, t.load_location, t.unload_firm ?? null, t.unload_street ?? null, t.unload_location,
       t.price, t.km_empty, t.km_loaded, t.tolls,
       t.truck_number, t.driver,
       t.invoiced ? 1 : 0,
@@ -245,17 +245,19 @@ app.put('/api/trips/:id', authMiddleware, requirePermission('editTrip'), async (
     await pool.query(`
       UPDATE trips SET
         client=$1, order_number=$2, load_date=$3, unload_date=$4,
-        load_location=$5, unload_location=$6,
-        price=$7, km_empty=$8, km_loaded=$9, tolls=$10,
-        truck_number=$11, driver=$12, invoiced=$13,
-        file_name=$14, file_data=$15, file_type=$16,
-        load_coords=$17, unload_coords=$18,
-        cmr_file_name=$19, cmr_file_data=$20, cmr_file_type=$21,
-        invoice_file_name=$22, invoice_file_data=$23, invoice_file_type=$24
-      WHERE id=$25
+        load_firm=$5, load_street=$6, load_location=$7,
+        unload_firm=$8, unload_street=$9, unload_location=$10,
+        price=$11, km_empty=$12, km_loaded=$13, tolls=$14,
+        truck_number=$15, driver=$16, invoiced=$17,
+        file_name=$18, file_data=$19, file_type=$20,
+        load_coords=$21, unload_coords=$22,
+        cmr_file_name=$23, cmr_file_data=$24, cmr_file_type=$25,
+        invoice_file_name=$26, invoice_file_data=$27, invoice_file_type=$28
+      WHERE id=$29
     `, [
       t.client, t.order_number, t.load_date, t.unload_date,
-      t.load_location ?? null, t.unload_location ?? null,
+      t.load_firm ?? null, t.load_street ?? null, t.load_location ?? null,
+      t.unload_firm ?? null, t.unload_street ?? null, t.unload_location ?? null,
       t.price ?? null, t.km_empty ?? null, t.km_loaded ?? null, t.tolls ?? null,
       t.truck_number, t.driver,
       t.invoiced ? 1 : 0,

@@ -22,8 +22,8 @@ function App() {
       if (w <= 1366)      zoom = 0.80;
       else if (w <= 1600) zoom = 0.88;
       else if (w <= 1920) zoom = 1.00;
-      else if (w <= 2300) zoom = 1.15;
-      else                zoom = 1.25;
+      else if (w <= 2300) zoom = 1.10;
+      else                zoom = 1.00;
       document.body.style.zoom = zoom;
     };
     applyZoom();
@@ -35,6 +35,9 @@ function App() {
   const changePage = (page) => {
     setCurrentPage(page);
     localStorage.setItem('currentPage', page);
+    if (page === 'admin') {
+      localStorage.removeItem('adminActiveSection');
+    }
   };
 
   useEffect(() => {
