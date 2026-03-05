@@ -110,9 +110,9 @@ function TripDocsModal({ trip, onClose, onSave }) {
           border: '1px solid var(--gray-2)',
           borderRadius: '16px',
           padding: '32px',
-          maxWidth: '1100px',
+          maxWidth: '1500px',
           width: '100%',
-          height: '85vh',
+          height: '90vh',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 24px 48px rgba(0,0,0,0.3)',
@@ -143,7 +143,7 @@ function TripDocsModal({ trip, onClose, onSave }) {
         <div style={{ display: 'flex', gap: '20px', flex: 1, minHeight: 0 }}>
 
           {/* Stânga: carduri documente */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '260px', flexShrink: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', width: '240px', flexShrink: 0 }}>
             {DOC_TYPES.map(docType => {
               const hasDoc = !!docs[docType.dataKey];
               const isSelected = selectedDoc === docType.key;

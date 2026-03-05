@@ -3,7 +3,6 @@ import Login from './pages/Login';
 import Tracking from './pages/Tracking';
 import Admin from './pages/Admin';
 import Curse from './pages/Curse';
-import Soferi from './pages/Soferi';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -301,24 +300,7 @@ function App() {
             >
               Curse
             </button>
-            <button
-              onClick={() => changePage('soferi')}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                borderBottom: `2px solid ${currentPage === 'soferi' ? '#ff7a3d' : 'transparent'}`,
-                padding: '12px 20px',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: currentPage === 'soferi' ? '#ff7a3d' : 'var(--gray-4)',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                marginBottom: '-2px'
-              }}
-            >
-              Șoferi
-            </button>
-            {user.role === 'admin' && (
+{user.role === 'admin' && (
               <button
                 onClick={() => changePage('admin')}
                 style={{
@@ -343,8 +325,7 @@ function App() {
         {/* Page Content */}
         {currentPage === 'tracking' && <Tracking user={user} />}
         {currentPage === 'curse' && <Curse user={user} />}
-        {currentPage === 'soferi' && <Soferi user={user} />}
-        {currentPage === 'admin' && <Admin user={user} />}
+{currentPage === 'admin' && <Admin user={user} />}
       </div>
     </div>
   );
