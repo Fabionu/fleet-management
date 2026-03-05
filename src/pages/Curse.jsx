@@ -116,10 +116,6 @@ function Curse({ user }) {
 
     const mainLineEmpty = !truck.client && !truck.order_number;
 
-    // Construiește locație completă din cele 3 câmpuri
-    const buildLoc = (firm, street, city) =>
-      [firm, street, city].filter(Boolean).join('\n');
-
     // Serializare câmpuri speciale (același pattern ca Tracking.jsx)
     const baseTruck = {
       ...truck,
@@ -138,9 +134,9 @@ function Curse({ user }) {
         status: 'booked',
         client: trip.client,
         order_number: trip.order_number,
-        load_location: buildLoc(trip.load_firm, trip.load_street, trip.load_location),
+        load_location: trip.load_location || '',
         load_date: trip.load_date || '',
-        unload_location: buildLoc(trip.unload_firm, trip.unload_street, trip.unload_location),
+        unload_location: trip.unload_location || '',
         unload_date: trip.unload_date || '',
         next_trip: JSON.stringify(nextTrips)
       };
@@ -149,11 +145,11 @@ function Curse({ user }) {
       const newNextTrip = {
         client: trip.client,
         order_number: trip.order_number,
-        load_location: buildLoc(trip.load_firm, trip.load_street, trip.load_location),
+        load_location: trip.load_location || '',
         load_date: loadParsed.date,
         load_time: loadParsed.time,
         load_lat: '', load_lng: '',
-        unload_location: buildLoc(trip.unload_firm, trip.unload_street, trip.unload_location),
+        unload_location: trip.unload_location || '',
         unload_date: unloadParsed.date,
         unload_time: unloadParsed.time,
         unload_lat: '', unload_lng: '',
@@ -226,18 +222,15 @@ function Curse({ user }) {
 
     let updatedTruck;
 
-    const buildLocSync = (firm, street, city) =>
-      [firm, street, city].filter(Boolean).join('\n');
-
     if (onMainLine) {
       // Actualizează linia principală
       updatedTruck = {
         ...baseTruck,
         client: trip.client,
         order_number: trip.order_number,
-        load_location: buildLocSync(trip.load_firm, trip.load_street, trip.load_location),
+        load_location: trip.load_location || '',
         load_date: trip.load_date || '',
-        unload_location: buildLocSync(trip.unload_firm, trip.unload_street, trip.unload_location),
+        unload_location: trip.unload_location || '',
         unload_date: trip.unload_date || '',
         next_trip: JSON.stringify(nextTrips)
       };
@@ -247,10 +240,10 @@ function Curse({ user }) {
         ...nextTrips[nextTripIndex],
         client: trip.client,
         order_number: trip.order_number,
-        load_location: buildLocSync(trip.load_firm, trip.load_street, trip.load_location),
+        load_location: trip.load_location || '',
         load_date: loadParsed.date,
         load_time: loadParsed.time,
-        unload_location: buildLocSync(trip.unload_firm, trip.unload_street, trip.unload_location),
+        unload_location: trip.unload_location || '',
         unload_date: unloadParsed.date,
         unload_time: unloadParsed.time
       };
