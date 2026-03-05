@@ -1,7 +1,20 @@
 {
   "permissions": {
     "allow": [
-      "Bash(node -e \":*)"
+      "Bash(node -e \":*)",
+      "Bash(git add src/pages/Tracking.jsx)",
+      "Bash(git commit -m \"Polling interval: 15s → 2s pe Tracking\")",
+      "Bash(git push)",
+      "Bash(git commit -m \"Fix: sterge AddTripModal duplicat + muta loadTrucks inainte de useEffect\")",
+      "Bash(git add database/db.cjs)",
+      "Bash(git commit -m \"Fix SSL: activ doar pe Railway, dezactivat local\")",
+      "Bash(git add package.json)",
+      "Bash(git commit -m \"Adauga script local pentru dev cu Vite + backend simultan\")",
+      "Bash(git add vite.config.js src/pages/Tracking.jsx)",
+      "Bash(git commit -m \"Fix local dev: proxy Vite /api -> :3000 + guard Array trucks\")",
+      "Bash(git add src/components/AddCurseModal.jsx)",
+      "Bash(git commit:*)",
+      "Bash(git add src/components/AddCurseModal.jsx src/components/EditCurseModal.jsx src/components/AddTripModal.jsx src/components/EditTripModal.jsx)"
     ]
   }
 }

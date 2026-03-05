@@ -61,10 +61,14 @@ function Curse({ user }) {
   };
 
   const handleInvoiceToggle = async (trip) => {
-    // TODO: Update invoice status in backend
-    setTrips(trips.map(t => 
-      t.id === trip.id ? { ...t, invoiced: !t.invoiced } : t
-    ));
+    const newInvoiced = !trip.invoiced;
+    setTrips(trips.map(t => t.id === trip.id ? { ...t, invoiced: newInvoiced } : t));
+    try {
+      await api.updateTrip(trip.id, { ...trip, invoiced: newInvoiced });
+    } catch (error) {
+      setTrips(trips.map(t => t.id === trip.id ? { ...t, invoiced: trip.invoiced } : t));
+      console.error('Eroare la actualizarea statusului factură:', error);
+    }
   };
 
   const handleSendToTracking = async (trip) => {

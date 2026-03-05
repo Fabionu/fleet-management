@@ -74,13 +74,14 @@ function AddCurseModal({ trucks, onClose, onSave }) {
 
   const inputStyle = {
     width: '100%',
-    padding: '7px 10px',
+    padding: '10px 12px',
     border: '1px solid var(--gray-3)',
-    borderRadius: '6px',
-    fontSize: '13px',
+    borderRadius: '8px',
+    fontSize: '14px',
     background: 'var(--bg-page)',
     color: 'var(--black)',
     outline: 'none',
+    boxSizing: 'border-box',
     fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
   };
 
@@ -88,7 +89,7 @@ function AddCurseModal({ trucks, onClose, onSave }) {
     display: 'block',
     fontSize: '12px',
     fontWeight: 500,
-    marginBottom: '4px',
+    marginBottom: '6px',
     color: 'var(--black)',
     fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
   };
@@ -107,7 +108,7 @@ function AddCurseModal({ trucks, onClose, onSave }) {
           background: 'var(--bg-page)',
           border: '1px solid var(--gray-2)',
           borderRadius: '16px',
-          padding: '22px 32px',
+          padding: '28px 36px',
           maxWidth: '1100px',
           width: '100%',
           boxShadow: '0 24px 48px rgba(0,0,0,0.3)'
@@ -152,28 +153,28 @@ function AddCurseModal({ trucks, onClose, onSave }) {
               <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', color: '#ff7a3d', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
                 Încărcare
               </div>
-              <div style={{ marginBottom: '5px' }}>
+              <div style={{ marginBottom: '8px' }}>
                 <input type="text" value={formData.load_firm}
                   onChange={(e) => handleChange('load_firm', e.target.value)}
                   placeholder="Nume firmă (ex: METRO AG)" style={inputStyle}
                   onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
               </div>
-              <div style={{ marginBottom: '5px' }}>
+              <div style={{ marginBottom: '8px' }}>
                 <input type="text" value={formData.load_street}
                   onChange={(e) => handleChange('load_street', e.target.value)}
                   placeholder="Stradă / Zonă industrială" style={inputStyle}
                   onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
               </div>
-              <div style={{ marginBottom: '7px' }}>
+              <div style={{ marginBottom: '12px' }}>
                 <input type="text" required value={formData.load_location}
                   onChange={(e) => handleChange('load_location', e.target.value)}
                   placeholder="Țară, cod poștal, oraș (ex: DE 40599 Düsseldorf)" style={inputStyle}
                   onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 72px 1fr', gap: '6px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                 <input type="date" required value={formData.load_date}
                   onChange={(e) => handleChange('load_date', e.target.value)}
                   style={{ ...inputStyle, colorScheme: 'light' }}
@@ -184,12 +185,12 @@ function AddCurseModal({ trucks, onClose, onSave }) {
                   placeholder="HH:MM" maxLength={5} style={inputStyle}
                   onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
-                <input type="text" value={formData.load_coords}
-                  onChange={(e) => handleChange('load_coords', e.target.value)}
-                  placeholder="Coord. (opțional)" style={inputStyle}
-                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
               </div>
+              <input type="text" value={formData.load_coords}
+                onChange={(e) => handleChange('load_coords', e.target.value)}
+                placeholder="Coord. (opțional)" style={inputStyle}
+                onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
             </div>
 
             {/* DESCĂRCARE */}
@@ -197,28 +198,28 @@ function AddCurseModal({ trucks, onClose, onSave }) {
               <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px', color: '#ff7a3d', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
                 Descărcare
               </div>
-              <div style={{ marginBottom: '5px' }}>
+              <div style={{ marginBottom: '8px' }}>
                 <input type="text" value={formData.unload_firm}
                   onChange={(e) => handleChange('unload_firm', e.target.value)}
                   placeholder="Nume firmă (ex: Amazon EU SARL)" style={inputStyle}
                   onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
               </div>
-              <div style={{ marginBottom: '5px' }}>
+              <div style={{ marginBottom: '8px' }}>
                 <input type="text" value={formData.unload_street}
                   onChange={(e) => handleChange('unload_street', e.target.value)}
                   placeholder="Stradă / Zonă industrială" style={inputStyle}
                   onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
               </div>
-              <div style={{ marginBottom: '7px' }}>
+              <div style={{ marginBottom: '12px' }}>
                 <input type="text" required value={formData.unload_location}
                   onChange={(e) => handleChange('unload_location', e.target.value)}
                   placeholder="Țară, cod poștal, oraș (ex: DE 10117 Berlin)" style={inputStyle}
                   onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 72px 1fr', gap: '6px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                 <input type="date" required value={formData.unload_date}
                   onChange={(e) => handleChange('unload_date', e.target.value)}
                   style={{ ...inputStyle, colorScheme: 'light' }}
@@ -229,12 +230,12 @@ function AddCurseModal({ trucks, onClose, onSave }) {
                   placeholder="HH:MM" maxLength={5} style={inputStyle}
                   onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
                   onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
-                <input type="text" value={formData.unload_coords}
-                  onChange={(e) => handleChange('unload_coords', e.target.value)}
-                  placeholder="Coord. (opțional)" style={inputStyle}
-                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
               </div>
+              <input type="text" value={formData.unload_coords}
+                onChange={(e) => handleChange('unload_coords', e.target.value)}
+                placeholder="Coord. (opțional)" style={inputStyle}
+                onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
+                onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
             </div>
           </div>
 
