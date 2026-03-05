@@ -14,6 +14,23 @@ function App() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef(null);
 
+  // Auto-zoom bazat pe rezolutia ecranului
+  useEffect(() => {
+    const applyZoom = () => {
+      const w = window.innerWidth;
+      let zoom = 1;
+      if (w <= 1366)      zoom = 0.80;
+      else if (w <= 1600) zoom = 0.88;
+      else if (w <= 1920) zoom = 1.00;
+      else if (w <= 2300) zoom = 1.15;
+      else                zoom = 1.25;
+      document.body.style.zoom = zoom;
+    };
+    applyZoom();
+    window.addEventListener('resize', applyZoom);
+    return () => window.removeEventListener('resize', applyZoom);
+  }, []);
+
   // Helper function to change page and save to localStorage
   const changePage = (page) => {
     setCurrentPage(page);
