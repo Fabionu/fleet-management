@@ -26,6 +26,7 @@
   --yellow-light: #fffbeb;
   --bg-body: #000000;
   --bg-page: #fafaf8;
+  --surface: #ffffff;
   --eta-bg: #dbeafe;
   --eta-text: #1d4ed8;
   --shadow: rgba(0,0,0,0.04);
@@ -52,6 +53,7 @@
   --yellow-light: #2d2410;
   --bg-body: #0f0f0f;
   --bg-page: #1a1a1a;
+  --surface: #242424;
   --eta-bg: #1e293b;
   --eta-text: #60a5fa;
   --shadow: rgba(0,0,0,0.5);
@@ -217,28 +219,6 @@ table {
   font-size: 13px;
 }
 
-#fleetTable tbody td:nth-child(4) {
-  padding-right: 2px !important;
-}
-
-#fleetTable tbody td:nth-child(1) {
-  padding-right: 4px !important;
-}
-
-#fleetTable tbody td:nth-child(2) {
-  padding-left: 4px !important;
-  padding-right: 4px !important;
-}
-
-#fleetTable tbody td:nth-child(5) {
-  padding-left: 8px !important;
-  padding-right: 4px !important;
-}
-
-#fleetTable tbody td:nth-child(6) {
-  padding-left: 16px !important;
-}
-
 thead th {
   color: var(--black);
   font-weight: 700;
@@ -270,8 +250,6 @@ tbody td {
   vertical-align: top;
 }
 
-tbody td:nth-child(4) { padding-right: 8px; }
-tbody td:nth-child(5) { padding-left: 8px; }
 
 /* Truck Cell */
 .truck-info {
@@ -1222,3 +1200,4 @@ body.card-view tbody tr td {
   visibility: visible;
   transform: translateY(0);
 }
+

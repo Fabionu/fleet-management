@@ -27,6 +27,7 @@ function Tracking({ user }) {
   const [modalType, setModalType] = useState(null);
   const [selectedTruck, setSelectedTruck] = useState(null);
   const [hoveredTruckId, setHoveredTruckId] = useState(null);
+  const [pauseEditId, setPauseEditId] = useState(null);
   const menuRef = useRef(null);
   const [showToast, setShowToast] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -375,8 +376,7 @@ const handleDeleteTrip = async (truck) => {
           <thead>
     <tr style={{ background: 'var(--gray-1)', borderBottom: '2px solid var(--gray-3)' }}>
     <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Vehicul</th>
-    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Pauză</th>
-    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Weekend</th>
+    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Repaus</th>
     <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Client / Nr. Comandă</th>
     <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Încărcare</th>
     <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Descărcare</th>
@@ -397,6 +397,7 @@ const handleDeleteTrip = async (truck) => {
                       truck.status === 'service'    ? '#a8a8a8' :
                       truck.status === 'acasa'      ? '#a8a8a8' : '#505050';
                     const isOpen = statusDropdownId === truck.id;
+                    const isMenuOpen = openMenuId === truck.id;
                     const statusLabel = statusOptions.find(o => o.value === truck.status)?.label || truck.status;
                     return (
                       <div style={{ position: 'relative', width: '100%' }}>
@@ -410,17 +411,46 @@ const handleDeleteTrip = async (truck) => {
                           overflow: 'hidden',
                           cursor: 'default',
                         }}>
-                          {/* Număr auto */}
-                          <div style={{
-                            padding: '10px 12px 5px 12px',
-                            fontWeight: 800,
-                            fontSize: '15px',
-                            color: 'var(--black)',
-                            letterSpacing: '0.02em',
-                            whiteSpace: 'nowrap',
-                            textAlign: 'center',
-                          }}>
-                            {truck.number}
+                          {/* Număr auto + buton ⋮ */}
+                          <div style={{ padding: '8px 8px 5px 8px', display: 'flex', alignItems: 'center' }}>
+                            <div style={{ width: '22px', flexShrink: 0 }} />
+                            <div style={{
+                              flex: 1,
+                              fontWeight: 800,
+                              fontSize: '15px',
+                              color: 'var(--black)',
+                              letterSpacing: '0.02em',
+                              whiteSpace: 'nowrap',
+                              textAlign: 'center',
+                            }}>
+                              {truck.number}
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(isMenuOpen ? null : truck.id);
+                                setStatusDropdownId(null);
+                                setPauseEditId(null);
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-1)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--gray-4)',
+                                width: '22px',
+                                height: '22px',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                                fontSize: '16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0,
+                                transition: 'background 0.15s',
+                                padding: 0,
+                              }}
+                            >⋮</button>
                           </div>
                           {/* Separator */}
                           <div style={{ height: '1px', background: 'var(--gray-2)', margin: '0 10px' }} />
@@ -429,6 +459,8 @@ const handleDeleteTrip = async (truck) => {
                             onClick={(e) => {
                               e.stopPropagation();
                               setStatusDropdownId(isOpen ? null : truck.id);
+                              setOpenMenuId(null);
+                              setPauseEditId(null);
                             }}
                             onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
                             onMouseLeave={e => e.currentTarget.style.background = isOpen ? 'var(--gray-1)' : 'transparent'}
@@ -522,252 +554,216 @@ const handleDeleteTrip = async (truck) => {
                             })}
                           </div>
                         )}
+                        {/* Meniu ⋮ — în afara overflow:hidden */}
+                        {isMenuOpen && (
+                          <div
+                            ref={menuRef}
+                            style={{
+                              position: 'absolute',
+                              top: 'calc(100% + 4px)',
+                              left: 0,
+                              minWidth: '200px',
+                              background: 'var(--bg-page)',
+                              border: '1px solid var(--gray-2)',
+                              borderRadius: '8px',
+                              boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                              zIndex: 1001,
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <button
+                              onClick={() => { setSelectedTruck(truck); setModalType('info'); setOpenMenuId(null); }}
+                              style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--black)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.2s', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-1)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                              Info Vehicul
+                            </button>
+                            <button
+                              onClick={() => { setSelectedTruck(truck); setModalType('edit'); setOpenMenuId(null); }}
+                              style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--black)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.2s', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-1)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                              Editare Cursă
+                            </button>
+                            <button
+                              onClick={() => { setSelectedTruck(truck); setModalType('addNext'); setOpenMenuId(null); }}
+                              style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--black)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.2s', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-1)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                              Adaugă Cursă
+                            </button>
+                            <div style={{ height: '1px', background: 'var(--gray-2)', margin: '4px 0' }} />
+                            <button
+                              onClick={() => { setDeleteConfirm(truck); setOpenMenuId(null); }}
+                              style={{ width: '100%', padding: '12px 16px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--red)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.2s', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--red-light)'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                              Șterge Date Cursă
+                            </button>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}
                 </td>
-                <td style={{ padding: '16px' }}>
-  <div style={{ position: 'relative' }}>
-    <button 
-      onClick={() => setOpenMenuId(openMenuId === truck.id ? null : truck.id)}
-      style={{
-        background: 'transparent',
-        border: '1px solid var(--gray-2)',
-        color: 'var(--gray-4)',
-        width: '32px',
-        height: '32px',
-        borderRadius: '6px',
-        cursor: 'pointer',
-        fontSize: '16px',
-        transition: 'all 0.2s'
-      }}
-      onMouseEnter={(e) => {
-        e.target.style.background = 'var(--gray-1)';
-        e.target.style.borderColor = 'var(--gray-3)';
-      }}
-      onMouseLeave={(e) => {
-        e.target.style.background = 'transparent';
-        e.target.style.borderColor = 'var(--gray-2)';
-      }}
-    >
-      ⋮
-    </button>
-
-    {/* Dropdown Menu */}
-    {openMenuId === truck.id && (
-      <div 
-      ref={menuRef}
-      style={{
-        position: 'absolute',
-        top: '100%',
-        left: '0',
-        marginTop: '4px',
-        background: 'var(--bg-page)',
-        border: '1px solid var(--gray-2)',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px var(--shadow)',
-        minWidth: '200px',
-        zIndex: 1000,
-        overflow: 'visible'
-      }}>
-        {/* Info Vehicul */}
+                <td style={{ padding: '12px 16px', width: '210px', position: 'relative', verticalAlign: 'middle' }}>
+  {/* ── Pauza badge ── */}
+  {(() => {
+    const hasPause = !!(truck.pause_date || truck.pause_time);
+    const isPauseOpen = pauseEditId === truck.id;
+    let dateDisplay = '';
+    if (truck.pause_date) {
+      const parts = truck.pause_date.split('-');
+      if (parts.length === 3) dateDisplay = `${parts[2]}.${parts[1]}`;
+    }
+    const pauseText = [dateDisplay, truck.pause_time].filter(Boolean).join(' · ');
+    return (
+      <div style={{ position: 'relative', marginBottom: '8px' }}>
         <button
-          onClick={() => {
-            setSelectedTruck(truck);
-            setModalType('info');
+          onClick={(e) => {
+            e.stopPropagation();
+            setPauseEditId(isPauseOpen ? null : truck.id);
+            setStatusDropdownId(null);
             setOpenMenuId(null);
           }}
+          onMouseEnter={e => e.currentTarget.style.background = hasPause ? 'rgba(249,115,22,0.06)' : 'var(--gray-1)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
           style={{
             width: '100%',
-            padding: '12px 16px',
             background: 'transparent',
-            border: 'none',
-            textAlign: 'left',
-            fontSize: '13px',
-            color: 'var(--black)',
+            border: hasPause ? '1px solid var(--orange)' : '1px dashed var(--gray-3)',
+            borderLeft: hasPause ? '3px solid var(--orange)' : '1px dashed var(--gray-3)',
+            borderRadius: '8px',
+            padding: '8px 12px',
             cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            transition: 'background 0.2s',
-            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
-          }}
-          onMouseEnter={(e) => e.target.style.background = 'var(--gray-1)'}
-          onMouseLeave={(e) => e.target.style.background = 'transparent'}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          Info Vehicul
-        </button>
-
-        {/* Editare Cursă */}
-        <button
-          onClick={() => {
-            setSelectedTruck(truck);
-            setModalType('edit');
-            setOpenMenuId(null);
-          }}
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            background: 'transparent',
-            border: 'none',
             textAlign: 'left',
-            fontSize: '13px',
-            color: 'var(--black)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            transition: 'background 0.2s',
-            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
+            transition: 'background 0.15s',
+            boxSizing: 'border-box',
           }}
-          onMouseEnter={(e) => e.target.style.background = 'var(--gray-1)'}
-          onMouseLeave={(e) => e.target.style.background = 'transparent'}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-          </svg>
-          Editare Cursă
+          {hasPause ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', whiteSpace: 'nowrap' }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <span style={{ fontWeight: 700, color: 'var(--orange)' }}>{pauseText}</span>
+            </div>
+          ) : (
+            <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>—</div>
+          )}
         </button>
-
-        {/* Adaugă Cursă Următoare */}
-        <button
-          onClick={() => {
-            setSelectedTruck(truck);
-            setModalType('addNext');
-            setOpenMenuId(null);
-          }}
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            background: 'transparent',
-            border: 'none',
-            textAlign: 'left',
-            fontSize: '13px',
-            color: 'var(--black)',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            transition: 'background 0.2s',
-            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
-          }}
-          onMouseEnter={(e) => e.target.style.background = 'var(--gray-1)'}
-          onMouseLeave={(e) => e.target.style.background = 'transparent'}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Adaugă Cursă
-        </button>
-
-        <div style={{ height: '1px', background: 'var(--gray-2)', margin: '4px 0' }}></div>
-
-        {/* Șterge Date Cursă */}
-        <button
-          onClick={() => {
-  setDeleteConfirm(truck);
-  setOpenMenuId(null);
-}}
-          style={{
-            width: '100%',
-            padding: '12px 16px',
-            background: 'transparent',
-            border: 'none',
-            textAlign: 'left',
-            fontSize: '13px',
-            color: '#ef4444',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            transition: 'background 0.2s',
-            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
-          }}
-          onMouseEnter={(e) => e.target.style.background = 'rgba(239, 68, 68, 0.1)'}
-          onMouseLeave={(e) => e.target.style.background = 'transparent'}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <polyline points="3 6 5 6 21 6"/>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-          </svg>
-          Șterge Date Cursă
-        </button>
+        {isPauseOpen && (
+          <div style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            right: 0,
+            background: 'var(--bg-page)',
+            border: '1px solid var(--gray-2)',
+            borderRadius: '10px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+            zIndex: 1000,
+            padding: '14px',
+          }}>
+            <div style={{ marginBottom: '10px' }}>
+              <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
+              <input
+                type="date"
+                value={truck.pause_date || ''}
+                onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)}
+                style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }}
+              />
+            </div>
+            <div style={{ marginBottom: hasPause ? '12px' : '0' }}>
+              <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la ora</label>
+              <input
+                type="text"
+                value={truck.pause_time || ''}
+                onChange={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '');
+                  let formatted = digits.slice(0, 2);
+                  if (digits.length >= 3) formatted += ':' + digits.slice(2, 4);
+                  handleUpdate(truck, 'pause_time', formatted);
+                }}
+                placeholder="HH:MM"
+                maxLength={5}
+                style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+              />
+            </div>
+            {hasPause && (
+              <button
+                onClick={async () => {
+                  const truckData = {
+                    ...truck,
+                    pause_date: '',
+                    pause_time: '',
+                    vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []),
+                    next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null),
+                    amazon_account: truck.amazon_account ? 1 : 0,
+                  };
+                  setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t));
+                  await api.updateTruck(truck.id, truckData);
+                  setPauseEditId(null);
+                }}
+                style={{ width: '100%', padding: '7px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', color: 'var(--red)', cursor: 'pointer', fontWeight: 500, fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+              >Șterge pauza</button>
+            )}
+          </div>
+        )}
       </div>
-    )}
-  </div>
-</td>
-                <td style={{ padding: '16px 16px 16px 45px', width: '160px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '140px' }}>
-                    <input
-                      type="date"
-                      value={truck.pause_date || ''}
-                      onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        borderBottom: '1px solid var(--gray-2)',
-                        color: 'var(--black)',
-                        fontSize: '12px',
-                        padding: '4px 0',
-                        outline: 'none'
-                      }}
-                    />
-                    <input
-                      type="time"
-                      value={truck.pause_time || ''}
-                      onChange={(e) => handleUpdate(truck, 'pause_time', e.target.value)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        borderBottom: '1px solid var(--gray-2)',
-                        color: 'var(--black)',
-                        fontSize: '13px',
-                        padding: '4px 0',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-                </td>
-                <td style={{ padding: '16px', width: '300px', position: 'relative', verticalAlign: 'middle' }}>
-  <button 
-    onClick={() => {
-      setSelectedTruck(truck);
-      setModalType('weekend');
-    }}
-    style={{
-      background: 'rgba(34, 197, 94, 0.15)',
-      color: '#16a34a',
-      padding: '8px 12px',
-      borderRadius: '6px',
-      fontSize: '13px',
-      fontWeight: 500,
-      border: '1px solid transparent',
-      cursor: 'pointer',
-      whiteSpace: 'nowrap',
-      transition: 'all 0.2s'
-    }}
-    onMouseEnter={(e) => {
-      e.target.style.background = 'rgba(34, 197, 94, 0.25)';
-      setHoveredTruckId(truck.id);
-    }}
-    onMouseLeave={(e) => {
-      e.target.style.background = 'rgba(34, 197, 94, 0.15)';
-      setHoveredTruckId(null);
-    }}
-  >
-    {truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration
-      ? `${truck.weekend_duration} | ${truck.weekend_day || '—'} ${truck.weekend_time || '—'}`
-      : '—'}
-  </button>
+    );
+  })()}
 
-  {/* Tooltip cu istoric */}
+  {/* ── Weekend badge ── */}
+  {(() => {
+    const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
+    return (
+      <button
+        onClick={() => { setSelectedTruck(truck); setModalType('weekend'); }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)';
+          setHoveredTruckId(truck.id);
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'transparent';
+          setHoveredTruckId(null);
+        }}
+        style={{
+          width: '100%',
+          background: 'transparent',
+          border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)',
+          borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)',
+          borderRadius: '8px',
+          padding: '8px 12px',
+          cursor: 'pointer',
+          display: 'block',
+          textAlign: 'left',
+          transition: 'background 0.15s',
+          boxSizing: 'border-box',
+        }}
+      >
+        {hasWeekend ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '7px', whiteSpace: 'nowrap', fontSize: '12px' }}>
+            <span style={{ fontWeight: 700, color: 'var(--green)' }}>{truck.weekend_duration}</span>
+            <span style={{ color: 'var(--gray-3)', fontSize: '10px', lineHeight: 1 }}>|</span>
+            <span style={{ color: 'var(--gray-4)' }}>{truck.weekend_day || '—'} {truck.weekend_time || '—'}</span>
+          </div>
+        ) : (
+          <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>—</div>
+        )}
+      </button>
+    );
+  })()}
+
+  {/* Tooltip istoric weekend */}
   {hoveredTruckId === truck.id && (() => {
     const history = Array.isArray(truck.weekend_history) ? truck.weekend_history : [];
     const currentWeek = `W${getWeekNumber()}`;
@@ -791,10 +787,7 @@ const handleDeleteTrip = async (truck) => {
         fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
       }}>
         {pastWeeks.map((item, idx) => (
-          <div key={idx} style={{
-            marginBottom: idx < pastWeeks.length - 1 ? '4px' : '0',
-            color: 'var(--black)'
-          }}>
+          <div key={idx} style={{ marginBottom: idx < pastWeeks.length - 1 ? '4px' : '0', color: 'var(--black)' }}>
             <span style={{ fontWeight: 700 }}>{item.week}</span> — {item.duration}
           </div>
         ))}
@@ -802,7 +795,7 @@ const handleDeleteTrip = async (truck) => {
     );
   })()}
 </td>
-                <td style={{ paddingLeft: '0px', paddingRight: '16px', paddingTop: '16px', paddingBottom: '16px', width: '250px' }}>
+                <td style={{ padding: '16px', width: '250px' }}>
                   {truck.client ? (
                     <div>
                       <div style={{ fontWeight: 700, fontSize: '14px', color: 'var(--black)', marginBottom: '4px' }}>{truck.client}</div>
@@ -988,10 +981,7 @@ const handleDeleteTrip = async (truck) => {
                 if (!nextTrips || nextTrips.length === 0) return [];
                 
                 return nextTrips.map((trip, idx) => (
-    <tr key={`${truck.id}-next-${idx}`} style={{
-      background: 'var(--gray-1)',
-      borderTop: '1px dashed var(--gray-3)'
-    }}>
+    <tr key={`${truck.id}-next-${idx}`} style={{ background: 'var(--gray-1)', borderTop: '1px dashed var(--gray-3)', borderBottom: '1px solid var(--gray-2)' }}>
       <td style={{ padding: '12px 16px', fontSize: '12px', color: 'var(--gray-4)' }}>
         ↳ Cursă #{idx + 1}
       </td>
@@ -1019,7 +1009,7 @@ const handleDeleteTrip = async (truck) => {
           {trip.unload_date} {trip.unload_time}
         </div>
       </td>
-      <td colSpan="3" style={{ padding: '12px 16px' }}>
+      <td colSpan="2" style={{ padding: '12px 16px' }}>
         <div style={{ display: 'flex', gap: '8px' }}>
           <button
  onClick={() => {
@@ -1530,10 +1520,18 @@ onSave={async (data) => {
   </div>
 )}
 
-{/* Overlay pentru a închide status dropdown la click în afară */}
+{/* Overlay status dropdown */}
 {statusDropdownId !== null && (
   <div
     onClick={() => setStatusDropdownId(null)}
+    style={{ position: 'fixed', inset: 0, zIndex: 999 }}
+  />
+)}
+
+{/* Overlay pauza dropdown */}
+{pauseEditId !== null && (
+  <div
+    onClick={() => setPauseEditId(null)}
     style={{ position: 'fixed', inset: 0, zIndex: 999 }}
   />
 )}

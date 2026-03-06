@@ -17,7 +17,9 @@
       "Bash(git add src/components/AddCurseModal.jsx src/components/EditCurseModal.jsx src/components/AddTripModal.jsx src/components/EditTripModal.jsx)",
       "mcp__Claude_Preview__preview_start",
       "Bash(where npm)",
-      "Bash(curl -s http://localhost:5173)"
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(timeout /t 4)",
+      "Bash(npx vite build)"
     ]
   }
 }
