@@ -80,7 +80,7 @@ app.post('/api/login', async (req, res) => {
 app.get('/api/trucks', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM trucks WHERE organization_id = $1',
+      'SELECT * FROM trucks WHERE organization_id = $1 ORDER BY number ASC',
       [req.user.organization_id]
     );
     res.json(result.rows.map(t => ({
