@@ -23,6 +23,7 @@ function Tracking({ user }) {
   const filterDropdownRef = useRef(null);
   const [searchText, setSearchText] = useState('');
   const [openMenuId, setOpenMenuId] = useState(null);
+  const [statusDropdownId, setStatusDropdownId] = useState(null);
   const [modalType, setModalType] = useState(null);
   const [selectedTruck, setSelectedTruck] = useState(null);
   const [hoveredTruckId, setHoveredTruckId] = useState(null);
@@ -373,11 +374,9 @@ const handleDeleteTrip = async (truck) => {
         }}>
           <thead>
     <tr style={{ background: 'var(--gray-1)', borderBottom: '2px solid var(--gray-3)' }}>
-    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Nr. Auto</th>
-    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)', width: '40px' }}></th>
+    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Vehicul</th>
     <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Pauză</th>
     <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Weekend</th>
-    <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Status</th>
     <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Client / Nr. Comandă</th>
     <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Încărcare</th>
     <th style={{ padding: '16px', textAlign: 'left', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--black)' }}>Descărcare</th>
@@ -387,8 +386,145 @@ const handleDeleteTrip = async (truck) => {
           <tbody>
             {filteredTrucks.map((truck) => [
               <tr key={truck.id} style={{ borderBottom: '1px solid var(--gray-2)' }}>
-                <td style={{ padding: '16px', fontWeight: 700, fontSize: '15px', color: 'var(--black)', width: '140px' }}>
-                  {truck.number}
+                <td style={{ padding: '8px 8px 8px 16px', width: '200px', verticalAlign: 'middle' }}>
+                  {(() => {
+                    const statusColor =
+                      truck.status === 'liber'      ? '#ef4444' :
+                      truck.status === 'incarcare'  ? '#ff7a3d' :
+                      truck.status === 'descarcare' ? '#ff7a3d' :
+                      truck.status === 'tranzit'    ? '#60a5fa' :
+                      truck.status === 'booked'     ? '#4ade80' :
+                      truck.status === 'service'    ? '#a8a8a8' :
+                      truck.status === 'acasa'      ? '#a8a8a8' : '#505050';
+                    const isOpen = statusDropdownId === truck.id;
+                    const statusLabel = statusOptions.find(o => o.value === truck.status)?.label || truck.status;
+                    return (
+                      <div style={{ position: 'relative', width: '100%' }}>
+                        {/* Card cu accent stânga colorat */}
+                        <div style={{
+                          borderRadius: '10px',
+                          background: 'var(--surface)',
+                          border: '1px solid var(--gray-2)',
+                          borderLeft: `4px solid ${statusColor}`,
+                          boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+                          overflow: 'hidden',
+                          cursor: 'default',
+                        }}>
+                          {/* Număr auto */}
+                          <div style={{
+                            padding: '10px 12px 5px 12px',
+                            fontWeight: 800,
+                            fontSize: '15px',
+                            color: 'var(--black)',
+                            letterSpacing: '0.02em',
+                            whiteSpace: 'nowrap',
+                            textAlign: 'center',
+                          }}>
+                            {truck.number}
+                          </div>
+                          {/* Separator */}
+                          <div style={{ height: '1px', background: 'var(--gray-2)', margin: '0 10px' }} />
+                          {/* Status trigger */}
+                          <div
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setStatusDropdownId(isOpen ? null : truck.id);
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                            onMouseLeave={e => e.currentTarget.style.background = isOpen ? 'var(--gray-1)' : 'transparent'}
+                            style={{
+                              padding: '8px 10px 10px 12px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.07em',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              userSelect: 'none',
+                              background: isOpen ? 'var(--gray-1)' : 'transparent',
+                              transition: 'background 0.15s',
+                              gap: '6px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{
+                                width: 7, height: 7, borderRadius: '50%',
+                                background: statusColor, flexShrink: 0,
+                                boxShadow: `0 0 0 2px ${statusColor}30`,
+                              }} />
+                              <span style={{ color: statusColor }}>{statusLabel}</span>
+                            </div>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={statusColor} strokeWidth="2.5"
+                              style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s', flexShrink: 0 }}>
+                              <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                          </div>
+                        </div>
+                        {/* Dropdown — în afara overflow:hidden, dar în position:relative */}
+                        {isOpen && (
+                          <div style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 4px)',
+                            left: 0,
+                            right: 0,
+                            background: 'var(--bg-page)',
+                            border: '1px solid var(--gray-2)',
+                            borderRadius: '10px',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                            zIndex: 1000,
+                            overflow: 'hidden',
+                            minWidth: '160px',
+                          }}>
+                            {statusOptions.filter(o => o.value !== 'all').map(opt => {
+                              const optColor =
+                                opt.value === 'liber'      ? '#ef4444' :
+                                opt.value === 'incarcare'  ? '#ff7a3d' :
+                                opt.value === 'descarcare' ? '#ff7a3d' :
+                                opt.value === 'tranzit'    ? '#60a5fa' :
+                                opt.value === 'booked'     ? '#4ade80' : '#a8a8a8';
+                              const isActive = truck.status === opt.value;
+                              return (
+                                <button
+                                  key={opt.value}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUpdate(truck, 'status', opt.value);
+                                    setStatusDropdownId(null);
+                                  }}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '10px',
+                                    width: '100%',
+                                    padding: '10px 14px',
+                                    background: isActive ? `${optColor}15` : 'transparent',
+                                    border: 'none',
+                                    borderLeft: isActive ? `3px solid ${optColor}` : '3px solid transparent',
+                                    cursor: 'pointer',
+                                    fontSize: '12px',
+                                    fontWeight: isActive ? 700 : 500,
+                                    color: isActive ? optColor : 'var(--black)',
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                    textAlign: 'left',
+                                    transition: 'background 0.1s',
+                                    fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                                  }}
+                                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--gray-1)'; }}
+                                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                                >
+                                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: optColor, flexShrink: 0 }} />
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </td>
                 <td style={{ padding: '16px' }}>
   <div style={{ position: 'relative' }}>
@@ -599,7 +735,7 @@ const handleDeleteTrip = async (truck) => {
                     />
                   </div>
                 </td>
-                <td style={{ padding: '16px', width: '300px', position: 'relative' }}>
+                <td style={{ padding: '16px', width: '300px', position: 'relative', verticalAlign: 'middle' }}>
   <button 
     onClick={() => {
       setSelectedTruck(truck);
@@ -666,49 +802,6 @@ const handleDeleteTrip = async (truck) => {
     );
   })()}
 </td>
-                <td style={{ padding: '16px 4px 16px 16px', width: '350px' }}>
-                  <select
-  className={getStatusClass(truck.status)}
-  value={truck.status}
-  onChange={(e) => handleUpdate(truck, 'status', e.target.value)}
-  style={{
-  border: 'none',
-  color: 'white',
-  padding: '10px 35px 10px 16px',
-  borderRadius: '0',
-  cursor: 'pointer',
-  fontSize: '12px',
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  outline: 'none',
-  minWidth: '180px',
-  appearance: 'none',
-  WebkitAppearance: 'none',
-  MozAppearance: 'none',
-  backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'white\' stroke-width=\'2\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E")',
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'right 12px center',
-  backgroundSize: '12px',
-  backgroundColor: 
-    truck.status === 'liber' ? '#ef4444' :
-    truck.status === 'incarcare' ? '#ff7a3d' :
-    truck.status === 'descarcare' ? '#ff7a3d' :
-    truck.status === 'tranzit' ? '#60a5fa' :
-    truck.status === 'booked' ? '#4ade80' :
-    truck.status === 'service' ? '#b8b8b8' :
-    truck.status === 'acasa' ? '#b8b8b8' : '#505050'
-}}
->
-  <option value="liber">Liber</option>
-  <option value="incarcare">La Încărcare</option>
-  <option value="descarcare">La Descărcare</option>
-  <option value="tranzit">În Tranzit</option>
-  <option value="booked">Booked</option>
-  <option value="service">Service</option>
-  <option value="acasa">Acasă</option>
-</select>
-                </td>
                 <td style={{ paddingLeft: '0px', paddingRight: '16px', paddingTop: '16px', paddingBottom: '16px', width: '250px' }}>
                   {truck.client ? (
                     <div>
@@ -1435,6 +1528,14 @@ onSave={async (data) => {
       </div>
     </div>
   </div>
+)}
+
+{/* Overlay pentru a închide status dropdown la click în afară */}
+{statusDropdownId !== null && (
+  <div
+    onClick={() => setStatusDropdownId(null)}
+    style={{ position: 'fixed', inset: 0, zIndex: 999 }}
+  />
 )}
 
 {/* Toast */}

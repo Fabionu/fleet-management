@@ -14,7 +14,10 @@
       "Bash(git commit -m \"Fix local dev: proxy Vite /api -> :3000 + guard Array trucks\")",
       "Bash(git add src/components/AddCurseModal.jsx)",
       "Bash(git commit:*)",
-      "Bash(git add src/components/AddCurseModal.jsx src/components/EditCurseModal.jsx src/components/AddTripModal.jsx src/components/EditTripModal.jsx)"
+      "Bash(git add src/components/AddCurseModal.jsx src/components/EditCurseModal.jsx src/components/AddTripModal.jsx src/components/EditTripModal.jsx)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where npm)",
+      "Bash(curl -s http://localhost:5173)"
     ]
   }
 }
