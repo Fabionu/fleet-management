@@ -36,7 +36,7 @@ function App() {
     setCurrentPage(page);
     localStorage.setItem('currentPage', page);
     if (page === 'admin') {
-      localStorage.removeItem('adminActiveSection');
+      localStorage.removeItem('adminSection');
     }
   };
 

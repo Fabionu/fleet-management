@@ -113,10 +113,7 @@ const VehicleBadge = ({ type }) => {
   const vt = VEHICLE_TYPES.find(v => v.value === type);
   if (!vt) return <span style={{ color: 'var(--gray-4)', fontSize: '12px' }}>—</span>;
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: vt.color }}>
-      <VehicleIcon type={type} size={28} />
-      <span style={{ fontSize: '12px', fontWeight: 700 }}>{vt.label}</span>
-    </div>
+    <span style={{ fontSize: '12px', fontWeight: 700, color: vt.color }}>{vt.label}</span>
   );
 };
 
@@ -1051,8 +1048,15 @@ function SectionJurnal({ onBack }) {
   };
 
   const actionColor = (a) => a?.startsWith('Adăug') ? '#22c55e' : a?.startsWith('Editat') ? '#3b82f6' : a?.startsWith('Șters') ? '#ef4444' : '#6b7280';
-  const entityIcon = { truck:'🚛', trip:'📦', user:'👤', driver:'🧑‍✈️' };
   const entityLabel = { truck:'Camion', trip:'Cursă', user:'Utilizator', driver:'Șofer' };
+  const EntityIcon = ({ type }) => {
+    const s = { width:13, height:13, fill:'none', stroke:'currentColor', strokeWidth:2, strokeLinecap:'round', strokeLinejoin:'round' };
+    if (type === 'truck') return <svg viewBox="0 0 24 24" {...s}><rect x="1" y="5" width="15" height="11" rx="2"/><path d="M16 8h4l3 4v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>;
+    if (type === 'trip') return <svg viewBox="0 0 24 24" {...s}><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+    if (type === 'user') return <svg viewBox="0 0 24 24" {...s}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+    if (type === 'driver') return <svg viewBox="0 0 24 24" {...s}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2.5"/><line x1="12" y1="9.5" x2="12" y2="2"/><line x1="14.2" y1="13.2" x2="20.7" y2="17"/><line x1="9.8" y1="13.2" x2="3.3" y2="17"/></svg>;
+    return null;
+  };
 
   return (
     <div>
@@ -1079,7 +1083,7 @@ function SectionJurnal({ onBack }) {
         </select>
         <select value={filter.entity} onChange={e=>setFilter(f=>({...f,entity:e.target.value}))} style={{ ...inputStyle, minWidth:130 }}>
           <option value="">Toate tipurile</option>
-          {entities.map(e => <option key={e} value={e}>{entityIcon[e]||''} {entityLabel[e]||e}</option>)}
+          {entities.map(e => <option key={e} value={e}>{entityLabel[e]||e}</option>)}
         </select>
       </div>
 
@@ -1098,7 +1102,12 @@ function SectionJurnal({ onBack }) {
               </td>
               <td style={tdStyle}><Badge label={l.action} color={actionColor(l.action)} /></td>
               <td style={{ ...tdStyle, fontSize:'12px', color:'var(--gray-4)' }}>
-                {l.entity_type ? `${entityIcon[l.entity_type]||''} ${entityLabel[l.entity_type]||l.entity_type}` : '—'}
+                {l.entity_type ? (
+                  <div style={{ display:'flex', alignItems:'center', gap:'5px' }}>
+                    <EntityIcon type={l.entity_type} />
+                    <span>{entityLabel[l.entity_type]||l.entity_type}</span>
+                  </div>
+                ) : '—'}
               </td>
               <td style={{ ...tdStyle, color:'var(--gray-4)', fontSize:'12px', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                 {l.details||'—'}
