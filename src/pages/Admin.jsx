@@ -616,7 +616,6 @@ function SectionCamioane({ onBack }) {
                         fontSize:'12px', fontWeight:700,
                       }}
                     >
-                      <VehicleIcon type={vt.value} size={22} />
                       {vt.label}
                     </button>
                   );
