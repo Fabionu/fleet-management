@@ -139,20 +139,20 @@ app.put('/api/trucks/:id', authMiddleware, async (req, res) => {
     await pool.query(`
       UPDATE trucks SET
         number=$1, status=$2, client=$3, order_number=$4,
-        load_location=$5, load_date=$6, load_lat=$7, load_lng=$8,
-        unload_location=$9, unload_date=$10, unload_lat=$11, unload_lng=$12, eta=$13,
-        observations=$14, pause_date=$15, pause_time=$16,
-        weekend_duration=$17, weekend_day=$18, weekend_time=$19, weekend_week=$20, weekend_history=$21,
-        drivers=$22, phone=$23, trailer=$24, fuel_card=$25, fuel_card_expiry=$26,
-        amazon_account=$27, vignettes=$28, next_trip=$29,
-        file_name=$30, file_data=$31, file_type=$32, vehicle_type=$33,
-        driver_1=$34, driver_2=$35
-      WHERE id=$36
+        load_firm=$5, load_street=$6, load_location=$7, load_date=$8, load_lat=$9, load_lng=$10,
+        unload_firm=$11, unload_street=$12, unload_location=$13, unload_date=$14, unload_lat=$15, unload_lng=$16,
+        eta=$17, observations=$18, pause_date=$19, pause_time=$20,
+        weekend_duration=$21, weekend_day=$22, weekend_time=$23, weekend_week=$24, weekend_history=$25,
+        drivers=$26, phone=$27, trailer=$28, fuel_card=$29, fuel_card_expiry=$30,
+        amazon_account=$31, vignettes=$32, next_trip=$33,
+        file_name=$34, file_data=$35, file_type=$36, vehicle_type=$37,
+        driver_1=$38, driver_2=$39
+      WHERE id=$40
     `, [
       t.number, t.status, t.client, t.order_number,
-      t.load_location, t.load_date, t.load_lat, t.load_lng,
-      t.unload_location, t.unload_date, t.unload_lat, t.unload_lng, t.eta,
-      t.observations, t.pause_date, t.pause_time,
+      t.load_firm ?? null, t.load_street ?? null, t.load_location, t.load_date, t.load_lat, t.load_lng,
+      t.unload_firm ?? null, t.unload_street ?? null, t.unload_location, t.unload_date, t.unload_lat, t.unload_lng,
+      t.eta, t.observations, t.pause_date, t.pause_time,
       t.weekend_duration, t.weekend_day, t.weekend_time, t.weekend_week,
       typeof t.weekend_history === 'string' ? t.weekend_history : JSON.stringify(t.weekend_history || []),
       t.drivers, t.phone, t.trailer, t.fuel_card, t.fuel_card_expiry,

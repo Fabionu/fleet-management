@@ -134,8 +134,12 @@ function Curse({ user }) {
         status: 'booked',
         client: trip.client,
         order_number: trip.order_number,
+        load_firm: trip.load_firm || '',
+        load_street: trip.load_street || '',
         load_location: trip.load_location || '',
         load_date: trip.load_date || '',
+        unload_firm: trip.unload_firm || '',
+        unload_street: trip.unload_street || '',
         unload_location: trip.unload_location || '',
         unload_date: trip.unload_date || '',
         next_trip: JSON.stringify(nextTrips)
@@ -145,10 +149,14 @@ function Curse({ user }) {
       const newNextTrip = {
         client: trip.client,
         order_number: trip.order_number,
+        load_firm: trip.load_firm || '',
+        load_street: trip.load_street || '',
         load_location: trip.load_location || '',
         load_date: loadParsed.date,
         load_time: loadParsed.time,
         load_lat: '', load_lng: '',
+        unload_firm: trip.unload_firm || '',
+        unload_street: trip.unload_street || '',
         unload_location: trip.unload_location || '',
         unload_date: unloadParsed.date,
         unload_time: unloadParsed.time,
@@ -228,8 +236,12 @@ function Curse({ user }) {
         ...baseTruck,
         client: trip.client,
         order_number: trip.order_number,
+        load_firm: trip.load_firm || '',
+        load_street: trip.load_street || '',
         load_location: trip.load_location || '',
         load_date: trip.load_date || '',
+        unload_firm: trip.unload_firm || '',
+        unload_street: trip.unload_street || '',
         unload_location: trip.unload_location || '',
         unload_date: trip.unload_date || '',
         next_trip: JSON.stringify(nextTrips)
@@ -240,9 +252,13 @@ function Curse({ user }) {
         ...nextTrips[nextTripIndex],
         client: trip.client,
         order_number: trip.order_number,
+        load_firm: trip.load_firm || '',
+        load_street: trip.load_street || '',
         load_location: trip.load_location || '',
         load_date: loadParsed.date,
         load_time: loadParsed.time,
+        unload_firm: trip.unload_firm || '',
+        unload_street: trip.unload_street || '',
         unload_location: trip.unload_location || '',
         unload_date: unloadParsed.date,
         unload_time: unloadParsed.time
@@ -1002,7 +1018,7 @@ function Curse({ user }) {
       {/* Toast */}
       {toast && (
         <div style={{
-          position: 'fixed', bottom: '24px', right: '24px',
+          position: 'fixed', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
           background: toast.type === 'error' ? '#ef4444' : '#22c55e',
           color: 'white', padding: '12px 20px', borderRadius: '8px',
           fontSize: '14px', fontWeight: 500, zIndex: 4000,

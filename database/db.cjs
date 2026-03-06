@@ -242,6 +242,12 @@ async function initDb() {
     await client.query(`ALTER TABLE trips ADD COLUMN IF NOT EXISTS unload_firm TEXT`);
     await client.query(`ALTER TABLE trips ADD COLUMN IF NOT EXISTS unload_street TEXT`);
 
+    // Migration: add load_firm, load_street, unload_firm, unload_street to trucks
+    await client.query(`ALTER TABLE trucks ADD COLUMN IF NOT EXISTS load_firm TEXT`);
+    await client.query(`ALTER TABLE trucks ADD COLUMN IF NOT EXISTS load_street TEXT`);
+    await client.query(`ALTER TABLE trucks ADD COLUMN IF NOT EXISTS unload_firm TEXT`);
+    await client.query(`ALTER TABLE trucks ADD COLUMN IF NOT EXISTS unload_street TEXT`);
+
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {
     client.release();
