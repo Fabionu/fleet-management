@@ -439,13 +439,15 @@ const handleDeleteTrip = async (truck) => {
                         {/* Card cu accent stânga colorat */}
                         <div style={{
                           borderRadius: '10px',
-                          background: 'var(--surface)',
-                          border: '1px solid var(--gray-2)',
+                          background: rowHoverId === truck.id ? 'var(--gray-1)' : 'var(--surface)',
+                          borderTop: `1px solid ${rowHoverId === truck.id ? 'var(--gray-3)' : 'var(--gray-2)'}`,
+                          borderRight: `1px solid ${rowHoverId === truck.id ? 'var(--gray-3)' : 'var(--gray-2)'}`,
+                          borderBottom: `1px solid ${rowHoverId === truck.id ? 'var(--gray-3)' : 'var(--gray-2)'}`,
                           borderLeft: `4px solid ${statusColor}`,
                           boxShadow: rowHoverId === truck.id ? '0 2px 8px rgba(0,0,0,0.13)' : '0 1px 4px rgba(0,0,0,0.07)',
                           overflow: 'hidden',
                           cursor: 'default',
-                          transition: 'box-shadow 0.15s',
+                          transition: 'box-shadow 0.15s, border-color 0.15s, background 0.15s',
                           height: '100%',
                           display: 'flex',
                           flexDirection: 'column',
