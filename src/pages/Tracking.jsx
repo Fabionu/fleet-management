@@ -455,7 +455,7 @@ const handleDeleteTrip = async (truck) => {
                           justifyContent: 'center',
                         }}>
                           {/* Număr auto + buton ⋮ */}
-                          <div style={{ padding: '8px 8px 5px 8px', display: 'flex', alignItems: 'center' }}>
+                          <div style={{ padding: '5px 8px 3px 8px', display: 'flex', alignItems: 'center' }}>
                             <div style={{ width: '22px', flexShrink: 0 }} />
                             <div style={{
                               flex: 1,
@@ -508,7 +508,7 @@ const handleDeleteTrip = async (truck) => {
                             onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
                             onMouseLeave={e => e.currentTarget.style.background = isOpen ? 'var(--gray-1)' : 'transparent'}
                             style={{
-                              padding: '8px 10px 8px 12px',
+                              padding: '5px 10px 5px 12px',
                               fontSize: '11px',
                               fontWeight: 700,
                               textTransform: 'uppercase',
@@ -685,7 +685,7 @@ const handleDeleteTrip = async (truck) => {
                       const pauseText = [dateDisplay, truck.pause_time].filter(Boolean).join(' · ');
                       const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
                       return (
-                        <div style={{ padding: '8px 12px', width: '155px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', gap: '5px', position: 'relative' }}>
+                        <div style={{ padding: '5px 12px', width: '155px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', gap: '5px', position: 'relative' }}>
                           <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '2px' }}>Repaus</div>
 
                           {/* Pauza badge */}
@@ -766,7 +766,7 @@ const handleDeleteTrip = async (truck) => {
                     })()}
 
                     {/* ── Client / Comandă ── */}
-                    <div style={{ padding: '8px 14px', width: '190px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: '5px 14px', width: '190px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '6px' }}>Client / Comandă</div>
                       {truck.client ? (
                         <div>
@@ -777,7 +777,7 @@ const handleDeleteTrip = async (truck) => {
                     </div>
 
                     {/* ── Încărcare ── */}
-                    <div style={{ padding: '8px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '6px' }}>Încărcare</div>
                       {truck.load_location ? (
                         <div>
@@ -794,7 +794,7 @@ const handleDeleteTrip = async (truck) => {
                     </div>
 
                     {/* ── Descărcare ── */}
-                    <div style={{ padding: '8px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '6px' }}>Descărcare</div>
                       {truck.unload_location ? (
                         <div>
@@ -811,7 +811,7 @@ const handleDeleteTrip = async (truck) => {
                     </div>
 
                     {/* ── Observații ── */}
-                    <div style={{ padding: '8px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: '5px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '4px' }}>Observații</div>
                       <textarea
                         value={truck.observations || ''}
@@ -846,20 +846,20 @@ const handleDeleteTrip = async (truck) => {
         ↳ Cursă #{idx + 1}
       </td>
       <td style={{ padding: '4px 12px 4px 4px', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
-        <div style={{ display: 'flex', alignItems: 'stretch', borderRadius: '8px', border: '1px solid var(--gray-2)', background: 'var(--surface)', overflow: 'hidden', minHeight: '44px' }}>
-          <div style={{ padding: '8px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'stretch', borderRadius: '8px', border: '1px solid var(--gray-2)', background: 'var(--surface)', overflow: 'hidden', minHeight: '38px' }}>
+          <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontSize: '12px', color: 'var(--gray-4)', fontWeight: 500 }}>{trip.client || '—'}</div>
             <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginTop: '2px' }}>{trip.order_number || '—'}</div>
           </div>
-          <div style={{ padding: '8px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>{trip.load_location || '—'}</div>
             <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginTop: '2px' }}>{trip.load_date} {trip.load_time}</div>
           </div>
-          <div style={{ padding: '8px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>{trip.unload_location || '—'}</div>
             <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginTop: '2px' }}>{trip.unload_date} {trip.unload_time}</div>
           </div>
-          <div style={{ padding: '8px 14px', display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ padding: '5px 14px', display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
             <button onClick={() => { setEditNextTrip({ truck: truck, tripIndex: idx, tripData: trip }); }} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', fontSize: '12px', fontWeight: 500, color: 'var(--gray-4)', cursor: 'pointer', transition: 'all 0.2s', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = '#ff7a3d'; e.currentTarget.style.color = '#ff7a3d'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Editare
