@@ -463,7 +463,7 @@ const handleDeleteTrip = async (truck) => {
                           <button
                             onClick={(e) => { e.stopPropagation(); setOpenMenuId(isMenuOpen ? null : truck.id); setStatusDropdownId(null); }}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '7px 10px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: '6px' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'none'}
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
@@ -488,7 +488,7 @@ const handleDeleteTrip = async (truck) => {
                         )}
                         {/* Status dropdown */}
                         {isOpen && (
-                          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, overflow: 'hidden', minWidth: '160px' }}>
+                          <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, overflow: 'hidden', minWidth: '160px' }}>
                             {statusOptions.filter(o => o.value !== 'all').map(opt => {
                               const optColor = opt.value === 'liber' ? '#ef4444' : opt.value === 'incarcare' ? '#ff7a3d' : opt.value === 'descarcare' ? '#ff7a3d' : opt.value === 'tranzit' ? '#60a5fa' : opt.value === 'booked' ? '#4ade80' : '#a8a8a8';
                               const isActive = truck.status === opt.value;
@@ -507,7 +507,7 @@ const handleDeleteTrip = async (truck) => {
                         )}
                         {/* 3-dot menu dropdown */}
                         {isMenuOpen && (
-                          <div style={{ position: 'absolute', top: 0, left: '100%', marginLeft: '4px', background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, overflow: 'hidden', minWidth: '180px' }}>
+                          <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 0, left: '100%', marginLeft: '4px', background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, overflow: 'hidden', minWidth: '180px' }}>
                             {user?.permissions?.editVehicleInfo && <button onClick={() => { setSelectedTruck(truck); setModalType('info'); setOpenMenuId(null); }} style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--black)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Info Vehicul</button>}
                             {user?.permissions?.addTrip && <button onClick={() => { setSelectedTruck(truck); setModalType('edit'); setOpenMenuId(null); }} style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--black)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editare Cursă</button>}
                             {user?.permissions?.addNextTrip && <button onClick={() => { setSelectedTruck(truck); setModalType('addNext'); setOpenMenuId(null); }} style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--black)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă Cursă</button>}
@@ -529,7 +529,7 @@ const handleDeleteTrip = async (truck) => {
                             {isActivePause ? (<div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style={{ fontWeight: 700, color: 'var(--orange)' }}>{pauseText}</span></div>) : isPauseReady ? (<div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg><span style={{ fontWeight: 700, color: 'var(--green)' }}>Ready</span></div>) : (<div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza 9h</div>)}
                           </button>
                           {isPauseOpen && (
-                            <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, padding: '14px' }}>
+                            <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, padding: '14px' }}>
                               <div style={{ marginBottom: '10px' }}><label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label><input type="date" value={truck.pause_date || ''} onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} /></div>
                               <div style={{ marginBottom: hasPause ? '12px' : '0' }}><label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la ora</label><input type="text" value={truck.pause_time || ''} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); handleUpdate(truck, 'pause_time', formatted); }} placeholder="HH:MM" maxLength={5} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }} /></div>
                               {hasPause && <button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); }} style={{ width: '100%', padding: '7px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', color: 'var(--red)', cursor: 'pointer', fontWeight: 500, fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>Șterge pauza</button>}
@@ -652,7 +652,7 @@ const handleDeleteTrip = async (truck) => {
                                 setStatusDropdownId(null);
                                 setPauseEditId(null);
                               }}
-                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-1)'}
+                              onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-2)'}
                               onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                               style={{
                                 background: 'transparent',
@@ -682,8 +682,8 @@ const handleDeleteTrip = async (truck) => {
                               setOpenMenuId(null);
                               setPauseEditId(null);
                             }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
-                            onMouseLeave={e => e.currentTarget.style.background = isOpen ? 'var(--gray-1)' : 'transparent'}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'}
+                            onMouseLeave={e => e.currentTarget.style.background = isOpen ? 'var(--gray-2)' : 'transparent'}
                             style={{
                               padding: '5px 10px 5px 12px',
                               fontSize: '11px',
@@ -695,7 +695,7 @@ const handleDeleteTrip = async (truck) => {
                               alignItems: 'center',
                               justifyContent: 'space-between',
                               userSelect: 'none',
-                              background: isOpen ? 'var(--gray-1)' : 'transparent',
+                              background: isOpen ? 'var(--gray-2)' : 'transparent',
                               transition: 'background 0.15s',
                               gap: '6px',
                             }}
@@ -713,10 +713,18 @@ const handleDeleteTrip = async (truck) => {
                               <polyline points="6 9 12 15 18 9"/>
                             </svg>
                           </div>
+                          {/* Șoferi */}
+                          {(truck.driver_1 || truck.driver_2 || truck.drivers) && (
+                            <div style={{ fontSize: '11px', color: 'var(--gray-4)', padding: '2px 12px 5px 12px', lineHeight: 1.3 }}>
+                              {truck.driver_1 || truck.driver_2
+                                ? [truck.driver_1, truck.driver_2].filter(Boolean).join(' / ')
+                                : truck.drivers}
+                            </div>
+                          )}
                         </div>
                         {/* Dropdown — în afara overflow:hidden, dar în position:relative */}
                         {isOpen && (
-                          <div style={{
+                          <div onMouseDown={e => e.stopPropagation()} style={{
                             position: 'absolute',
                             top: 'calc(100% + 4px)',
                             left: 0,
@@ -778,6 +786,7 @@ const handleDeleteTrip = async (truck) => {
                         {isMenuOpen && (
                           <div
                             ref={menuRef}
+                            onMouseDown={e => e.stopPropagation()}
                             style={{
                               position: 'absolute',
                               top: 'calc(100% + 4px)',
@@ -890,7 +899,7 @@ const handleDeleteTrip = async (truck) => {
                               )}
                             </button>
                             {isPauseOpen && (
-                              <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, padding: '14px' }}>
+                              <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, padding: '14px' }}>
                                 <div style={{ marginBottom: '10px' }}>
                                   <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
                                   <input type="date" value={truck.pause_date || ''} onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
