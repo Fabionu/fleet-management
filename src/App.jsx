@@ -12,6 +12,9 @@ function App() {
   );
   const [theme, setTheme] = useState('dark');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [trackingView, setTrackingView] = useState(
+    () => localStorage.getItem('trackingView') || 'card'
+  );
   const userMenuRef = useRef(null);
 
   // Auto-zoom bazat pe rezolutia ecranului
@@ -99,6 +102,13 @@ function App() {
     setTheme(newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
+  };
+
+  const toggleTrackingView = () => {
+    const next = trackingView === 'card' ? 'standard' : 'card';
+    setTrackingView(next);
+    localStorage.setItem('trackingView', next);
+    setUserMenuOpen(false);
   };
 
   if (!isAuthenticated) {
@@ -217,6 +227,47 @@ function App() {
               zIndex: 1000,
               overflow: 'hidden'
             }}>
+              {/* View toggle — vizibil doar pe pagina tracking */}
+              {currentPage === 'tracking' && (
+                <button
+                  onClick={toggleTrackingView}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    background: 'transparent',
+                    border: 'none',
+                    textAlign: 'left',
+                    fontSize: '14px',
+                    color: 'var(--black)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-1)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                >
+                  {trackingView === 'card' ? (
+                    <>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                        <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                      </svg>
+                      Standard View
+                    </>
+                  ) : (
+                    <>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                        <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                      </svg>
+                      Card View
+                    </>
+                  )}
+                </button>
+              )}
+              <div style={{ height: '1px', background: 'var(--gray-2)' }} />
               <button
                 onClick={handleLogout}
                 style={{
@@ -233,8 +284,8 @@ function App() {
                   gap: '10px',
                   transition: 'background 0.2s'
                 }}
-                onMouseEnter={(e) => e.target.style.background = 'var(--gray-1)'}
-                onMouseLeave={(e) => e.target.style.background = 'transparent'}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-1)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -343,7 +394,7 @@ function App() {
         </div>
 
         {/* Page Content */}
-        {currentPage === 'tracking' && <Tracking user={user} />}
+        {currentPage === 'tracking' && <Tracking user={user} viewMode={trackingView} />}
         {currentPage === 'curse' && <Curse user={user} />}
 {currentPage === 'admin' && <Admin user={user} />}
       </div>

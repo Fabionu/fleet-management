@@ -19,7 +19,8 @@
       "Bash(where npm)",
       "Bash(curl -s http://localhost:5173)",
       "Bash(timeout /t 4)",
-      "Bash(npx vite build)"
+      "Bash(npx vite build)",
+      "Bash(npm run build)"
     ]
   }
 }

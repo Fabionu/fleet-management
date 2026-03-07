@@ -15,7 +15,7 @@ const getWeekNumber = (date = new Date()) => {
   return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 };
 
-function Tracking({ user }) {
+function Tracking({ user, viewMode = 'card' }) {
   const { trucks, setTrucks } = useStore();
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -234,6 +234,10 @@ const handleDeleteTrip = async (truck) => {
       if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target)) {
         setFilterDropdownOpen(false);
       }
+      // Închide și dropdown-urile de status/meniu la click în afara lor
+      setOpenMenuId(null);
+      setStatusDropdownId(null);
+      setPauseEditId(null);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -248,7 +252,7 @@ const handleDeleteTrip = async (truck) => {
       if (!haystack.includes(q)) return false;
     }
     return true;
-  });
+  }).sort((a, b) => (a.number || '').localeCompare(b.number || '', undefined, { numeric: true, sensitivity: 'base' }));
 
   // Auto-clear pauze expirate (mai mult de 15 minute)
   useEffect(() => {
@@ -401,6 +405,184 @@ const handleDeleteTrip = async (truck) => {
       </div>
 
       {/* Table */}
+      {viewMode === 'standard' ? (
+        /* ══════════════════════════════════════════
+           STANDARD VIEW
+        ══════════════════════════════════════════ */
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', overflow: 'visible' }}>
+          <table id="fleetTable" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <thead>
+              <tr style={{ background: 'var(--gray-1)', borderBottom: '2px solid var(--gray-2)' }}>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)', width: '185px' }}>Vehicul</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)', width: '170px' }}>Repaus</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)', width: '200px' }}>Client / Comandă</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)' }}>Încărcare</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)' }}>Descărcare</th>
+                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)' }}>Observații</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredTrucks.map((truck, idx) => {
+                const statusColor =
+                  truck.status === 'liber'      ? '#ef4444' :
+                  truck.status === 'incarcare'  ? '#ff7a3d' :
+                  truck.status === 'descarcare' ? '#ff7a3d' :
+                  truck.status === 'tranzit'    ? '#60a5fa' :
+                  truck.status === 'booked'     ? '#4ade80' :
+                  truck.status === 'service'    ? '#a8a8a8' :
+                  truck.status === 'acasa'      ? '#a8a8a8' : '#505050';
+                const isOpen = statusDropdownId === truck.id;
+                const isMenuOpen = openMenuId === truck.id;
+                const statusLabel = statusOptions.find(o => o.value === truck.status)?.label || truck.status;
+                const hasPause = !!(truck.pause_date || truck.pause_time);
+                const pauseStatus = hasPause ? getPauseStatus(truck.pause_date, truck.pause_time) : null;
+                const isActivePause = pauseStatus === 'active';
+                const isPauseReady = pauseStatus === 'ready';
+                const isPauseOpen = pauseEditId === truck.id;
+                let dateDisplay = '';
+                if (truck.pause_date) {
+                  const parts = truck.pause_date.split('-');
+                  if (parts.length === 3) dateDisplay = `${parts[2]}.${parts[1]}`;
+                }
+                const pauseText = [dateDisplay, truck.pause_time].filter(Boolean).join(' · ');
+                const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
+                const isNotLast = idx < filteredTrucks.length - 1;
+
+                return (
+                  <tr key={truck.id}
+                    style={{ borderBottom: isNotLast ? '1px solid var(--gray-2)' : 'none' }}
+                    onMouseEnter={() => setRowHoverId(truck.id)}
+                    onMouseLeave={() => setRowHoverId(null)}
+                  >
+                    {/* ── Vehicul TD ── */}
+                    <td style={{ padding: '8px 12px 8px 0', width: '185px', verticalAlign: 'top', borderLeft: `4px solid ${statusColor}`, position: 'relative', background: rowHoverId === truck.id ? 'var(--gray-2)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                      <div style={{ position: 'relative', paddingLeft: '12px' }}>
+                        {/* Număr + meniu */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <span style={{ fontWeight: 800, fontSize: '14px', color: 'var(--black)', letterSpacing: '0.02em' }}>{truck.number}</span>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setOpenMenuId(isMenuOpen ? null : truck.id); setStatusDropdownId(null); }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '7px 10px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: '6px' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+                          </button>
+                        </div>
+                        {/* Status trigger */}
+                        <div
+                          onClick={(e) => { e.stopPropagation(); setStatusDropdownId(isOpen ? null : truck.id); setOpenMenuId(null); }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', padding: '3px 6px', borderRadius: '6px', background: isOpen ? 'var(--gray-1)' : 'transparent', transition: 'background 0.15s', userSelect: 'none' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                          onMouseLeave={e => e.currentTarget.style.background = isOpen ? 'var(--gray-1)' : 'transparent'}
+                        >
+                          <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor, display: 'inline-block', flexShrink: 0, boxShadow: `0 0 0 2px ${statusColor}30` }} />
+                          <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: statusColor }}>{statusLabel}</span>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={statusColor} strokeWidth="2.5" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s', marginLeft: 'auto' }}><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                        {/* Șoferi */}
+                        {(truck.driver_1 || truck.driver_2 || truck.drivers) && (
+                          <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginTop: '3px', paddingLeft: '2px' }}>
+                            {truck.driver_1 || truck.driver_2 ? [truck.driver_1, truck.driver_2].filter(Boolean).join(' / ') : truck.drivers}
+                          </div>
+                        )}
+                        {/* Status dropdown */}
+                        {isOpen && (
+                          <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, overflow: 'hidden', minWidth: '160px' }}>
+                            {statusOptions.filter(o => o.value !== 'all').map(opt => {
+                              const optColor = opt.value === 'liber' ? '#ef4444' : opt.value === 'incarcare' ? '#ff7a3d' : opt.value === 'descarcare' ? '#ff7a3d' : opt.value === 'tranzit' ? '#60a5fa' : opt.value === 'booked' ? '#4ade80' : '#a8a8a8';
+                              const isActive = truck.status === opt.value;
+                              return (
+                                <button key={opt.value} onClick={(e) => { e.stopPropagation(); handleUpdate(truck, 'status', opt.value); setStatusDropdownId(null); }}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 14px', background: isActive ? 'var(--gray-1)' : 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--black)', cursor: 'pointer', borderLeft: isActive ? `3px solid ${optColor}` : '3px solid transparent', transition: 'background 0.15s', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}
+                                  onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--gray-1)'; }}
+                                  onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                                >
+                                  <span style={{ width: 8, height: 8, borderRadius: '50%', background: optColor, flexShrink: 0 }} />
+                                  {opt.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {/* 3-dot menu dropdown */}
+                        {isMenuOpen && (
+                          <div style={{ position: 'absolute', top: 0, left: '100%', marginLeft: '4px', background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, overflow: 'hidden', minWidth: '180px' }}>
+                            {user?.permissions?.editVehicleInfo && <button onClick={() => { setSelectedTruck(truck); setModalType('info'); setOpenMenuId(null); }} style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--black)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Info Vehicul</button>}
+                            {user?.permissions?.addTrip && <button onClick={() => { setSelectedTruck(truck); setModalType('edit'); setOpenMenuId(null); }} style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--black)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editare Cursă</button>}
+                            {user?.permissions?.addNextTrip && <button onClick={() => { setSelectedTruck(truck); setModalType('addNext'); setOpenMenuId(null); }} style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--black)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Adaugă Cursă</button>}
+                            <div style={{ height: '1px', background: 'var(--gray-2)', margin: '4px 0' }} />
+                            {user?.permissions?.clearTruckData && <button onClick={() => { setDeleteConfirm(truck); setOpenMenuId(null); }} style={{ width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--red)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }} onMouseEnter={e => e.currentTarget.style.background = 'var(--red-light)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Șterge Date Cursă</button>}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* ── Repaus TD ── */}
+                    <td style={{ padding: '8px 14px', verticalAlign: 'top', width: '170px', background: rowHoverId === truck.id ? 'var(--gray-2)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', position: 'relative' }}>
+                        <div style={{ position: 'relative' }}>
+                          <button onClick={(e) => { e.stopPropagation(); setPauseEditId(isPauseOpen ? null : truck.id); setStatusDropdownId(null); setOpenMenuId(null); }}
+                            onMouseEnter={e => e.currentTarget.style.background = isActivePause ? 'rgba(249,115,22,0.06)' : isPauseReady ? 'rgba(34,197,94,0.06)' : 'var(--gray-1)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            style={{ width: '100%', background: 'transparent', border: isActivePause ? '1px solid var(--orange)' : isPauseReady ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isPauseReady ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s', boxSizing: 'border-box' }}>
+                            {isActivePause ? (<div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style={{ fontWeight: 700, color: 'var(--orange)' }}>{pauseText}</span></div>) : isPauseReady ? (<div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg><span style={{ fontWeight: 700, color: 'var(--green)' }}>Ready</span></div>) : (<div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza 9h</div>)}
+                          </button>
+                          {isPauseOpen && (
+                            <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, padding: '14px' }}>
+                              <div style={{ marginBottom: '10px' }}><label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label><input type="date" value={truck.pause_date || ''} onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} /></div>
+                              <div style={{ marginBottom: hasPause ? '12px' : '0' }}><label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la ora</label><input type="text" value={truck.pause_time || ''} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); handleUpdate(truck, 'pause_time', formatted); }} placeholder="HH:MM" maxLength={5} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }} /></div>
+                              {hasPause && <button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); }} style={{ width: '100%', padding: '7px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', color: 'var(--red)', cursor: 'pointer', fontWeight: 500, fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>Șterge pauza</button>}
+                            </div>
+                          )}
+                        </div>
+                        <button onClick={() => { setSelectedTruck(truck); setModalType('weekend'); }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)'; setHoveredTruckId(truck.id); }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setHoveredTruckId(null); }}
+                          style={{ width: '100%', background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'left', transition: 'background 0.15s', boxSizing: 'border-box' }}>
+                          {hasWeekend ? (<div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', fontSize: '12px' }}><span style={{ fontWeight: 700, color: 'var(--green)' }}>{truck.weekend_duration}</span><span style={{ color: 'var(--gray-3)', fontSize: '10px' }}>|</span><span style={{ color: 'var(--gray-4)' }}>{truck.weekend_day || '—'} {truck.weekend_time || '—'}</span></div>) : (<div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza sapt.</div>)}
+                        </button>
+                      </div>
+                    </td>
+
+                    {/* ── Client TD ── */}
+                    <td style={{ padding: '8px 14px', verticalAlign: 'top', width: '200px', background: rowHoverId === truck.id ? 'var(--gray-2)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                      {truck.client ? (<div><div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--black)', marginBottom: '1px' }}>{truck.client}</div><div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>{truck.order_number}</div></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
+                    </td>
+
+                    {/* ── Încărcare TD ── */}
+                    <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--gray-2)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                      {truck.load_location ? (<div><div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}><div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.load_location}</div><button type="button" onClick={() => handleCopyCoords(`${truck.id}-load`, truck.load_lat, truck.load_lng)} style={{ background: 'none', border: 'none', cursor: truck.load_lat && truck.load_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-load` ? '#22c55e' : 'var(--gray-4)', opacity: truck.load_lat && truck.load_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>{copiedKey === `${truck.id}-load` ? <CheckIcon /> : <CopyIcon />}</button></div><div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '4px' }}>{truck.load_date}</div><input type="text" value={truck.load_eta ? `ETA: ${truck.load_eta}` : ''} onChange={(e) => { const value = e.target.value.replace('ETA: ', ''); handleUpdate(truck, 'load_eta', value); }} placeholder="ETA: --.--.-- --:--" style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '140px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", transition: 'border-color 0.2s' }} onFocus={(e) => { if (!e.target.value.startsWith('ETA: ')) e.target.value = 'ETA: '; e.target.style.borderColor = '#60a5fa'; }} onBlur={(e) => { e.target.style.borderColor = 'transparent'; }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} /></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
+                    </td>
+
+                    {/* ── Descărcare TD ── */}
+                    <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--gray-2)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                      {truck.unload_location ? (<div><div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}><div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.unload_location}</div><button type="button" onClick={() => handleCopyCoords(`${truck.id}-unload`, truck.unload_lat, truck.unload_lng)} style={{ background: 'none', border: 'none', cursor: truck.unload_lat && truck.unload_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-unload` ? '#22c55e' : 'var(--gray-4)', opacity: truck.unload_lat && truck.unload_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>{copiedKey === `${truck.id}-unload` ? <CheckIcon /> : <CopyIcon />}</button></div><div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '4px' }}>{truck.unload_date}</div><input type="text" value={truck.eta ? `ETA: ${truck.eta}` : ''} onChange={(e) => { const value = e.target.value.replace('ETA: ', ''); handleUpdate(truck, 'eta', value); }} placeholder="ETA: --.--.-- --:--" style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '140px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", transition: 'border-color 0.2s' }} onFocus={(e) => { if (!e.target.value.startsWith('ETA: ')) e.target.value = 'ETA: '; e.target.style.borderColor = '#60a5fa'; }} onBlur={(e) => { e.target.style.borderColor = 'transparent'; }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} /></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
+                    </td>
+
+                    {/* ── Observații TD ── */}
+                    <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--gray-2)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                      <textarea value={truck.observations || ''} onChange={(e) => handleUpdate(truck, 'observations', e.target.value)} rows="2"
+                        style={{ width: '100%', minWidth: '160px', padding: '4px 6px', border: 'none', borderBottom: '1px solid transparent', borderRadius: '0', fontSize: '13px', background: 'transparent', color: 'var(--gray-4)', resize: 'none', outline: 'none', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", transition: 'border-color 0.2s, color 0.2s' }}
+                        onFocus={(e) => { e.target.style.borderBottom = '1px solid var(--gray-3)'; e.target.style.color = 'var(--black)'; }}
+                        onBlur={(e) => { e.target.style.borderBottom = '1px solid transparent'; e.target.style.color = 'var(--gray-4)'; }}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {filteredTrucks.length === 0 && (
+            <div style={{ padding: '60px', textAlign: 'center', color: 'var(--gray-4)', fontSize: '14px' }}>
+              Nu există camioane {filter !== 'all' && `cu statusul "${filter}"`}.
+            </div>
+          )}
+        </div>
+      ) : (
+        /* ══════════════════════════════════════════
+           CARD VIEW (existent)
+        ══════════════════════════════════════════ */
       <div>
         <table id="fleetTable" style={{
           width: '100%',
@@ -887,6 +1069,7 @@ const handleDeleteTrip = async (truck) => {
           </div>
         )}
       </div>
+      )} {/* ← închide ternarul viewMode */}
       {/* Modale */}
 {modalType === 'info' && selectedTruck && (
   <InfoVehicleModal
