@@ -426,57 +426,71 @@ function Curse({ user }) {
               {trips.map((trip) => {
                 const kmTotal = trip.km_empty + trip.km_loaded;
                 const euroPerKm = kmTotal > 0 ? trip.price / kmTotal : 0;
-                
+                const isInvoiced = !!trip.invoiced;
+                const isLockedForUser = isInvoiced && user.role === 'dispatcher';
+                const cellColor = isInvoiced ? 'var(--gray-4)' : 'var(--black)';
+
                 return (
-                  <tr 
-                    key={trip.id} 
-                    style={{ 
+                  <tr
+                    key={trip.id}
+                    style={{
                       borderBottom: '1px solid var(--gray-2)',
                       borderLeft: `4px solid ${trip.invoiced ? '#22c55e' : '#ef4444'}`,
-                      transition: 'all 0.2s'
+                      transition: 'all 0.2s',
+                      background: isInvoiced ? 'rgba(34, 197, 94, 0.04)' : 'transparent',
                     }}
                   >
                     <td style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
-  <button
-    onClick={() => handleInvoiceToggle(trip)}
-    disabled={user.role !== 'accountant' && user.role !== 'admin'}
-    style={{
-      width: '24px',
-      height: '24px',
-      border: `2px solid ${trip.invoiced ? '#22c55e' : 'var(--gray-3)'}`,
-      borderRadius: '6px',
-      background: trip.invoiced ? '#22c55e' : 'transparent',
-      cursor: user.role === 'accountant' || user.role === 'admin' ? 'pointer' : 'not-allowed',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      transition: 'all 0.2s',
-      opacity: user.role === 'accountant' || user.role === 'admin' ? 1 : 0.5
-    }}
-    onMouseEnter={(e) => {
-      if (user.role === 'accountant' || user.role === 'admin') {
-        e.target.style.transform = 'scale(1.1)';
-      }
-    }}
-    onMouseLeave={(e) => {
-      e.target.style.transform = 'scale(1)';
-    }}
-  >
-    {trip.invoiced && (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
-        <polyline points="20 6 9 17 4 12"/>
-      </svg>
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
+    <button
+      onClick={() => handleInvoiceToggle(trip)}
+      disabled={user.role !== 'accountant' && user.role !== 'admin'}
+      style={{
+        width: '24px',
+        height: '24px',
+        border: `2px solid ${trip.invoiced ? '#22c55e' : 'var(--gray-3)'}`,
+        borderRadius: '6px',
+        background: trip.invoiced ? '#22c55e' : 'transparent',
+        cursor: user.role === 'accountant' || user.role === 'admin' ? 'pointer' : 'not-allowed',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.2s',
+        opacity: user.role === 'accountant' || user.role === 'admin' ? 1 : 0.5,
+        flexShrink: 0,
+      }}
+      onMouseEnter={(e) => {
+        if (user.role === 'accountant' || user.role === 'admin') {
+          e.currentTarget.style.transform = 'scale(1.1)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+    >
+      {trip.invoiced && (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      )}
+    </button>
+    {isInvoiced && (
+      <span style={{
+        fontSize: '9px', fontWeight: 700, color: '#16a34a',
+        letterSpacing: '0.08em', textTransform: 'uppercase',
+        whiteSpace: 'nowrap',
+      }}>Facturat</span>
     )}
-  </button>
+  </div>
 </td>
-                    <td style={{ padding: '16px', fontSize: '14px', color: 'var(--black)', width: '140px', fontWeight: 500, verticalAlign: 'middle' }}>
+                    <td style={{ padding: '16px', fontSize: '14px', color: cellColor, width: '140px', fontWeight: 500, verticalAlign: 'middle' }}>
                       {trip.client}
                     </td>
-                    <td style={{ padding: '16px', fontSize: '14px', color: 'var(--black)', width: '130px', verticalAlign: 'middle' }}>
+                    <td style={{ padding: '16px', fontSize: '14px', color: cellColor, width: '130px', verticalAlign: 'middle' }}>
                       {trip.order_number}
                     </td>
                     <td style={{ padding: '16px', width: '125px', verticalAlign: 'middle' }}>
-                      <div style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 600 }}>
+                      <div style={{ fontSize: '14px', color: cellColor, fontWeight: 600 }}>
                         {trip.truck_number}
                       </div>
                       <div style={{ fontSize: '12px', color: 'var(--gray-4)', marginTop: '3px' }}>
@@ -484,7 +498,7 @@ function Curse({ user }) {
                       </div>
                     </td>
                     <td style={{ padding: '16px', width: '185px', verticalAlign: 'middle' }}>
-                      <div style={{ fontSize: '14px', color: 'var(--black)', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '14px', color: cellColor, marginBottom: '4px' }}>
                         {trip.load_location}
                       </div>
                       <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>
@@ -492,7 +506,7 @@ function Curse({ user }) {
                       </div>
                     </td>
                     <td style={{ padding: '16px', width: '185px', verticalAlign: 'middle' }}>
-                      <div style={{ fontSize: '14px', color: 'var(--black)', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '14px', color: cellColor, marginBottom: '4px' }}>
                         {trip.unload_location}
                       </div>
                       <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>
@@ -505,10 +519,10 @@ function Curse({ user }) {
                     <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: 'var(--gray-4)', verticalAlign: 'middle' }}>
                       {trip.km_empty.toLocaleString()}
                     </td>
-                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: 'var(--black)', fontWeight: 500, verticalAlign: 'middle' }}>
+                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: cellColor, fontWeight: 500, verticalAlign: 'middle' }}>
                       {trip.km_loaded.toLocaleString()}
                     </td>
-                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: 'var(--black)', fontWeight: 600, verticalAlign: 'middle' }}>
+                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: cellColor, fontWeight: 600, verticalAlign: 'middle' }}>
                       {kmTotal.toLocaleString()}
                     </td>
                     <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: '#22c55e', fontWeight: 600, verticalAlign: 'middle' }}>
@@ -572,35 +586,56 @@ function Curse({ user }) {
                             }}
                           >
                             {/* Editare Cursă */}
-                            <button
-                              onClick={() => {
-                                setEditTrip(trip);
-                                setOpenMenuId(null);
-                              }}
-                              style={{
+                            {isLockedForUser ? (
+                              <div style={{
                                 width: '100%',
                                 padding: '12px 16px',
-                                background: 'transparent',
-                                border: 'none',
-                                textAlign: 'left',
-                                fontSize: '13px',
-                                color: 'var(--black)',
-                                cursor: 'pointer',
                                 display: 'flex',
                                 alignItems: 'center',
                                 gap: '10px',
-                                transition: 'background 0.2s',
-                                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
-                              }}
-                              onMouseEnter={(e) => e.target.style.background = 'var(--gray-1)'}
-                              onMouseLeave={(e) => e.target.style.background = 'transparent'}
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                              </svg>
-                              Editare Cursă
-                            </button>
+                                fontSize: '13px',
+                                color: 'var(--gray-3)',
+                                cursor: 'not-allowed',
+                                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                                boxSizing: 'border-box',
+                              }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="5" y="11" width="14" height="10" rx="2"/>
+                                  <path d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                                </svg>
+                                Editare restricționată
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setEditTrip(trip);
+                                  setOpenMenuId(null);
+                                }}
+                                style={{
+                                  width: '100%',
+                                  padding: '12px 16px',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  textAlign: 'left',
+                                  fontSize: '13px',
+                                  color: 'var(--black)',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '10px',
+                                  transition: 'background 0.2s',
+                                  fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-1)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                                Editare Cursă
+                              </button>
+                            )}
 
                             {/* Documente */}
                             <button
