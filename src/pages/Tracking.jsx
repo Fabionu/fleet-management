@@ -303,7 +303,7 @@ const handleDeleteTrip = async (truck) => {
         alignItems: 'center',
       }}>
         {/* Search field */}
-        <div style={{ position: 'relative', flex: 1 }}>
+        <div style={{ position: 'relative', flex: 1, maxWidth: '340px' }}>
           <svg
             style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--gray-4)' }}
             width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -480,12 +480,6 @@ const handleDeleteTrip = async (truck) => {
                           <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: statusColor }}>{statusLabel}</span>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={statusColor} strokeWidth="2.5" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.15s', marginLeft: 'auto' }}><polyline points="6 9 12 15 18 9"/></svg>
                         </div>
-                        {/* Șoferi */}
-                        {(truck.driver_1 || truck.driver_2 || truck.drivers) && (
-                          <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginTop: '3px', paddingLeft: '2px' }}>
-                            {truck.driver_1 || truck.driver_2 ? [truck.driver_1, truck.driver_2].filter(Boolean).join(' / ') : truck.drivers}
-                          </div>
-                        )}
                         {/* Status dropdown */}
                         {isOpen && (
                           <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, overflow: 'hidden', minWidth: '160px' }}>
@@ -713,14 +707,6 @@ const handleDeleteTrip = async (truck) => {
                               <polyline points="6 9 12 15 18 9"/>
                             </svg>
                           </div>
-                          {/* Șoferi */}
-                          {(truck.driver_1 || truck.driver_2 || truck.drivers) && (
-                            <div style={{ fontSize: '11px', color: 'var(--gray-4)', padding: '2px 12px 5px 12px', lineHeight: 1.3 }}>
-                              {truck.driver_1 || truck.driver_2
-                                ? [truck.driver_1, truck.driver_2].filter(Boolean).join(' / ')
-                                : truck.drivers}
-                            </div>
-                          )}
                         </div>
                         {/* Dropdown — în afara overflow:hidden, dar în position:relative */}
                         {isOpen && (
