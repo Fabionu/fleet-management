@@ -239,7 +239,7 @@ const handleDeleteTrip = async (truck) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredTrucks = trucks.filter(t => {
+  const filteredTrucks = (Array.isArray(trucks) ? trucks : []).filter(t => {
     if (filter !== 'all' && t.status !== filter) return false;
     if (searchText.trim()) {
       const q = searchText.toLowerCase();
@@ -401,17 +401,12 @@ const handleDeleteTrip = async (truck) => {
       </div>
 
       {/* Table */}
-      <div style={{
-        background: 'var(--bg-page)',
-        border: '1px solid var(--gray-2)',
-        borderRadius: '12px',
-        overflow: 'visible'
-      }}>
+      <div>
         <table id="fleetTable" style={{
           width: '100%',
           borderCollapse: 'separate',
-          borderSpacing: '0 8px',
-          fontSize: '13px'
+          borderSpacing: '0 0',
+          fontSize: '13px',
         }}>
           <tbody>
             {filteredTrucks.map((truck) => [
@@ -422,7 +417,7 @@ const handleDeleteTrip = async (truck) => {
                 onMouseLeave={() => setRowHoverId(null)}
               >
                 {/* ── LEFT: Vehicul ── */}
-                <td style={{ padding: '1px 4px 1px 12px', width: '185px', verticalAlign: 'top', height: '1px' }}>
+                <td style={{ padding: '5px 4px 5px 12px', width: '185px', verticalAlign: 'middle', height: '1px' }}>
                   {(() => {
                     const statusColor =
                       truck.status === 'liber'      ? '#ef4444' :
@@ -659,14 +654,16 @@ const handleDeleteTrip = async (truck) => {
                 </td>
 
                 {/* ── RIGHT: Date cursă ── */}
-                <td style={{ padding: '1px 12px 1px 4px', verticalAlign: 'top', height: '1px' }}>
+                <td style={{ padding: '5px 12px 5px 4px', verticalAlign: 'middle', height: '1px' }}>
                   <div style={{
                     display: 'flex',
+                    flex: 1,
                     alignItems: 'stretch',
                     borderRadius: '10px',
                     border: `1px solid ${rowHoverId === truck.id ? 'var(--gray-3)' : 'var(--gray-2)'}`,
                     background: rowHoverId === truck.id ? 'var(--gray-1)' : 'var(--surface)',
                     transition: 'border-color 0.15s, background 0.15s',
+                    overflow: 'hidden',
                     height: '100%',
                   }}>
 
@@ -685,7 +682,7 @@ const handleDeleteTrip = async (truck) => {
                       const pauseText = [dateDisplay, truck.pause_time].filter(Boolean).join(' · ');
                       const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
                       return (
-                        <div style={{ padding: '5px 12px', width: '155px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', gap: '5px', position: 'relative' }}>
+                        <div style={{ padding: '5px 10px', width: '155px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', gap: '5px', position: 'relative' }}>
                           <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '2px' }}>Repaus</div>
 
                           {/* Pauza badge */}
@@ -707,7 +704,7 @@ const handleDeleteTrip = async (truck) => {
                                   <span style={{ fontWeight: 700, color: 'var(--green)' }}>Ready</span>
                                 </div>
                               ) : (
-                                <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>—</div>
+                                <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza 9h</div>
                               )}
                             </button>
                             {isPauseOpen && (
@@ -741,7 +738,7 @@ const handleDeleteTrip = async (truck) => {
                                 <span style={{ color: 'var(--gray-4)' }}>{truck.weekend_day || '—'} {truck.weekend_time || '—'}</span>
                               </div>
                             ) : (
-                              <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>—</div>
+                              <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza sapt.</div>
                             )}
                           </button>
 
@@ -823,7 +820,7 @@ const handleDeleteTrip = async (truck) => {
                       />
                     </div>
 
-                  </div>
+                  </div>{/* ── închide card principal ── */}
                 </td>
               </tr>,
               
