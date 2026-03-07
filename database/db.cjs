@@ -236,6 +236,9 @@ async function initDb() {
     // Migration: add assigned_truck column to drivers
     await client.query(`ALTER TABLE drivers ADD COLUMN IF NOT EXISTS assigned_truck TEXT`);
 
+    // Migration: add amazon_account column to drivers
+    await client.query(`ALTER TABLE drivers ADD COLUMN IF NOT EXISTS amazon_account INTEGER DEFAULT 0`);
+
     // Migration: add load_firm, load_street, unload_firm, unload_street to trips
     await client.query(`ALTER TABLE trips ADD COLUMN IF NOT EXISTS load_firm TEXT`);
     await client.query(`ALTER TABLE trips ADD COLUMN IF NOT EXISTS load_street TEXT`);

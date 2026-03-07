@@ -458,6 +458,19 @@ function Soferi({ user }) {
     setDeleteConfirm(null);
   };
 
+  const handleToggleAmazon = async (driver) => {
+    if (!isAdmin) return;
+    const newVal = driver.amazon_account ? 0 : 1;
+    // Optimistic update
+    setDrivers(prev => prev.map(d => d.id === driver.id ? { ...d, amazon_account: newVal } : d));
+    try {
+      await api.updateDriverAmazon(driver.id, newVal);
+    } catch {
+      // Revert on error
+      setDrivers(prev => prev.map(d => d.id === driver.id ? { ...d, amazon_account: driver.amazon_account } : d));
+    }
+  };
+
   // Refresh documents for a driver after modal save
   const refreshDriverDocs = async (driverId) => {
     try {
@@ -511,7 +524,7 @@ function Soferi({ user }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
               <tr style={{ background: 'var(--gray-1)', borderBottom: '1px solid var(--gray-2)' }}>
-                {['#', 'Nume', 'Angajat din', 'Status', 'Camion', ...DOC_TYPES.map(t => DOC_SHORT[t.key] || t.label), 'Acțiuni'].map((h, i) => (
+                {['#', 'Nume', 'Angajat din', 'Status', 'Camion', ...DOC_TYPES.map(t => DOC_SHORT[t.key] || t.label), 'Amazon', 'Acțiuni'].map((h, i) => (
                   <th key={i} style={{ padding: '10px 12px', textAlign: i === 1 ? 'left' : 'center', fontWeight: 600, color: 'var(--gray-4)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
@@ -563,6 +576,28 @@ function Soferi({ user }) {
                         </td>
                       );
                     })}
+                    {/* Amazon badge */}
+                    <td style={{ padding: '12px 8px', textAlign: 'center' }}>
+                      <span
+                        onClick={isAdmin ? () => handleToggleAmazon(driver) : undefined}
+                        title={driver.amazon_account ? 'Amazon: Activ' : 'Amazon: Inactiv'}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '4px',
+                          padding: '3px 9px',
+                          background: driver.amazon_account ? '#22c55e1a' : 'var(--gray-1)',
+                          border: `1px solid ${driver.amazon_account ? '#22c55e55' : 'var(--gray-2)'}`,
+                          borderRadius: '12px',
+                          cursor: isAdmin ? 'pointer' : 'default',
+                          fontSize: '11px', fontWeight: 600,
+                          color: driver.amazon_account ? '#16a34a' : 'var(--gray-4)',
+                          transition: 'all 0.15s',
+                        }}
+                      >
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: driver.amazon_account ? '#22c55e' : 'var(--gray-3)', flexShrink: 0 }} />
+                        {driver.amazon_account ? 'Activ' : 'Nu'}
+                      </span>
+                    </td>
+
                     <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
                         <button onClick={() => setDocsModal(driver)}

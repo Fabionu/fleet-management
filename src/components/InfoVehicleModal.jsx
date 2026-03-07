@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { DRIVER_DOC_TYPES } from '../constants/docTypes';
 
@@ -143,11 +143,43 @@ function InfoVehicleModal({ truck, onClose, onSave, user }) {
     trailer: truck.trailer || '',
     fuel_card: truck.fuel_card || '',
     fuel_card_expiry: truck.fuel_card_expiry || '',
-    amazon_account: truck.amazon_account === true || truck.amazon_account === 1 ? 1 : 0
   });
 
   const [showToast, setShowToast] = useState(false);
   const [driverDocsFor, setDriverDocsFor] = useState(null); // driver name
+
+  // Per-driver Amazon state
+  const [driverMap, setDriverMap] = useState({}); // name → { id, amazon_account }
+  const [driverAmazon, setDriverAmazon] = useState({}); // name → 0|1
+
+  useEffect(() => {
+    if (!truck.driver_1 && !truck.driver_2) return;
+    api.getDrivers().then(res => {
+      const map = {};
+      res.data.forEach(d => {
+        map[d.name] = { id: d.id, amazon_account: d.amazon_account || 0 };
+      });
+      setDriverMap(map);
+      const init = {};
+      [truck.driver_1, truck.driver_2].filter(Boolean).forEach(name => {
+        if (map[name]) init[name] = map[name].amazon_account || 0;
+      });
+      setDriverAmazon(init);
+    }).catch(() => {});
+  }, []);
+
+  const handleToggleAmazon = async (driverName) => {
+    const d = driverMap[driverName];
+    if (!d) return;
+    const newVal = driverAmazon[driverName] === 1 ? 0 : 1;
+    setDriverAmazon(prev => ({ ...prev, [driverName]: newVal }));
+    try {
+      await api.updateDriverAmazon(d.id, newVal);
+    } catch {
+      // revert on error
+      setDriverAmazon(prev => ({ ...prev, [driverName]: driverAmazon[driverName] }));
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -179,6 +211,9 @@ Phone number: ${formData.phone || 'N/A'}`;
   };
 
   const isAdmin = user.role === 'admin';
+  let _perms = {};
+  try { _perms = JSON.parse(user.permissions || '{}'); } catch {}
+  const canToggleAmazon = isAdmin || !!_perms.toggleAmazon;
 
   const selectStyle = {
     width: '100%',
@@ -323,6 +358,25 @@ Phone number: ${formData.phone || 'N/A'}`;
                           {truck.driver_1.charAt(0).toUpperCase()}
                         </div>
                         <span style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 500, flex: 1 }}>{truck.driver_1}</span>
+                        {canToggleAmazon && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleAmazon(truck.driver_1)}
+                            title={driverAmazon[truck.driver_1] ? 'Amazon activ — click pentru dezactivare' : 'Amazon inactiv — click pentru activare'}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '5px',
+                              padding: '3px 9px',
+                              background: driverAmazon[truck.driver_1] ? '#22c55e1a' : 'transparent',
+                              border: `1px solid ${driverAmazon[truck.driver_1] ? '#22c55e55' : 'var(--gray-3)'}`,
+                              borderRadius: '12px', cursor: 'pointer', fontSize: '11px', fontWeight: 600,
+                              color: driverAmazon[truck.driver_1] ? '#16a34a' : 'var(--gray-4)',
+                              transition: 'all 0.2s', flexShrink: 0,
+                            }}
+                          >
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: driverAmazon[truck.driver_1] ? '#22c55e' : 'var(--gray-3)', flexShrink: 0 }} />
+                            Amazon
+                          </button>
+                        )}
                         <button
                           type="button"
                           title="Documente șofer"
@@ -341,6 +395,25 @@ Phone number: ${formData.phone || 'N/A'}`;
                           {truck.driver_2.charAt(0).toUpperCase()}
                         </div>
                         <span style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 500, flex: 1 }}>{truck.driver_2}</span>
+                        {canToggleAmazon && (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleAmazon(truck.driver_2)}
+                            title={driverAmazon[truck.driver_2] ? 'Amazon activ — click pentru dezactivare' : 'Amazon inactiv — click pentru activare'}
+                            style={{
+                              display: 'inline-flex', alignItems: 'center', gap: '5px',
+                              padding: '3px 9px',
+                              background: driverAmazon[truck.driver_2] ? '#22c55e1a' : 'transparent',
+                              border: `1px solid ${driverAmazon[truck.driver_2] ? '#22c55e55' : 'var(--gray-3)'}`,
+                              borderRadius: '12px', cursor: 'pointer', fontSize: '11px', fontWeight: 600,
+                              color: driverAmazon[truck.driver_2] ? '#16a34a' : 'var(--gray-4)',
+                              transition: 'all 0.2s', flexShrink: 0,
+                            }}
+                          >
+                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: driverAmazon[truck.driver_2] ? '#22c55e' : 'var(--gray-3)', flexShrink: 0 }} />
+                            Amazon
+                          </button>
+                        )}
                         <button
                           type="button"
                           title="Documente șofer"
@@ -468,55 +541,6 @@ Phone number: ${formData.phone || 'N/A'}`;
                 />
               </div>
             </div>
-
-            {/* Amazon Account Toggle (doar admin) */}
-            {isAdmin && (
-              <div style={{ marginBottom: '32px' }}>
-                <label style={labelStyle}>Amazon Account</label>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, amazon_account: formData.amazon_account === 1 ? 0 : 1 })}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '12px 16px',
-                    background: formData.amazon_account === 1 ? '#22c55e' : 'var(--gray-2)',
-                    border: '1px solid',
-                    borderColor: formData.amazon_account === 1 ? '#22c55e' : 'var(--gray-3)',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: formData.amazon_account === 1 ? 'white' : 'var(--black)',
-                    fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
-                  }}
-                >
-                  <div style={{
-                    width: '44px',
-                    height: '24px',
-                    background: formData.amazon_account === 1 ? 'white' : 'var(--gray-3)',
-                    borderRadius: '12px',
-                    position: 'relative',
-                    transition: 'all 0.2s'
-                  }}>
-                    <div style={{
-                      width: '20px',
-                      height: '20px',
-                      background: formData.amazon_account === 1 ? '#22c55e' : 'white',
-                      borderRadius: '50%',
-                      position: 'absolute',
-                      top: '2px',
-                      left: formData.amazon_account === 1 ? '22px' : '2px',
-                      transition: 'all 0.2s',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-                    }} />
-                  </div>
-                  {formData.amazon_account === 1 ? 'Activ' : 'Inactiv'}
-                </button>
-              </div>
-            )}
 
             {/* Buttons */}
             <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>

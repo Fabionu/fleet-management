@@ -47,6 +47,7 @@ export const api = {
   deleteDriver: (id) => apiClient.delete(`/drivers/${id}`),
 
   assignDriverTruck: (driverId, truck_number) => apiClient.put(`/drivers/${driverId}/truck`, { truck_number }),
+  updateDriverAmazon: (driverId, amazon_account) => apiClient.put(`/drivers/${driverId}/amazon`, { amazon_account }),
 
   // Driver Documents
   getDriverDocuments: (driverId) => apiClient.get(`/driver-documents/${driverId}`),

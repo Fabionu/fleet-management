@@ -419,11 +419,11 @@ app.get('/api/drivers', authMiddleware, async (req, res) => {
 app.post('/api/drivers', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
-    const { first_name, last_name, hire_date, is_active } = req.body;
+    const { first_name, last_name, hire_date, is_active, amazon_account } = req.body;
     const fullName = [first_name, last_name].filter(Boolean).join(' ') || '';
     const result = await pool.query(
-      `INSERT INTO drivers (name, first_name, last_name, hire_date, is_active, organization_id) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-      [fullName, first_name || null, last_name || null, hire_date || null, is_active !== undefined ? (is_active ? 1 : 0) : 1, req.user.organization_id]
+      `INSERT INTO drivers (name, first_name, last_name, hire_date, is_active, amazon_account, organization_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [fullName, first_name || null, last_name || null, hire_date || null, is_active !== undefined ? (is_active ? 1 : 0) : 1, amazon_account ? 1 : 0, req.user.organization_id]
     );
     await addLog(req.user.organization_id, req.user.username, 'Adăugat șofer', 'driver', result.rows[0].id, fullName);
     res.json({ id: result.rows[0].id });
@@ -436,16 +436,36 @@ app.post('/api/drivers', authMiddleware, async (req, res) => {
 app.put('/api/drivers/:id', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
-    const { first_name, last_name, hire_date, is_active } = req.body;
+    const { first_name, last_name, hire_date, is_active, amazon_account } = req.body;
     const fullName = [first_name, last_name].filter(Boolean).join(' ') || '';
     await pool.query(
-      `UPDATE drivers SET name=$1, first_name=$2, last_name=$3, hire_date=$4, is_active=$5 WHERE id=$6`,
-      [fullName, first_name || null, last_name || null, hire_date || null, is_active !== undefined ? (is_active ? 1 : 0) : 1, req.params.id]
+      `UPDATE drivers SET name=$1, first_name=$2, last_name=$3, hire_date=$4, is_active=$5, amazon_account=$6 WHERE id=$7`,
+      [fullName, first_name || null, last_name || null, hire_date || null, is_active !== undefined ? (is_active ? 1 : 0) : 1, amazon_account ? 1 : 0, req.params.id]
     );
     await addLog(req.user.organization_id, req.user.username, 'Editat șofer', 'driver', req.params.id, fullName);
     res.json({ success: true });
   } catch (err) {
     console.error('❌ PUT /api/drivers/:id error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Toggle amazon_account per șofer (acces rapid fără a trimite toate câmpurile)
+app.put('/api/drivers/:id/amazon', authMiddleware, async (req, res) => {
+  try {
+    let perms = {};
+    try { perms = JSON.parse(req.user.permissions || '{}'); } catch {}
+    if (req.user.role !== 'admin' && !perms.toggleAmazon) {
+      return res.status(403).json({ error: 'Acces interzis' });
+    }
+    const { amazon_account } = req.body;
+    await pool.query(
+      `UPDATE drivers SET amazon_account=$1 WHERE id=$2 AND organization_id=$3`,
+      [amazon_account ? 1 : 0, req.params.id, req.user.organization_id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ PUT /api/drivers/:id/amazon error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

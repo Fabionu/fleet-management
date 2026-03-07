@@ -16,6 +16,7 @@ function Curse({ user }) {
   const [editTrip, setEditTrip] = useState(null);
   const [docsTrip, setDocsTrip] = useState(null);
   const [toast, setToast] = useState(null);
+  const [hoveredRowId, setHoveredRowId] = useState(null);
   const menuRef = useRef(null);
 
   const showToast = (message, type = 'success') => {
@@ -433,11 +434,15 @@ function Curse({ user }) {
                 return (
                   <tr
                     key={trip.id}
+                    onMouseEnter={() => setHoveredRowId(trip.id)}
+                    onMouseLeave={() => setHoveredRowId(null)}
                     style={{
                       borderBottom: '1px solid var(--gray-2)',
                       borderLeft: `4px solid ${trip.invoiced ? '#22c55e' : '#ef4444'}`,
-                      transition: 'all 0.2s',
-                      background: isInvoiced ? 'rgba(34, 197, 94, 0.04)' : 'transparent',
+                      transition: 'background 0.15s',
+                      background: hoveredRowId === trip.id
+                        ? (isInvoiced ? 'rgba(34, 197, 94, 0.09)' : 'var(--gray-1)')
+                        : (isInvoiced ? 'rgba(34, 197, 94, 0.04)' : 'transparent'),
                     }}
                   >
                     <td style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
