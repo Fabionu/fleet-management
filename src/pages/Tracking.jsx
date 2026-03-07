@@ -421,7 +421,7 @@ const handleDeleteTrip = async (truck) => {
                 onMouseLeave={() => setRowHoverId(null)}
               >
                 {/* ── LEFT: Vehicul ── */}
-                <td style={{ padding: '6px 4px 6px 12px', width: '185px', verticalAlign: 'top', height: '1px' }}>
+                <td style={{ padding: '4px 4px 4px 12px', width: '185px', verticalAlign: 'top', height: '1px' }}>
                   {(() => {
                     const statusColor =
                       truck.status === 'liber'      ? '#ef4444' :
@@ -570,7 +570,7 @@ const handleDeleteTrip = async (truck) => {
                                     alignItems: 'center',
                                     gap: '10px',
                                     width: '100%',
-                                    padding: '10px 14px',
+                                    padding: '8px 14px',
                                     background: isActive ? `${optColor}15` : 'transparent',
                                     border: 'none',
                                     borderLeft: isActive ? `3px solid ${optColor}` : '3px solid transparent',
@@ -656,7 +656,7 @@ const handleDeleteTrip = async (truck) => {
                 </td>
 
                 {/* ── RIGHT: Date cursă ── */}
-                <td style={{ padding: '6px 12px 6px 4px', verticalAlign: 'top', height: '1px' }}>
+                <td style={{ padding: '4px 12px 4px 4px', verticalAlign: 'top', height: '1px' }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'stretch',
@@ -682,7 +682,7 @@ const handleDeleteTrip = async (truck) => {
                       const pauseText = [dateDisplay, truck.pause_time].filter(Boolean).join(' · ');
                       const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
                       return (
-                        <div style={{ padding: '10px 12px', width: '155px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', gap: '5px', position: 'relative' }}>
+                        <div style={{ padding: '8px 12px', width: '155px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', gap: '5px', position: 'relative' }}>
                           <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '2px' }}>Repaus</div>
 
                           {/* Pauza badge */}
@@ -749,7 +749,7 @@ const handleDeleteTrip = async (truck) => {
                             const pastWeeks = history.filter(h => h.week !== currentWeek);
                             if (pastWeeks.length === 0) return null;
                             return (
-                              <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px', background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '8px', padding: '10px 14px', boxShadow: '0 4px 12px var(--shadow)', zIndex: 1000, whiteSpace: 'nowrap', fontSize: '12px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+                              <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px', background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '8px', padding: '8px 14px', boxShadow: '0 4px 12px var(--shadow)', zIndex: 1000, whiteSpace: 'nowrap', fontSize: '12px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
                                 {pastWeeks.map((item, idx) => (
                                   <div key={idx} style={{ marginBottom: idx < pastWeeks.length - 1 ? '4px' : '0', color: 'var(--black)' }}>
                                     <span style={{ fontWeight: 700 }}>{item.week}</span> — {item.duration}
@@ -763,22 +763,22 @@ const handleDeleteTrip = async (truck) => {
                     })()}
 
                     {/* ── Client / Comandă ── */}
-                    <div style={{ padding: '10px 14px', width: '190px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: '8px 14px', width: '190px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '6px' }}>Client / Comandă</div>
                       {truck.client ? (
                         <div>
-                          <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--black)', marginBottom: '3px' }}>{truck.client}</div>
+                          <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--black)', marginBottom: '1px' }}>{truck.client}</div>
                           <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>{truck.order_number}</div>
                         </div>
                       ) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
                     </div>
 
                     {/* ── Încărcare ── */}
-                    <div style={{ padding: '10px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: '8px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '6px' }}>Încărcare</div>
                       {truck.load_location ? (
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}>
                             <div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.load_location}</div>
                             <button type="button" onClick={() => handleCopyCoords(`${truck.id}-load`, truck.load_lat, truck.load_lng)} title={truck.load_lat && truck.load_lng ? 'Copiază coordonate' : 'Fără coordonate'} style={{ background: 'none', border: 'none', cursor: truck.load_lat && truck.load_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-load` ? '#22c55e' : 'var(--gray-4)', opacity: truck.load_lat && truck.load_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>
                               {copiedKey === `${truck.id}-load` ? <CheckIcon /> : <CopyIcon />}
@@ -791,11 +791,11 @@ const handleDeleteTrip = async (truck) => {
                     </div>
 
                     {/* ── Descărcare ── */}
-                    <div style={{ padding: '10px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: '8px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
                       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '6px' }}>Descărcare</div>
                       {truck.unload_location ? (
                         <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}>
                             <div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.unload_location}</div>
                             <button type="button" onClick={() => handleCopyCoords(`${truck.id}-unload`, truck.unload_lat, truck.unload_lng)} title={truck.unload_lat && truck.unload_lng ? 'Copiază coordonate' : 'Fără coordonate'} style={{ background: 'none', border: 'none', cursor: truck.unload_lat && truck.unload_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-unload` ? '#22c55e' : 'var(--gray-4)', opacity: truck.unload_lat && truck.unload_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>
                               {copiedKey === `${truck.id}-unload` ? <CheckIcon /> : <CopyIcon />}
@@ -808,7 +808,7 @@ const handleDeleteTrip = async (truck) => {
                     </div>
 
                     {/* ── Observații ── */}
-                    <div style={{ padding: '10px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ padding: '8px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
                       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '4px' }}>Observații</div>
                       <textarea
                         value={truck.observations || ''}
