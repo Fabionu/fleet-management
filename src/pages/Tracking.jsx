@@ -409,19 +409,20 @@ const handleDeleteTrip = async (truck) => {
       }}>
         <table id="fleetTable" style={{
           width: '100%',
-          borderCollapse: 'collapse',
+          borderCollapse: 'separate',
+          borderSpacing: '0 4px',
           fontSize: '13px'
         }}>
           <tbody>
             {filteredTrucks.map((truck) => [
               <tr
                 key={truck.id}
-                style={{ borderBottom: '1px solid var(--gray-2)' }}
+                style={{ }}
                 onMouseEnter={() => setRowHoverId(truck.id)}
                 onMouseLeave={() => setRowHoverId(null)}
               >
                 {/* ── LEFT: Vehicul ── */}
-                <td style={{ padding: '3px 4px 3px 12px', width: '185px', verticalAlign: 'top', height: '1px' }}>
+                <td style={{ padding: '1px 4px 1px 12px', width: '185px', verticalAlign: 'top', height: '1px' }}>
                   {(() => {
                     const statusColor =
                       truck.status === 'liber'      ? '#ef4444' :
@@ -658,7 +659,7 @@ const handleDeleteTrip = async (truck) => {
                 </td>
 
                 {/* ── RIGHT: Date cursă ── */}
-                <td style={{ padding: '3px 12px 3px 4px', verticalAlign: 'top', height: '1px' }}>
+                <td style={{ padding: '1px 12px 1px 4px', verticalAlign: 'top', height: '1px' }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'stretch',
@@ -840,11 +841,11 @@ const handleDeleteTrip = async (truck) => {
                 if (!nextTrips || nextTrips.length === 0) return [];
                 
                 return nextTrips.map((trip, idx) => (
-    <tr key={`${truck.id}-next-${idx}`} style={{ background: 'var(--gray-1)', borderTop: '1px dashed var(--gray-3)', borderBottom: '1px solid var(--gray-2)' }}>
-      <td style={{ padding: '6px 4px 6px 12px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>
+    <tr key={`${truck.id}-next-${idx}`} style={{ background: 'var(--gray-1)' }}>
+      <td style={{ padding: '4px 4px 4px 12px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', whiteSpace: 'nowrap', borderTop: '1px dashed var(--gray-3)' }}>
         ↳ Cursă #{idx + 1}
       </td>
-      <td style={{ padding: '6px 12px 6px 4px', verticalAlign: 'middle' }}>
+      <td style={{ padding: '4px 12px 4px 4px', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
         <div style={{ display: 'flex', alignItems: 'stretch', borderRadius: '8px', border: '1px solid var(--gray-2)', background: 'var(--surface)', overflow: 'hidden', minHeight: '44px' }}>
           <div style={{ padding: '8px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontSize: '12px', color: 'var(--gray-4)', fontWeight: 500 }}>{trip.client || '—'}</div>

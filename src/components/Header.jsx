@@ -8,7 +8,7 @@ function Header({ user, onLogout }) {
           <circle cx="5.5" cy="17.5" r="2.5"/>
           <circle cx="18.5" cy="17.5" r="2.5"/>
         </svg>
-        <span className="org-name">{user.organizationName?.toUpperCase() || 'FLEET MANAGEMENT'}</span>
+        <span className="org-name">{(user.organizationName && user.organizationName !== 'Default') ? user.organizationName.toUpperCase() : 'FLEET MANAGEMENT'}</span>
       </div>
       <h1><strong>Fleet Management System</strong></h1>
       

@@ -270,7 +270,7 @@ function App() {
                   color: '#ff7a3d',
                   marginBottom: '2px'
                 }}>
-                  {user.organizationName?.toUpperCase() || 'FLEET MANAGEMENT'}
+                  {(user.organizationName && user.organizationName !== 'Default') ? user.organizationName.toUpperCase() : 'FLEET MANAGEMENT'}
                 </div>
                 <h1 style={{
                   fontSize: '24px',
