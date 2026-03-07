@@ -410,7 +410,7 @@ const handleDeleteTrip = async (truck) => {
         <table id="fleetTable" style={{
           width: '100%',
           borderCollapse: 'separate',
-          borderSpacing: '0 4px',
+          borderSpacing: '0 8px',
           fontSize: '13px'
         }}>
           <tbody>

@@ -211,9 +211,6 @@ Phone number: ${formData.phone || 'N/A'}`;
   };
 
   const isAdmin = user.role === 'admin';
-  let _perms = {};
-  try { _perms = JSON.parse(user.permissions || '{}'); } catch {}
-  const canToggleAmazon = isAdmin || !!_perms.toggleAmazon;
 
   const selectStyle = {
     width: '100%',
@@ -358,7 +355,7 @@ Phone number: ${formData.phone || 'N/A'}`;
                           {truck.driver_1.charAt(0).toUpperCase()}
                         </div>
                         <span style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 500, flex: 1 }}>{truck.driver_1}</span>
-                        {canToggleAmazon && (
+                        {isAdmin && (
                           <button
                             type="button"
                             onClick={() => handleToggleAmazon(truck.driver_1)}
@@ -395,7 +392,7 @@ Phone number: ${formData.phone || 'N/A'}`;
                           {truck.driver_2.charAt(0).toUpperCase()}
                         </div>
                         <span style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 500, flex: 1 }}>{truck.driver_2}</span>
-                        {canToggleAmazon && (
+                        {isAdmin && (
                           <button
                             type="button"
                             onClick={() => handleToggleAmazon(truck.driver_2)}
@@ -441,7 +438,8 @@ Phone number: ${formData.phone || 'N/A'}`;
               <input
                 type="text"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={isAdmin ? (e) => setFormData({ ...formData, phone: e.target.value }) : undefined}
+                readOnly={!isAdmin}
                 placeholder="Ex: +40 123 456 789"
                 style={{
                   width: '100%',
@@ -449,14 +447,15 @@ Phone number: ${formData.phone || 'N/A'}`;
                   border: '1px solid var(--gray-3)',
                   borderRadius: '8px',
                   fontSize: '14px',
-                  background: 'var(--bg-page)',
+                  background: isAdmin ? 'var(--bg-page)' : 'var(--gray-1)',
                   color: 'var(--black)',
                   outline: 'none',
                   fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                  transition: 'border-color 0.2s'
+                  transition: 'border-color 0.2s',
+                  cursor: isAdmin ? 'text' : 'default',
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+                onFocus={isAdmin ? (e) => e.target.style.borderColor = '#ff7a3d' : undefined}
+                onBlur={isAdmin ? (e) => e.target.style.borderColor = 'var(--gray-3)' : undefined}
               />
             </div>
 
@@ -466,7 +465,8 @@ Phone number: ${formData.phone || 'N/A'}`;
               <input
                 type="text"
                 value={formData.trailer}
-                onChange={(e) => setFormData({ ...formData, trailer: e.target.value })}
+                onChange={isAdmin ? (e) => setFormData({ ...formData, trailer: e.target.value }) : undefined}
+                readOnly={!isAdmin}
                 placeholder="Ex: SV-123-ABC"
                 style={{
                   width: '100%',
@@ -474,14 +474,15 @@ Phone number: ${formData.phone || 'N/A'}`;
                   border: '1px solid var(--gray-3)',
                   borderRadius: '8px',
                   fontSize: '14px',
-                  background: 'var(--bg-page)',
+                  background: isAdmin ? 'var(--bg-page)' : 'var(--gray-1)',
                   color: 'var(--black)',
                   outline: 'none',
                   fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                  transition: 'border-color 0.2s'
+                  transition: 'border-color 0.2s',
+                  cursor: isAdmin ? 'text' : 'default',
                 }}
-                onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
-                onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+                onFocus={isAdmin ? (e) => e.target.style.borderColor = '#ff7a3d' : undefined}
+                onBlur={isAdmin ? (e) => e.target.style.borderColor = 'var(--gray-3)' : undefined}
               />
             </div>
 
@@ -492,7 +493,8 @@ Phone number: ${formData.phone || 'N/A'}`;
                 <input
                   type="text"
                   value={formData.fuel_card}
-                  onChange={(e) => setFormData({ ...formData, fuel_card: e.target.value })}
+                  onChange={isAdmin ? (e) => setFormData({ ...formData, fuel_card: e.target.value }) : undefined}
+                  readOnly={!isAdmin}
                   placeholder="1234-5678-9012"
                   style={{
                     width: '100%',
@@ -500,14 +502,15 @@ Phone number: ${formData.phone || 'N/A'}`;
                     border: '1px solid var(--gray-3)',
                     borderRadius: '8px',
                     fontSize: '14px',
-                    background: 'var(--bg-page)',
+                    background: isAdmin ? 'var(--bg-page)' : 'var(--gray-1)',
                     color: 'var(--black)',
                     outline: 'none',
                     fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                    transition: 'border-color 0.2s'
+                    transition: 'border-color 0.2s',
+                    cursor: isAdmin ? 'text' : 'default',
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+                  onFocus={isAdmin ? (e) => e.target.style.borderColor = '#ff7a3d' : undefined}
+                  onBlur={isAdmin ? (e) => e.target.style.borderColor = 'var(--gray-3)' : undefined}
                 />
               </div>
               <div>
@@ -515,13 +518,14 @@ Phone number: ${formData.phone || 'N/A'}`;
                 <input
                   type="text"
                   value={formData.fuel_card_expiry}
-                  onChange={(e) => {
+                  onChange={isAdmin ? (e) => {
                     let value = e.target.value.replace(/\D/g, '');
                     if (value.length >= 2) {
                       value = value.slice(0, 2) + '/' + value.slice(2, 6);
                     }
                     setFormData({ ...formData, fuel_card_expiry: value });
-                  }}
+                  } : undefined}
+                  readOnly={!isAdmin}
                   placeholder="MM/YYYY"
                   maxLength="7"
                   style={{
@@ -530,14 +534,15 @@ Phone number: ${formData.phone || 'N/A'}`;
                     border: '1px solid var(--gray-3)',
                     borderRadius: '8px',
                     fontSize: '14px',
-                    background: 'var(--bg-page)',
+                    background: isAdmin ? 'var(--bg-page)' : 'var(--gray-1)',
                     color: 'var(--black)',
                     outline: 'none',
                     fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                    transition: 'border-color 0.2s'
+                    transition: 'border-color 0.2s',
+                    cursor: isAdmin ? 'text' : 'default',
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+                  onFocus={isAdmin ? (e) => e.target.style.borderColor = '#ff7a3d' : undefined}
+                  onBlur={isAdmin ? (e) => e.target.style.borderColor = 'var(--gray-3)' : undefined}
                 />
               </div>
             </div>
@@ -563,9 +568,9 @@ Phone number: ${formData.phone || 'N/A'}`;
                 onMouseEnter={(e) => e.currentTarget.style.background = 'var(--gray-2)'}
                 onMouseLeave={(e) => e.currentTarget.style.background = 'var(--gray-1)'}
               >
-                Anulează
+                {isAdmin ? 'Anulează' : 'Închide'}
               </button>
-              <button
+              {isAdmin && <button
                 type="submit"
                 style={{
                   flex: 1,
@@ -584,7 +589,7 @@ Phone number: ${formData.phone || 'N/A'}`;
                 onMouseLeave={(e) => e.currentTarget.style.background = '#ff7a3d'}
               >
                 Salvează
-              </button>
+              </button>}
             </div>
           </form>
 
