@@ -421,7 +421,7 @@ const handleDeleteTrip = async (truck) => {
                 onMouseLeave={() => setRowHoverId(null)}
               >
                 {/* ── LEFT: Vehicul ── */}
-                <td style={{ padding: '4px 4px 4px 12px', width: '185px', verticalAlign: 'top', height: '1px' }}>
+                <td style={{ padding: '3px 4px 3px 12px', width: '185px', verticalAlign: 'top', height: '1px' }}>
                   {(() => {
                     const statusColor =
                       truck.status === 'liber'      ? '#ef4444' :
@@ -656,7 +656,7 @@ const handleDeleteTrip = async (truck) => {
                 </td>
 
                 {/* ── RIGHT: Date cursă ── */}
-                <td style={{ padding: '4px 12px 4px 4px', verticalAlign: 'top', height: '1px' }}>
+                <td style={{ padding: '3px 12px 3px 4px', verticalAlign: 'top', height: '1px' }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'stretch',
