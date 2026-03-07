@@ -29,6 +29,7 @@ function Tracking({ user }) {
   const [hoveredTruckId, setHoveredTruckId] = useState(null);
   const [pauseEditId, setPauseEditId] = useState(null);
   const menuRef = useRef(null);
+  const autoClearedPauses = useRef(new Set());
   const [showToast, setShowToast] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [editNextTrip, setEditNextTrip] = useState(null);
@@ -55,6 +56,21 @@ function Tracking({ user }) {
       <path d="M2.5 6.5L5.5 9.5L10.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
+
+  const getPauseStatus = (pause_date, pause_time) => {
+    if (!pause_date && !pause_time) return null;
+    const now = new Date();
+    let pauseEnd = null;
+    if (pause_date) {
+      const timeStr = pause_time || '00:00';
+      pauseEnd = new Date(`${pause_date}T${timeStr}:00`);
+    }
+    if (!pauseEnd || isNaN(pauseEnd.getTime())) return 'active';
+    const diffMs = now - pauseEnd;
+    if (diffMs < 0) return 'active';
+    if (diffMs < 15 * 60 * 1000) return 'ready'; // primele 15 minute după expirare
+    return 'expired'; // mai mult de 15 minute → auto-clear
+  };
 
 useEffect(() => {
   const handleClickOutside = (event) => {
@@ -233,6 +249,28 @@ const handleDeleteTrip = async (truck) => {
     }
     return true;
   });
+
+  // Auto-clear pauze expirate (mai mult de 15 minute)
+  useEffect(() => {
+    const expiredTrucks = trucks.filter(truck => {
+      if (!truck.pause_date && !truck.pause_time) return false;
+      return getPauseStatus(truck.pause_date, truck.pause_time) === 'expired';
+    });
+    expiredTrucks.forEach(truck => {
+      if (autoClearedPauses.current.has(truck.id)) return;
+      autoClearedPauses.current.add(truck.id);
+      const truckData = {
+        ...truck,
+        pause_date: '',
+        pause_time: '',
+        vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []),
+        next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null),
+        amazon_account: truck.amazon_account ? 1 : 0
+      };
+      setTrucks(prev => prev.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t));
+      api.updateTruck(truck.id, truckData).catch(console.error);
+    });
+  }, [trucks]);
 
   const getStatusClass = (status) => {
     return `status-${status}`;
@@ -632,6 +670,9 @@ const handleDeleteTrip = async (truck) => {
                     {/* ── Repaus ── */}
                     {(() => {
                       const hasPause = !!(truck.pause_date || truck.pause_time);
+                      const pauseStatus = hasPause ? getPauseStatus(truck.pause_date, truck.pause_time) : null;
+                      const isActivePause = pauseStatus === 'active';
+                      const isReady = pauseStatus === 'ready';
                       const isPauseOpen = pauseEditId === truck.id;
                       let dateDisplay = '';
                       if (truck.pause_date) {
@@ -648,14 +689,19 @@ const handleDeleteTrip = async (truck) => {
                           <div style={{ position: 'relative' }}>
                             <button
                               onClick={(e) => { e.stopPropagation(); setPauseEditId(isPauseOpen ? null : truck.id); setStatusDropdownId(null); setOpenMenuId(null); }}
-                              onMouseEnter={e => e.currentTarget.style.background = hasPause ? 'rgba(249,115,22,0.06)' : 'var(--gray-1)'}
+                              onMouseEnter={e => e.currentTarget.style.background = isActivePause ? 'rgba(249,115,22,0.06)' : isReady ? 'rgba(34,197,94,0.06)' : 'var(--gray-1)'}
                               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                              style={{ width: '100%', background: 'transparent', border: hasPause ? '1px solid var(--orange)' : '1px dashed var(--gray-3)', borderLeft: hasPause ? '3px solid var(--orange)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s', boxSizing: 'border-box' }}
+                              style={{ width: '100%', background: 'transparent', border: isActivePause ? '1px solid var(--orange)' : isReady ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isReady ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s', boxSizing: 'border-box' }}
                             >
-                              {hasPause ? (
+                              {isActivePause ? (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}>
                                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                   <span style={{ fontWeight: 700, color: 'var(--orange)' }}>{pauseText}</span>
+                                </div>
+                              ) : isReady ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg>
+                                  <span style={{ fontWeight: 700, color: 'var(--green)' }}>Ready</span>
                                 </div>
                               ) : (
                                 <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>—</div>
@@ -739,7 +785,7 @@ const handleDeleteTrip = async (truck) => {
                             </button>
                           </div>
                           <div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '6px' }}>{truck.load_date}</div>
-                          <input type="text" value={truck.load_eta ? `ETA: ${truck.load_eta}` : ''} onChange={(e) => { const value = e.target.value.replace('ETA: ', ''); handleUpdate(truck, 'load_eta', value); }} placeholder="ETA: --.--.-- --:--" style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '0px', outline: 'none', width: '140px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", transition: 'border-color 0.2s' }} onFocus={(e) => { if (!e.target.value.startsWith('ETA: ')) e.target.value = 'ETA: '; e.target.style.borderColor = '#60a5fa'; }} onBlur={(e) => { e.target.style.borderColor = 'transparent'; }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} />
+                          <input type="text" value={truck.load_eta ? `ETA: ${truck.load_eta}` : ''} onChange={(e) => { const value = e.target.value.replace('ETA: ', ''); handleUpdate(truck, 'load_eta', value); }} placeholder="ETA: --.--.-- --:--" style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '140px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", transition: 'border-color 0.2s' }} onFocus={(e) => { if (!e.target.value.startsWith('ETA: ')) e.target.value = 'ETA: '; e.target.style.borderColor = '#60a5fa'; }} onBlur={(e) => { e.target.style.borderColor = 'transparent'; }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} />
                         </div>
                       ) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
                     </div>
@@ -756,7 +802,7 @@ const handleDeleteTrip = async (truck) => {
                             </button>
                           </div>
                           <div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '6px' }}>{truck.unload_date}</div>
-                          <input type="text" value={truck.eta ? `ETA: ${truck.eta}` : ''} onChange={(e) => { const value = e.target.value.replace('ETA: ', ''); handleUpdate(truck, 'eta', value); }} placeholder="ETA: --.--.-- --:--" style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '0px', outline: 'none', width: '140px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", transition: 'border-color 0.2s' }} onFocus={(e) => { if (!e.target.value.startsWith('ETA: ')) e.target.value = 'ETA: '; e.target.style.borderColor = '#60a5fa'; }} onBlur={(e) => { e.target.style.borderColor = 'transparent'; }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} />
+                          <input type="text" value={truck.eta ? `ETA: ${truck.eta}` : ''} onChange={(e) => { const value = e.target.value.replace('ETA: ', ''); handleUpdate(truck, 'eta', value); }} placeholder="ETA: --.--.-- --:--" style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '140px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", transition: 'border-color 0.2s' }} onFocus={(e) => { if (!e.target.value.startsWith('ETA: ')) e.target.value = 'ETA: '; e.target.style.borderColor = '#60a5fa'; }} onBlur={(e) => { e.target.style.borderColor = 'transparent'; }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} />
                         </div>
                       ) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
                     </div>
