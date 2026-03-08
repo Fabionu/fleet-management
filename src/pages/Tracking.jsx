@@ -455,7 +455,7 @@ const handleDeleteTrip = async (truck) => {
                     onMouseLeave={() => setRowHoverId(null)}
                   >
                     {/* ── Vehicul TD ── */}
-                    <td style={{ padding: '8px 12px 8px 0', width: '185px', verticalAlign: 'top', borderLeft: `8px solid ${statusColor}`, position: 'relative', background: rowHoverId === truck.id ? 'var(--gray-2)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                    <td style={{ padding: '8px 12px 8px 0', width: '185px', verticalAlign: 'top', borderLeft: `6px solid ${statusColor}`, position: 'relative', background: rowHoverId === truck.id ? 'var(--gray-2)' : 'var(--surface)', transition: 'background 0.15s' }}>
                       <div style={{ position: 'relative', paddingLeft: '12px' }}>
                         {/* Număr + meniu */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
