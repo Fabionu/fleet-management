@@ -449,23 +449,23 @@ function Curse({ user }) {
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px' }}>
     <button
       onClick={() => handleInvoiceToggle(trip)}
-      disabled={user.role !== 'accountant' && user.role !== 'admin'}
+      disabled={!user.permissions?.markInvoiced}
       style={{
         width: '24px',
         height: '24px',
         border: `2px solid ${trip.invoiced ? '#22c55e' : 'var(--gray-3)'}`,
         borderRadius: '6px',
         background: trip.invoiced ? '#22c55e' : 'transparent',
-        cursor: user.role === 'accountant' || user.role === 'admin' ? 'pointer' : 'not-allowed',
+        cursor: user.permissions?.markInvoiced ? 'pointer' : 'not-allowed',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         transition: 'all 0.2s',
-        opacity: user.role === 'accountant' || user.role === 'admin' ? 1 : 0.5,
+        opacity: user.permissions?.markInvoiced ? 1 : 0.5,
         flexShrink: 0,
       }}
       onMouseEnter={(e) => {
-        if (user.role === 'accountant' || user.role === 'admin') {
+        if (user.permissions?.markInvoiced) {
           e.currentTarget.style.transform = 'scale(1.1)';
         }
       }}
