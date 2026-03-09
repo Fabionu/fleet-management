@@ -1126,10 +1126,14 @@ const btnPrimary = { padding:'8px 16px', background:'#ff7a3d', color:'#fff', bor
 
 function Loader() { return <p style={{ color:'var(--gray-4)', padding:'24px 0', textAlign:'center' }}>Se încarcă...</p>; }
 function EmptyState({ msg }) { return <p style={{ color:'var(--gray-4)', textAlign:'center', padding:'40px 0', fontSize:'14px' }}>{msg}</p>; }
-function Avatar({ name, color='#ff7a3d', size=28 }) {
+function Avatar({ color='#ff7a3d', size=28 }) {
+  const iconSize = Math.round(size * 0.52);
   return (
-    <div style={{ width:size, height:size, borderRadius:'50%', background:color+'22', border:`1.5px solid ${color}44`, display:'flex', alignItems:'center', justifyContent:'center', color, fontWeight:700, fontSize:size*0.44, flexShrink:0 }}>
-      {name?.charAt(0).toUpperCase()}
+    <div style={{ width:size, height:size, borderRadius:'50%', background:color+'22', border:`1.5px solid ${color}44`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+      <svg width={iconSize} height={iconSize} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
     </div>
   );
 }
