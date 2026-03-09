@@ -329,7 +329,7 @@ Phone number: ${formData.phone || 'N/A'}`;
                     {truck.driver_1 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '8px' }}>
                         <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ff7a3d22', color: '#ff7a3d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>
-                          {truck.driver_1.charAt(0).toUpperCase()}
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         </div>
                         <span style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 500, flex: 1 }}>{truck.driver_1}</span>
                         {isAdmin && (
@@ -366,7 +366,7 @@ Phone number: ${formData.phone || 'N/A'}`;
                     {truck.driver_2 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '8px' }}>
                         <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ff7a3d22', color: '#ff7a3d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '12px', flexShrink: 0 }}>
-                          {truck.driver_2.charAt(0).toUpperCase()}
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                         </div>
                         <span style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 500, flex: 1 }}>{truck.driver_2}</span>
                         {isAdmin && (
