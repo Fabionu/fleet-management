@@ -115,6 +115,14 @@ function Curse({ user }) {
     const loadParsed = parseDateTime(trip.load_date);
     const unloadParsed = parseDateTime(trip.unload_date);
 
+    const parseCoords = (str) => {
+      if (!str) return { lat: '', lng: '' };
+      const parts = str.split(',').map(c => c.trim());
+      return { lat: parts[0] || '', lng: parts[1] || '' };
+    };
+    const loadCoords = parseCoords(trip.load_coords);
+    const unloadCoords = parseCoords(trip.unload_coords);
+
     const mainLineEmpty = !truck.client && !truck.order_number;
 
     // Serializare câmpuri speciale (același pattern ca Tracking.jsx)
@@ -139,10 +147,14 @@ function Curse({ user }) {
         load_street: trip.load_street || '',
         load_location: trip.load_location || '',
         load_date: trip.load_date || '',
+        load_lat: loadCoords.lat,
+        load_lng: loadCoords.lng,
         unload_firm: trip.unload_firm || '',
         unload_street: trip.unload_street || '',
         unload_location: trip.unload_location || '',
         unload_date: trip.unload_date || '',
+        unload_lat: unloadCoords.lat,
+        unload_lng: unloadCoords.lng,
         next_trip: JSON.stringify(nextTrips)
       };
     } else {
@@ -155,13 +167,13 @@ function Curse({ user }) {
         load_location: trip.load_location || '',
         load_date: loadParsed.date,
         load_time: loadParsed.time,
-        load_lat: '', load_lng: '',
+        load_lat: loadCoords.lat, load_lng: loadCoords.lng,
         unload_firm: trip.unload_firm || '',
         unload_street: trip.unload_street || '',
         unload_location: trip.unload_location || '',
         unload_date: unloadParsed.date,
         unload_time: unloadParsed.time,
-        unload_lat: '', unload_lng: '',
+        unload_lat: unloadCoords.lat, unload_lng: unloadCoords.lng,
         observations: ''
       };
       nextTrips.push(newNextTrip);
