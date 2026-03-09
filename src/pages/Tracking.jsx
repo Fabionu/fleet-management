@@ -578,8 +578,8 @@ const handleDeleteTrip = async (truck) => {
                           <button onClick={(e) => { e.stopPropagation(); setPauseEditId(isPauseOpen ? null : truck.id); setStatusDropdownId(null); setOpenMenuId(null); }}
                             onMouseEnter={e => e.currentTarget.style.background = isActivePause ? 'rgba(249,115,22,0.06)' : isPauseReady ? 'rgba(34,197,94,0.06)' : 'var(--gray-1)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                            style={{ width: '100%', background: 'transparent', border: isActivePause ? '1px solid var(--orange)' : isPauseReady ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isPauseReady ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s', boxSizing: 'border-box' }}>
-                            {isActivePause ? (<div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style={{ fontWeight: 700, color: 'var(--orange)' }}>{pauseText}</span></div>) : isPauseReady ? (<div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg><span style={{ fontWeight: 700, color: 'var(--green)' }}>Ready</span></div>) : (<div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza 9h</div>)}
+                            style={{ width: '100%', background: 'transparent', border: isActivePause ? '1px solid var(--orange)' : isPauseReady ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isPauseReady ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', textAlign: 'center', transition: 'background 0.15s', boxSizing: 'border-box' }}>
+                            {isActivePause ? (<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style={{ fontWeight: 700, color: 'var(--orange)' }}>{pauseText}</span></div>) : isPauseReady ? (<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg><span style={{ fontWeight: 700, color: 'var(--green)' }}>Ready</span></div>) : (<div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza 9h</div>)}
                           </button>
                           {isPauseOpen && (
                             <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, padding: '14px' }}>
@@ -596,7 +596,11 @@ const handleDeleteTrip = async (truck) => {
                               setWeekendEditId(null); setWeekendDropdownPos(null);
                             } else {
                               const rect = e.currentTarget.getBoundingClientRect();
-                              setWeekendDropdownPos({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 220) });
+                              const wkH = 240;
+                              const spaceBelow = window.innerHeight - rect.bottom;
+                              setWeekendDropdownPos(spaceBelow >= wkH + 8
+                                ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
+                                : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
                               setWeekendFormData({ duration: truck.weekend_duration || '45H', day: truck.weekend_day || 'Sâm', time: truck.weekend_time || '18:00' });
                               setWeekendEditId(truck.id);
                             }
@@ -609,8 +613,8 @@ const handleDeleteTrip = async (truck) => {
                             setWeekendTooltipTruck(truck);
                           }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
-                          style={{ width: '100%', background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'left', transition: 'background 0.15s', boxSizing: 'border-box' }}>
-                          {hasWeekend ? (<div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', fontSize: '12px' }}><span style={{ fontWeight: 700, color: 'var(--green)' }}>{truck.weekend_duration}</span><span style={{ color: 'var(--gray-3)', fontSize: '10px' }}>|</span><span style={{ color: 'var(--gray-4)' }}>{truck.weekend_day || '—'} {truck.weekend_time || '—'}</span></div>) : (<div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza sapt.</div>)}
+                          style={{ width: '100%', background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'center', transition: 'background 0.15s', boxSizing: 'border-box' }}>
+                          {hasWeekend ? (<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', whiteSpace: 'nowrap', fontSize: '12px' }}><span style={{ fontWeight: 700, color: 'var(--green)' }}>{truck.weekend_duration}</span><span style={{ color: 'var(--gray-3)', fontSize: '10px' }}>|</span><span style={{ color: 'var(--gray-4)' }}>{truck.weekend_day || '—'} {truck.weekend_time || '—'}</span></div>) : (<div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza sapt.</div>)}
                         </button>
                       </div>
                     </td>
@@ -947,22 +951,26 @@ const handleDeleteTrip = async (truck) => {
                                   setPauseEditId(null); setPauseDropdownPos(null);
                                 } else {
                                   const rect = e.currentTarget.getBoundingClientRect();
-                                  setPauseDropdownPos({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 200) });
+                                  const pauseH = 160;
+                                  const spaceBelow = window.innerHeight - rect.bottom;
+                                  setPauseDropdownPos(spaceBelow >= pauseH + 8
+                                    ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
+                                    : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
                                   setPauseEditId(truck.id);
                                 }
                                 setStatusDropdownId(null); setOpenMenuId(null);
                               }}
                               onMouseEnter={e => e.currentTarget.style.background = isActivePause ? 'rgba(249,115,22,0.06)' : isReady ? 'rgba(34,197,94,0.06)' : 'var(--gray-1)'}
                               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                              style={{ width: '100%', background: 'transparent', border: isActivePause ? '1px solid var(--orange)' : isReady ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isReady ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s', boxSizing: 'border-box' }}
+                              style={{ width: '100%', background: 'transparent', border: isActivePause ? '1px solid var(--orange)' : isReady ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isReady ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', textAlign: 'center', transition: 'background 0.15s', boxSizing: 'border-box' }}
                             >
                               {isActivePause ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}>
                                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                                   <span style={{ fontWeight: 700, color: 'var(--orange)' }}>{pauseText}</span>
                                 </div>
                               ) : isReady ? (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}>
                                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg>
                                   <span style={{ fontWeight: 700, color: 'var(--green)' }}>Ready</span>
                                 </div>
@@ -980,7 +988,11 @@ const handleDeleteTrip = async (truck) => {
                                 setWeekendEditId(null); setWeekendDropdownPos(null);
                               } else {
                                 const rect = e.currentTarget.getBoundingClientRect();
-                                setWeekendDropdownPos({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 220) });
+                                const wkH = 240;
+                                const spaceBelow = window.innerHeight - rect.bottom;
+                                setWeekendDropdownPos(spaceBelow >= wkH + 8
+                                  ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
+                                  : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
                                 setWeekendFormData({ duration: truck.weekend_duration || '45H', day: truck.weekend_day || 'Sâm', time: truck.weekend_time || '18:00' });
                                 setWeekendEditId(truck.id);
                               }
@@ -993,10 +1005,10 @@ const handleDeleteTrip = async (truck) => {
                               setWeekendTooltipTruck(truck);
                             }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
-                            style={{ width: '100%', background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'left', transition: 'background 0.15s', boxSizing: 'border-box' }}
+                            style={{ width: '100%', background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'center', transition: 'background 0.15s', boxSizing: 'border-box' }}
                           >
                             {hasWeekend ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', fontSize: '12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', whiteSpace: 'nowrap', fontSize: '12px' }}>
                                 <span style={{ fontWeight: 700, color: 'var(--green)' }}>{truck.weekend_duration}</span>
                                 <span style={{ color: 'var(--gray-3)', fontSize: '10px', lineHeight: 1 }}>|</span>
                                 <span style={{ color: 'var(--gray-4)' }}>{truck.weekend_day || '—'} {truck.weekend_time || '—'}</span>
@@ -1496,7 +1508,7 @@ const handleDeleteTrip = async (truck) => {
   if (!truck) return null;
   const hasPause = !!(truck.pause_date || truck.pause_time);
   return (
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', top: pauseDropdownPos.top, left: pauseDropdownPos.left, width: pauseDropdownPos.width, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1001, padding: '14px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(pauseDropdownPos.bottom !== undefined ? { bottom: pauseDropdownPos.bottom } : { top: pauseDropdownPos.top }), left: pauseDropdownPos.left, width: pauseDropdownPos.width, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1001, padding: '14px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ marginBottom: '10px' }}>
         <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
         <input type="date" value={truck.pause_date || ''} onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
@@ -1522,7 +1534,7 @@ const handleDeleteTrip = async (truck) => {
   const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
   const days = ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum'];
   return (
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', top: weekendDropdownPos.top, left: weekendDropdownPos.left, width: weekendDropdownPos.width, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 1001, padding: '16px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(weekendDropdownPos.bottom !== undefined ? { bottom: weekendDropdownPos.bottom } : { top: weekendDropdownPos.top }), left: weekendDropdownPos.left, width: weekendDropdownPos.width, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 1001, padding: '16px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '12px' }}>Pauza Săptămânală — {truck.number}</div>
       {/* Durată */}
       <div style={{ marginBottom: '12px' }}>
