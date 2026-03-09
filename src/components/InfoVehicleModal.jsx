@@ -147,6 +147,7 @@ function InfoVehicleModal({ truck, onClose, onSave, user }) {
 
   const [showToast, setShowToast] = useState(false);
   const [driverDocsFor, setDriverDocsFor] = useState(null); // driver name
+  const [showTruckDoc, setShowTruckDoc] = useState(false);
 
   // Per-driver Amazon state
   const [driverMap, setDriverMap] = useState({}); // name → { id, amazon_account }
@@ -274,15 +275,28 @@ Phone number: ${formData.phone || 'N/A'}`;
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--gray-2)' }}>
+          <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--black)', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>Informații vehicul</span>
+            <button
+              type="button"
+              onClick={handleCopy}
+              title="Copiază detalii"
+              style={{ padding: '5px 7px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', cursor: 'pointer', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </button>
           </div>
 
           {/* Camion row */}
           <div style={{ marginBottom: '24px' }}>
             <label style={labelStyle}>Camion</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '8px' }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ff7a3d22', color: '#ff7a3d', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ff7a3d22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2">
                   <rect x="1" y="5" width="15" height="10" rx="2"/>
                   <path d="M16 8h3l3 3v4h-3"/>
@@ -293,16 +307,13 @@ Phone number: ${formData.phone || 'N/A'}`;
               <span style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 500, flex: 1, fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>{truck.number}</span>
               <button
                 type="button"
-                onClick={handleCopy}
-                title="Copiază detalii"
+                title="Documente vehicul"
+                onClick={() => setShowTruckDoc(true)}
                 style={{ padding: '5px 7px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', cursor: 'pointer', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                </svg>
+                <DocIcon />
               </button>
             </div>
           </div>
@@ -587,6 +598,39 @@ Phone number: ${formData.phone || 'N/A'}`;
           )}
         </div>
       </div>
+
+      {/* Truck doc overlay */}
+      {showTruckDoc && (
+        <div onClick={() => setShowTruckDoc(false)} style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, backdropFilter: 'blur(4px)', padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()} style={{ background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '14px', padding: '28px', width: '100%', maxWidth: '460px', boxShadow: '0 24px 48px rgba(0,0,0,0.35)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--gray-2)' }}>
+              <div>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--black)', fontFamily: "'SF Pro Display', -apple-system, sans-serif" }}>Documente vehicul</div>
+                <div style={{ fontSize: '13px', color: 'var(--gray-4)', marginTop: '2px', fontFamily: "'SF Pro Display', -apple-system, sans-serif" }}>{truck.number}</div>
+              </div>
+              <button onClick={() => setShowTruckDoc(false)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: '4px', display: 'flex', alignItems: 'center', borderRadius: '6px' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </div>
+            {truck.file_data ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 14px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--black)', fontFamily: "'SF Pro Display', -apple-system, sans-serif" }}>{truck.file_name || 'Document'}</div>
+                </div>
+                <a href={truck.file_data} download={truck.file_name || 'document'} style={{ padding: '6px 12px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', fontSize: '12px', fontWeight: 500, color: 'var(--black)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', textDecoration: 'none', fontFamily: "'SF Pro Display', -apple-system, sans-serif" }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Descarcă
+                </a>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '32px', color: 'var(--gray-4)', fontSize: '14px', fontFamily: "'SF Pro Display', -apple-system, sans-serif" }}>
+                Niciun document adăugat pentru acest vehicul.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Driver docs overlay */}
       {driverDocsFor && (
