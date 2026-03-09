@@ -274,71 +274,37 @@ Phone number: ${formData.phone || 'N/A'}`;
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: '32px',
-            paddingBottom: '20px',
-            borderBottom: '1px solid var(--gray-2)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2">
-                <rect x="1" y="5" width="15" height="10" rx="2"/>
-                <path d="M16 8h3l3 3v4h-3"/>
-                <circle cx="5.5" cy="17.5" r="2.5"/>
-                <circle cx="18.5" cy="17.5" r="2.5"/>
-              </svg>
-              <div>
-                <h2 style={{
-                  fontSize: '20px',
-                  fontWeight: 600,
-                  color: 'var(--black)',
-                  marginBottom: '4px',
-                  fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
-                }}>
-                  {truck.number}
-                </h2>
-                <p style={{
-                  fontSize: '13px',
-                  color: 'var(--gray-4)',
-                  fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
-                }}>
-                  Informații vehicul
-                </p>
-              </div>
-            </div>
+          <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--gray-2)' }}>
+            <span style={{ fontSize: '16px', fontWeight: 600, color: 'var(--black)', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>Informații vehicul</span>
+          </div>
 
-            {/* Copy Button */}
-            <button
-              type="button"
-              onClick={handleCopy}
-              title="Copiază detalii"
-              style={{
-                padding: '10px',
-                background: 'var(--gray-1)',
-                border: '1px solid var(--gray-3)',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--gray-2)';
-                e.currentTarget.style.borderColor = '#ff7a3d';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'var(--gray-1)';
-                e.currentTarget.style.borderColor = 'var(--gray-3)';
-              }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-              </svg>
-            </button>
+          {/* Camion row */}
+          <div style={{ marginBottom: '24px' }}>
+            <label style={labelStyle}>Camion</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '8px' }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ff7a3d22', color: '#ff7a3d', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2">
+                  <rect x="1" y="5" width="15" height="10" rx="2"/>
+                  <path d="M16 8h3l3 3v4h-3"/>
+                  <circle cx="5.5" cy="17.5" r="2.5"/>
+                  <circle cx="18.5" cy="17.5" r="2.5"/>
+                </svg>
+              </div>
+              <span style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 500, flex: 1, fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>{truck.number}</span>
+              <button
+                type="button"
+                onClick={handleCopy}
+                title="Copiază detalii"
+                style={{ padding: '5px 7px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', cursor: 'pointer', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit}>
