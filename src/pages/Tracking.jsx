@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../services/api';
 import useStore from '../store/useStore';
 import InfoVehicleModal from '../components/InfoVehicleModal';
@@ -1502,20 +1503,18 @@ const handleDeleteTrip = async (truck) => {
 )}
 
 {/* Overlay pauza dropdown */}
-{pauseEditId !== null && (
-  <div
-    onClick={() => { setPauseEditId(null); setPauseDropdownPos(null); }}
-    style={{ position: 'fixed', inset: 0, zIndex: 999 }}
-  />
+{pauseEditId !== null && createPortal(
+  <div onClick={() => { setPauseEditId(null); setPauseDropdownPos(null); }} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />,
+  document.body
 )}
 
-{/* Fixed pause dropdown (card view) */}
+{/* Fixed pause dropdown */}
 {pauseEditId !== null && pauseDropdownPos && (() => {
   const truck = trucks.find(t => t.id === pauseEditId);
   if (!truck) return null;
   const hasPause = !!(truck.pause_date || truck.pause_time);
-  return (
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(pauseDropdownPos.bottom !== undefined ? { bottom: pauseDropdownPos.bottom } : { top: pauseDropdownPos.top }), left: pauseDropdownPos.left, width: pauseDropdownPos.width, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1001, padding: '14px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+  return createPortal(
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(pauseDropdownPos.bottom !== undefined ? { bottom: pauseDropdownPos.bottom } : { top: pauseDropdownPos.top }), left: pauseDropdownPos.left, width: pauseDropdownPos.width, minWidth: '180px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 9999, padding: '14px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ marginBottom: '10px' }}>
         <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
         <input type="date" value={truck.pause_date || ''} onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
@@ -1527,21 +1526,23 @@ const handleDeleteTrip = async (truck) => {
       {hasPause && (
         <button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); setPauseDropdownPos(null); }} style={{ width: '100%', padding: '7px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', color: 'var(--red)', cursor: 'pointer', fontWeight: 500 }}>Șterge pauza</button>
       )}
-    </div>
+    </div>,
+    document.body
   );
 })()}
 
-{/* Weekend dropdown (fixed, pentru ambele view-uri) */}
-{weekendEditId !== null && (
-  <div onClick={() => { setWeekendEditId(null); setWeekendDropdownPos(null); }} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
+{/* Weekend dropdown (portal, pentru ambele view-uri) */}
+{weekendEditId !== null && createPortal(
+  <div onClick={() => { setWeekendEditId(null); setWeekendDropdownPos(null); }} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />,
+  document.body
 )}
 {weekendEditId !== null && weekendDropdownPos && (() => {
   const truck = trucks.find(t => t.id === weekendEditId);
   if (!truck) return null;
   const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
   const days = ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum'];
-  return (
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(weekendDropdownPos.bottom !== undefined ? { bottom: weekendDropdownPos.bottom } : { top: weekendDropdownPos.top }), left: weekendDropdownPos.left, width: weekendDropdownPos.width, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 1001, padding: '16px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+  return createPortal(
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(weekendDropdownPos.bottom !== undefined ? { bottom: weekendDropdownPos.bottom } : { top: weekendDropdownPos.top }), left: weekendDropdownPos.left, width: weekendDropdownPos.width, minWidth: '200px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 9999, padding: '16px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '12px' }}>Pauza Săptămânală — {truck.number}</div>
       {/* Durată */}
       <div style={{ marginBottom: '12px' }}>
@@ -1569,7 +1570,8 @@ const handleDeleteTrip = async (truck) => {
         <button onClick={() => handleSaveWeekend(truck, weekendFormData)} style={{ flex: 1, padding: '8px', background: '#ff7a3d', border: 'none', borderRadius: '7px', fontSize: '13px', fontWeight: 600, color: 'white', cursor: 'pointer' }}>Salvează</button>
         {hasWeekend && <button onClick={() => handleClearWeekend(truck)} style={{ padding: '8px 12px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '7px', fontSize: '12px', color: 'var(--red)', cursor: 'pointer' }}>Șterge</button>}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 })()}
 
@@ -1584,15 +1586,16 @@ const handleDeleteTrip = async (truck) => {
   const currentWeek = `W${getWeekNumber()}`;
   const pastWeeks = history.filter(h => h.week !== currentWeek);
   if (pastWeeks.length === 0) return null;
-  return (
-    <div style={{ position: 'fixed', top: weekendTooltipPos.top, left: weekendTooltipPos.left, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '8px', padding: '8px 14px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', zIndex: 1002, whiteSpace: 'nowrap', fontSize: '12px', pointerEvents: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+  return createPortal(
+    <div style={{ position: 'fixed', top: weekendTooltipPos.top, left: weekendTooltipPos.left, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '8px', padding: '8px 14px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', zIndex: 10000, whiteSpace: 'nowrap', fontSize: '12px', pointerEvents: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '5px' }}>Istoric pauze</div>
       {pastWeeks.map((item, idx) => (
         <div key={idx} style={{ marginBottom: idx < pastWeeks.length - 1 ? '3px' : '0', color: 'var(--black)' }}>
           <span style={{ fontWeight: 700 }}>{item.week}</span> — <span style={{ color: 'var(--orange)' }}>{item.duration}</span>
         </div>
       ))}
-    </div>
+    </div>,
+    document.body
   );
 })()}
 
