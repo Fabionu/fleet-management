@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import useStore from '../store/useStore';
 import InfoVehicleModal from '../components/InfoVehicleModal';
-import WeekendModal from '../components/WeekendModal';
 import EditTripModal from '../components/EditTripModal';
 import AddTripModal from '../components/AddTripModal';
 
@@ -26,15 +25,21 @@ function Tracking({ user, viewMode = 'card' }) {
   const [statusDropdownId, setStatusDropdownId] = useState(null);
   const [modalType, setModalType] = useState(null);
   const [selectedTruck, setSelectedTruck] = useState(null);
-  const [hoveredTruckId, setHoveredTruckId] = useState(null);
   const [pauseEditId, setPauseEditId] = useState(null);
   const menuRef = useRef(null);
   const autoClearedPauses = useRef(new Set());
+  const focusedETARef = useRef(false);
   const [showToast, setShowToast] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [editNextTrip, setEditNextTrip] = useState(null);
   const [copiedKey, setCopiedKey] = useState(null);
   const [rowHoverId, setRowHoverId] = useState(null);
+  const [pauseDropdownPos, setPauseDropdownPos] = useState(null);
+  const [weekendEditId, setWeekendEditId] = useState(null);
+  const [weekendDropdownPos, setWeekendDropdownPos] = useState(null);
+  const [weekendFormData, setWeekendFormData] = useState({ duration: '45H', day: 'Sâm', time: '18:00' });
+  const [weekendTooltipPos, setWeekendTooltipPos] = useState(null);
+  const [weekendTooltipTruck, setWeekendTooltipTruck] = useState(null);
 
   const handleCopyCoords = (key, lat, lng) => {
     if (!lat || !lng) return;
@@ -92,7 +97,12 @@ useEffect(() => {
     try {
       const response = await api.getTrucks();
       if (Array.isArray(response.data)) {
-        setTrucks(response.data);
+        // Nu actualiza state-ul dacă userul editează un câmp (ETA, obs, pauza etc.)
+        const active = document.activeElement;
+        const isInputFocused = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
+        if (!isInputFocused) {
+          setTrucks(response.data);
+        }
       }
     } catch (error) {
       console.error('Error loading trucks:', error);
@@ -278,6 +288,55 @@ const handleDeleteTrip = async (truck) => {
 
   const getStatusClass = (status) => {
     return `status-${status}`;
+  };
+
+  const handleSaveWeekend = async (truck, data) => {
+    const currentWeek = `W${getWeekNumber()}`;
+    let history = [];
+    try {
+      history = typeof truck.weekend_history === 'string'
+        ? JSON.parse(truck.weekend_history)
+        : (Array.isArray(truck.weekend_history) ? truck.weekend_history : []);
+    } catch (e) { history = []; }
+    const existingIndex = history.findIndex(h => h.week === currentWeek);
+    if (existingIndex >= 0) {
+      history[existingIndex] = { week: currentWeek, duration: data.duration };
+    } else {
+      history.push({ week: currentWeek, duration: data.duration });
+    }
+    history = history.slice(-3);
+    const truckData = {
+      ...truck,
+      weekend_duration: data.duration,
+      weekend_day: data.day,
+      weekend_time: data.time,
+      weekend_week: currentWeek,
+      weekend_history: JSON.stringify(history),
+      vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []),
+      next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null),
+      amazon_account: truck.amazon_account ? 1 : 0
+    };
+    setTrucks(trucks.map(t => t.id === truck.id ? { ...t, weekend_duration: data.duration, weekend_day: data.day, weekend_time: data.time, weekend_week: currentWeek, weekend_history: history } : t));
+    await api.updateTruck(truck.id, truckData);
+    setWeekendEditId(null);
+    setWeekendDropdownPos(null);
+  };
+
+  const handleClearWeekend = async (truck) => {
+    const truckData = {
+      ...truck,
+      weekend_duration: '',
+      weekend_day: '',
+      weekend_time: '',
+      weekend_week: '',
+      vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []),
+      next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null),
+      amazon_account: truck.amazon_account ? 1 : 0
+    };
+    setTrucks(trucks.map(t => t.id === truck.id ? { ...t, weekend_duration: '', weekend_day: '', weekend_time: '', weekend_week: '' } : t));
+    await api.updateTruck(truck.id, truckData);
+    setWeekendEditId(null);
+    setWeekendDropdownPos(null);
   };
 
   if (loading) {
@@ -530,9 +589,26 @@ const handleDeleteTrip = async (truck) => {
                             </div>
                           )}
                         </div>
-                        <button onClick={() => { setSelectedTruck(truck); setModalType('weekend'); }}
-                          onMouseEnter={(e) => { e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)'; setHoveredTruckId(truck.id); }}
-                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setHoveredTruckId(null); }}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (weekendEditId === truck.id) {
+                              setWeekendEditId(null); setWeekendDropdownPos(null);
+                            } else {
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setWeekendDropdownPos({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 220) });
+                              setWeekendFormData({ duration: truck.weekend_duration || '45H', day: truck.weekend_day || 'Sâm', time: truck.weekend_time || '18:00' });
+                              setWeekendEditId(truck.id);
+                            }
+                            setStatusDropdownId(null); setOpenMenuId(null); setPauseEditId(null); setPauseDropdownPos(null);
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)';
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setWeekendTooltipPos({ top: rect.bottom + 4, left: rect.left });
+                            setWeekendTooltipTruck(truck);
+                          }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
                           style={{ width: '100%', background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'left', transition: 'background 0.15s', boxSizing: 'border-box' }}>
                           {hasWeekend ? (<div style={{ display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap', fontSize: '12px' }}><span style={{ fontWeight: 700, color: 'var(--green)' }}>{truck.weekend_duration}</span><span style={{ color: 'var(--gray-3)', fontSize: '10px' }}>|</span><span style={{ color: 'var(--gray-4)' }}>{truck.weekend_day || '—'} {truck.weekend_time || '—'}</span></div>) : (<div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza sapt.</div>)}
                         </button>
@@ -865,7 +941,17 @@ const handleDeleteTrip = async (truck) => {
                           {/* Pauza badge */}
                           <div style={{ position: 'relative' }}>
                             <button
-                              onClick={(e) => { e.stopPropagation(); setPauseEditId(isPauseOpen ? null : truck.id); setStatusDropdownId(null); setOpenMenuId(null); }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (isPauseOpen) {
+                                  setPauseEditId(null); setPauseDropdownPos(null);
+                                } else {
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setPauseDropdownPos({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 200) });
+                                  setPauseEditId(truck.id);
+                                }
+                                setStatusDropdownId(null); setOpenMenuId(null);
+                              }}
                               onMouseEnter={e => e.currentTarget.style.background = isActivePause ? 'rgba(249,115,22,0.06)' : isReady ? 'rgba(34,197,94,0.06)' : 'var(--gray-1)'}
                               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                               style={{ width: '100%', background: 'transparent', border: isActivePause ? '1px solid var(--orange)' : isReady ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isReady ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', textAlign: 'left', transition: 'background 0.15s', boxSizing: 'border-box' }}
@@ -884,28 +970,29 @@ const handleDeleteTrip = async (truck) => {
                                 <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza 9h</div>
                               )}
                             </button>
-                            {isPauseOpen && (
-                              <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, padding: '14px' }}>
-                                <div style={{ marginBottom: '10px' }}>
-                                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
-                                  <input type="date" value={truck.pause_date || ''} onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
-                                </div>
-                                <div style={{ marginBottom: hasPause ? '12px' : '0' }}>
-                                  <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la ora</label>
-                                  <input type="text" value={truck.pause_time || ''} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); handleUpdate(truck, 'pause_time', formatted); }} placeholder="HH:MM" maxLength={5} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }} />
-                                </div>
-                                {hasPause && (
-                                  <button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); }} style={{ width: '100%', padding: '7px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', color: 'var(--red)', cursor: 'pointer', fontWeight: 500, fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>Șterge pauza</button>
-                                )}
-                              </div>
-                            )}
                           </div>
 
                           {/* Weekend badge */}
                           <button
-                            onClick={() => { setSelectedTruck(truck); setModalType('weekend'); }}
-                            onMouseEnter={(e) => { e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)'; setHoveredTruckId(truck.id); }}
-                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setHoveredTruckId(null); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (weekendEditId === truck.id) {
+                                setWeekendEditId(null); setWeekendDropdownPos(null);
+                              } else {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                setWeekendDropdownPos({ top: rect.bottom + 4, left: rect.left, width: Math.max(rect.width, 220) });
+                                setWeekendFormData({ duration: truck.weekend_duration || '45H', day: truck.weekend_day || 'Sâm', time: truck.weekend_time || '18:00' });
+                                setWeekendEditId(truck.id);
+                              }
+                              setStatusDropdownId(null); setOpenMenuId(null); setPauseEditId(null); setPauseDropdownPos(null);
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)';
+                              const rect = e.currentTarget.getBoundingClientRect();
+                              setWeekendTooltipPos({ top: rect.bottom + 4, left: rect.left });
+                              setWeekendTooltipTruck(truck);
+                            }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
                             style={{ width: '100%', background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'left', transition: 'background 0.15s', boxSizing: 'border-box' }}
                           >
                             {hasWeekend ? (
@@ -918,23 +1005,6 @@ const handleDeleteTrip = async (truck) => {
                               <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza sapt.</div>
                             )}
                           </button>
-
-                          {/* Tooltip weekend */}
-                          {hoveredTruckId === truck.id && (() => {
-                            const history = Array.isArray(truck.weekend_history) ? truck.weekend_history : [];
-                            const currentWeek = `W${getWeekNumber()}`;
-                            const pastWeeks = history.filter(h => h.week !== currentWeek);
-                            if (pastWeeks.length === 0) return null;
-                            return (
-                              <div style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', marginBottom: '8px', background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '8px', padding: '8px 14px', boxShadow: '0 4px 12px var(--shadow)', zIndex: 1000, whiteSpace: 'nowrap', fontSize: '12px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-                                {pastWeeks.map((item, idx) => (
-                                  <div key={idx} style={{ marginBottom: idx < pastWeeks.length - 1 ? '4px' : '0', color: 'var(--black)' }}>
-                                    <span style={{ fontWeight: 700 }}>{item.week}</span> — {item.duration}
-                                  </div>
-                                ))}
-                              </div>
-                            );
-                          })()}
                         </div>
                       );
                     })()}
@@ -1113,79 +1183,6 @@ const handleDeleteTrip = async (truck) => {
   />
 )}
 
-{/* Weekend Modal */}
-{modalType === 'weekend' && selectedTruck && (
-  <WeekendModal
-    truck={selectedTruck}
-    onClose={() => {
-      setModalType(null);
-      setSelectedTruck(null);
-    }}
-onSave={async (data) => {
-  try {
-    const currentWeek = `W${getWeekNumber()}`;
-    
-    // Parse istoric existent
-    let history = [];
-    try {
-      history = typeof selectedTruck.weekend_history === 'string' 
-        ? JSON.parse(selectedTruck.weekend_history) 
-        : (selectedTruck.weekend_history || []);
-    } catch (e) {
-      history = [];
-    }
-    
-    // Verifică dacă săptămâna curentă există deja
-    const existingIndex = history.findIndex(h => h.week === currentWeek);
-    
-    if (existingIndex >= 0) {
-      // Actualizează săptămâna curentă
-      history[existingIndex] = { week: currentWeek, duration: data.duration };
-    } else {
-      // Adaugă săptămână nouă
-      history.push({ week: currentWeek, duration: data.duration });
-    }
-    
-    // Păstrează doar ultimele 3
-    history = history.slice(-3);
-
-    const truckData = {
-      ...selectedTruck,
-      weekend_duration: data.duration,
-      weekend_day: data.day,
-      weekend_time: data.time,
-      weekend_week: currentWeek,
-      weekend_history: JSON.stringify(history),
-      vignettes: typeof selectedTruck.vignettes === 'string' 
-        ? selectedTruck.vignettes 
-        : JSON.stringify(selectedTruck.vignettes || []),
-      next_trip: typeof selectedTruck.next_trip === 'string'
-        ? selectedTruck.next_trip
-        : JSON.stringify(selectedTruck.next_trip || null),
-      amazon_account: selectedTruck.amazon_account === true || selectedTruck.amazon_account === 1 ? 1 : 0
-    };
-
-    await api.updateTruck(selectedTruck.id, truckData);
-    
-    // Update local
-    setTrucks(trucks.map(t => 
-      t.id === selectedTruck.id 
-        ? {
-            ...t,
-            weekend_duration: data.duration,
-            weekend_day: data.day,
-            weekend_time: data.time,
-            weekend_week: currentWeek,
-            weekend_history: history
-          }
-        : t
-    ));
-  } catch (error) {
-    console.error('Error updating:', error);
-  }
-}}
-  />
-)}
 
 {/* Edit Trip Modal */}
 {modalType === 'edit' && selectedTruck && (
@@ -1488,10 +1485,97 @@ onSave={async (data) => {
 {/* Overlay pauza dropdown */}
 {pauseEditId !== null && (
   <div
-    onClick={() => setPauseEditId(null)}
+    onClick={() => { setPauseEditId(null); setPauseDropdownPos(null); }}
     style={{ position: 'fixed', inset: 0, zIndex: 999 }}
   />
 )}
+
+{/* Fixed pause dropdown (card view) */}
+{pauseEditId !== null && pauseDropdownPos && (() => {
+  const truck = trucks.find(t => t.id === pauseEditId);
+  if (!truck) return null;
+  const hasPause = !!(truck.pause_date || truck.pause_time);
+  return (
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', top: pauseDropdownPos.top, left: pauseDropdownPos.left, width: pauseDropdownPos.width, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1001, padding: '14px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      <div style={{ marginBottom: '10px' }}>
+        <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
+        <input type="date" value={truck.pause_date || ''} onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
+      </div>
+      <div style={{ marginBottom: hasPause ? '12px' : '0' }}>
+        <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la ora</label>
+        <input type="text" value={truck.pause_time || ''} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); handleUpdate(truck, 'pause_time', formatted); }} placeholder="HH:MM" maxLength={5} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
+      </div>
+      {hasPause && (
+        <button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); setPauseDropdownPos(null); }} style={{ width: '100%', padding: '7px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', color: 'var(--red)', cursor: 'pointer', fontWeight: 500 }}>Șterge pauza</button>
+      )}
+    </div>
+  );
+})()}
+
+{/* Weekend dropdown (fixed, pentru ambele view-uri) */}
+{weekendEditId !== null && (
+  <div onClick={() => { setWeekendEditId(null); setWeekendDropdownPos(null); }} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
+)}
+{weekendEditId !== null && weekendDropdownPos && (() => {
+  const truck = trucks.find(t => t.id === weekendEditId);
+  if (!truck) return null;
+  const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
+  const days = ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum'];
+  return (
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', top: weekendDropdownPos.top, left: weekendDropdownPos.left, width: weekendDropdownPos.width, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 1001, padding: '16px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '12px' }}>Pauza Săptămânală — {truck.number}</div>
+      {/* Durată */}
+      <div style={{ marginBottom: '12px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '6px' }}>Durată</div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {['24H', '45H'].map(d => (
+            <button key={d} type="button" onClick={() => setWeekendFormData(f => ({ ...f, duration: d }))} style={{ flex: 1, padding: '8px', background: weekendFormData.duration === d ? '#ff7a3d' : 'var(--gray-1)', border: `1px solid ${weekendFormData.duration === d ? '#ff7a3d' : 'var(--gray-3)'}`, borderRadius: '7px', fontSize: '14px', fontWeight: 600, color: weekendFormData.duration === d ? 'white' : 'var(--black)', cursor: 'pointer', transition: 'all 0.15s' }}>{d}</button>
+          ))}
+        </div>
+      </div>
+      {/* Zi */}
+      <div style={{ marginBottom: '10px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '5px' }}>Ziua</div>
+        <select value={weekendFormData.day} onChange={(e) => setWeekendFormData(f => ({ ...f, day: e.target.value }))} style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--gray-3)', borderRadius: '7px', fontSize: '13px', background: 'var(--surface)', color: 'var(--black)', outline: 'none', cursor: 'pointer' }} onFocus={e => e.target.style.borderColor='#ff7a3d'} onBlur={e => e.target.style.borderColor='var(--gray-3)'}>
+          {days.map(day => <option key={day} value={day}>{day}</option>)}
+        </select>
+      </div>
+      {/* Oră */}
+      <div style={{ marginBottom: '12px' }}>
+        <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '5px' }}>Ora</div>
+        <input type="time" value={weekendFormData.time} onChange={(e) => setWeekendFormData(f => ({ ...f, time: e.target.value }))} style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--gray-3)', borderRadius: '7px', fontSize: '13px', background: 'var(--surface)', color: 'var(--black)', outline: 'none' }} onFocus={e => e.target.style.borderColor='#ff7a3d'} onBlur={e => e.target.style.borderColor='var(--gray-3)'} />
+      </div>
+      {/* Butoane */}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <button onClick={() => handleSaveWeekend(truck, weekendFormData)} style={{ flex: 1, padding: '8px', background: '#ff7a3d', border: 'none', borderRadius: '7px', fontSize: '13px', fontWeight: 600, color: 'white', cursor: 'pointer' }}>Salvează</button>
+        {hasWeekend && <button onClick={() => handleClearWeekend(truck)} style={{ padding: '8px 12px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '7px', fontSize: '12px', color: 'var(--red)', cursor: 'pointer' }}>Șterge</button>}
+      </div>
+    </div>
+  );
+})()}
+
+{/* Tooltip weekend history (apare la hover, arată ultimele 3 săptămâni) */}
+{weekendTooltipPos && weekendTooltipTruck && (() => {
+  let history = [];
+  try {
+    history = typeof weekendTooltipTruck.weekend_history === 'string'
+      ? JSON.parse(weekendTooltipTruck.weekend_history)
+      : (Array.isArray(weekendTooltipTruck.weekend_history) ? weekendTooltipTruck.weekend_history : []);
+  } catch (e) { history = []; }
+  const currentWeek = `W${getWeekNumber()}`;
+  const pastWeeks = history.filter(h => h.week !== currentWeek);
+  if (pastWeeks.length === 0) return null;
+  return (
+    <div style={{ position: 'fixed', top: weekendTooltipPos.top, left: weekendTooltipPos.left, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '8px', padding: '8px 14px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', zIndex: 1002, whiteSpace: 'nowrap', fontSize: '12px', pointerEvents: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '5px' }}>Istoric pauze</div>
+      {pastWeeks.map((item, idx) => (
+        <div key={idx} style={{ marginBottom: idx < pastWeeks.length - 1 ? '3px' : '0', color: 'var(--black)' }}>
+          <span style={{ fontWeight: 700 }}>{item.week}</span> — <span style={{ color: 'var(--orange)' }}>{item.duration}</span>
+        </div>
+      ))}
+    </div>
+  );
+})()}
 
 {/* Toast */}
 {showToast && (
