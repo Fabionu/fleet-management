@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "fleet-local",
-      "runtimeExecutable": "npm.cmd",
-      "runtimeArgs": ["run", "local"],
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "npm run local"],
       "port": 5173
     }
   ]
