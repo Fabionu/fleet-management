@@ -575,19 +575,26 @@ const handleDeleteTrip = async (truck) => {
                     <td style={{ padding: '8px 14px', verticalAlign: 'top', width: '170px', background: rowHoverId === truck.id ? 'var(--gray-2)' : 'var(--surface)', transition: 'background 0.15s' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', position: 'relative' }}>
                         <div style={{ position: 'relative' }}>
-                          <button onClick={(e) => { e.stopPropagation(); setPauseEditId(isPauseOpen ? null : truck.id); setStatusDropdownId(null); setOpenMenuId(null); }}
+                          <button onClick={(e) => {
+                              e.stopPropagation();
+                              if (isPauseOpen) {
+                                setPauseEditId(null); setPauseDropdownPos(null);
+                              } else {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const pauseH = 160;
+                                const spaceBelow = window.innerHeight - rect.bottom;
+                                setPauseDropdownPos(spaceBelow >= pauseH + 8
+                                  ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
+                                  : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+                                setPauseEditId(truck.id);
+                              }
+                              setStatusDropdownId(null); setOpenMenuId(null);
+                            }}
                             onMouseEnter={e => e.currentTarget.style.background = isActivePause ? 'rgba(249,115,22,0.06)' : isPauseReady ? 'rgba(34,197,94,0.06)' : 'var(--gray-1)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                             style={{ width: '100%', background: 'transparent', border: isActivePause ? '1px solid var(--orange)' : isPauseReady ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isPauseReady ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', textAlign: 'center', transition: 'background 0.15s', boxSizing: 'border-box' }}>
                             {isActivePause ? (<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style={{ fontWeight: 700, color: 'var(--orange)' }}>{pauseText}</span></div>) : isPauseReady ? (<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', fontSize: '12px', whiteSpace: 'nowrap' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg><span style={{ fontWeight: 700, color: 'var(--green)' }}>Ready</span></div>) : (<div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza 9h</div>)}
                           </button>
-                          {isPauseOpen && (
-                            <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, padding: '14px' }}>
-                              <div style={{ marginBottom: '10px' }}><label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label><input type="date" value={truck.pause_date || ''} onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} /></div>
-                              <div style={{ marginBottom: hasPause ? '12px' : '0' }}><label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la ora</label><input type="text" value={truck.pause_time || ''} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); handleUpdate(truck, 'pause_time', formatted); }} placeholder="HH:MM" maxLength={5} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }} /></div>
-                              {hasPause && <button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); }} style={{ width: '100%', padding: '7px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', color: 'var(--red)', cursor: 'pointer', fontWeight: 500, fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>Șterge pauza</button>}
-                            </div>
-                          )}
                         </div>
                         <button
                           onClick={(e) => {
