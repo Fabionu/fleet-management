@@ -43,6 +43,7 @@ function Tracking({ user, viewMode = 'card' }) {
   const [weekendFormData, setWeekendFormData] = useState({ duration: '45H', day: 'Sâm', time: '18:00' });
   const [weekendTooltipPos, setWeekendTooltipPos] = useState(null);
   const [weekendTooltipTruck, setWeekendTooltipTruck] = useState(null);
+  const getBodyZoom = () => parseFloat(document.body.style.zoom) || 1;
 
   const handleCopyCoords = (key, lat, lng) => {
     if (!lat || !lng) return;
@@ -577,19 +578,19 @@ const handleDeleteTrip = async (truck) => {
                     {/* ── Repaus TD ── */}
                     <td style={{ padding: '8px 14px', verticalAlign: 'top', width: '170px', background: rowHoverId === truck.id ? 'var(--gray-2)' : 'var(--surface)', transition: 'background 0.15s' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', position: 'relative' }}>
-                        <div style={{ position: 'relative' }}>
-                          <div style={{ border: isActivePause ? '1px solid var(--orange)' : isPauseReady ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isPauseReady ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '3px 6px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '4px', minHeight: '30px', width: '100%' }}>
-                            {isActivePause ? (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>) : isPauseReady ? (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg>) : null}
-                            <button onClick={(e) => { e.stopPropagation(); setPauseEditId(isPauseOpen ? null : truck.id); setStatusDropdownId(null); setOpenMenuId(null); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, color: isActivePause ? 'var(--orange)' : isPauseReady ? 'var(--green)' : 'var(--gray-3)', padding: '2px', flexShrink: 0, fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>{dateDisplay || 'dată'}</button>
-                            {dateDisplay && <span style={{ color: 'var(--gray-3)', fontSize: '10px', flexShrink: 0 }}>·</span>}
-                            <input type="text" value={pauseTimeValues[truck.id] !== undefined ? pauseTimeValues[truck.id] : (truck.pause_time || '')} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); setPauseTimeValues(prev => ({...prev, [truck.id]: formatted})); }} onFocus={() => setPauseTimeValues(prev => ({...prev, [truck.id]: truck.pause_time || ''}))} onBlur={() => { const val = pauseTimeValues[truck.id] ?? truck.pause_time ?? ''; handleUpdate(truck, 'pause_time', val); setPauseTimeValues(prev => { const n={...prev}; delete n[truck.id]; return n; }); }} placeholder="HH:MM" maxLength={5} style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '12px', fontWeight: 700, color: isActivePause ? 'var(--orange)' : isPauseReady ? 'var(--green)' : 'var(--gray-4)', width: '40px', flexShrink: 0, fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", userSelect: 'text', cursor: 'text' }} />
-                            {hasPause && (<button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); }} onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--gray-3)'} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-3)', fontSize: '14px', padding: '0 2px', marginLeft: 'auto', lineHeight: 1, fontFamily: 'system-ui', flexShrink: 0 }}>×</button>)}
-                          </div>
-                          {isPauseOpen && (
-                            <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, padding: '14px' }}>
-                              <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
-                              <input type="date" value={truck.pause_date || ''} onChange={(e) => { handleUpdate(truck, 'pause_date', e.target.value); setPauseEditId(null); }} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
+                        <div>
+                          {hasPause ? (
+                            <div style={{ border: isActivePause ? '1px solid var(--orange)' : isPauseReady ? '1px solid var(--green)' : '1px solid var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isPauseReady ? '3px solid var(--green)' : '3px solid var(--gray-3)', borderRadius: '8px', padding: '3px 6px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '4px', minHeight: '30px', width: '100%' }}>
+                              {isActivePause ? (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>) : isPauseReady ? (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg>) : null}
+                              <button onClick={(e) => { e.stopPropagation(); if (isPauseOpen) { setPauseEditId(null); setPauseDropdownPos(null); } else { const container = e.currentTarget.parentElement; const rect = container.getBoundingClientRect(); const zoom = getBodyZoom(); setPauseDropdownPos({ top: rect.bottom / zoom, left: rect.left / zoom, width: rect.width / zoom }); setPauseEditId(truck.id); } setStatusDropdownId(null); setOpenMenuId(null); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, color: isActivePause ? 'var(--orange)' : isPauseReady ? 'var(--green)' : 'var(--gray-3)', padding: '2px', flexShrink: 0, fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>{dateDisplay || 'dată'}</button>
+                              {dateDisplay && <span style={{ color: 'var(--gray-3)', fontSize: '10px', flexShrink: 0 }}>·</span>}
+                              <input type="text" value={pauseTimeValues[truck.id] !== undefined ? pauseTimeValues[truck.id] : (truck.pause_time || '')} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); setPauseTimeValues(prev => ({...prev, [truck.id]: formatted})); }} onFocus={() => setPauseTimeValues(prev => ({...prev, [truck.id]: truck.pause_time || ''}))} onBlur={() => { const val = pauseTimeValues[truck.id] ?? truck.pause_time ?? ''; handleUpdate(truck, 'pause_time', val); setPauseTimeValues(prev => { const n={...prev}; delete n[truck.id]; return n; }); }} placeholder="HH:MM" maxLength={5} style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '12px', fontWeight: 700, color: isActivePause ? 'var(--orange)' : isPauseReady ? 'var(--green)' : 'var(--gray-4)', width: '40px', flexShrink: 0, fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", userSelect: 'text', cursor: 'text' }} />
+                              <button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); setPauseDropdownPos(null); }} onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--gray-3)'} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-3)', fontSize: '14px', padding: '0 2px', marginLeft: 'auto', lineHeight: 1, fontFamily: 'system-ui', flexShrink: 0 }}>×</button>
                             </div>
+                          ) : (
+                            <button onClick={(e) => { e.stopPropagation(); if (isPauseOpen) { setPauseEditId(null); setPauseDropdownPos(null); } else { const rect = e.currentTarget.getBoundingClientRect(); const zoom = getBodyZoom(); setPauseDropdownPos({ top: rect.bottom / zoom, left: rect.left / zoom, width: rect.width / zoom }); setPauseEditId(truck.id); } setStatusDropdownId(null); setOpenMenuId(null); }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ width: '100%', background: 'transparent', border: '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', transition: 'background 0.15s', boxSizing: 'border-box' }}>
+                              <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza 9h</div>
+                            </button>
                           )}
                         </div>
                         <button
@@ -599,11 +600,12 @@ const handleDeleteTrip = async (truck) => {
                               setWeekendEditId(null); setWeekendDropdownPos(null);
                             } else {
                               const rect = e.currentTarget.getBoundingClientRect();
+                              const zoom = getBodyZoom();
                               const wkH = 240;
                               const spaceBelow = window.innerHeight - rect.bottom;
                               setWeekendDropdownPos(spaceBelow >= wkH + 8
-                                ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
-                                : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+                                ? { top: rect.bottom / zoom, left: rect.left / zoom, width: rect.width / zoom }
+                                : { bottom: (window.innerHeight - rect.top) / zoom, left: rect.left / zoom, width: rect.width / zoom });
                               setWeekendFormData({ duration: truck.weekend_duration || '45H', day: truck.weekend_day || 'Sâm', time: truck.weekend_time || '18:00' });
                               setWeekendEditId(truck.id);
                             }
@@ -612,7 +614,8 @@ const handleDeleteTrip = async (truck) => {
                           onMouseEnter={(e) => {
                             e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)';
                             const rect = e.currentTarget.getBoundingClientRect();
-                            setWeekendTooltipPos({ top: rect.bottom + 4, left: rect.left });
+                            const zoom = getBodyZoom();
+                            setWeekendTooltipPos({ bottom: (window.innerHeight - rect.top + 8) / zoom, left: rect.left / zoom });
                             setWeekendTooltipTruck(truck);
                           }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
@@ -667,6 +670,20 @@ const handleDeleteTrip = async (truck) => {
           borderSpacing: '0 0',
           fontSize: '13px',
         }}>
+          <thead>
+            <tr style={{ background: 'var(--gray-1)' }}>
+              <th style={{ padding: '10px 12px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)', width: '185px', borderBottom: '2px solid var(--gray-2)' }}>Vehicul</th>
+              <th style={{ padding: '0', borderBottom: '2px solid var(--gray-2)' }}>
+                <div style={{ display: 'flex', alignItems: 'stretch' }}>
+                  <div style={{ padding: '10px 10px', width: '155px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)' }}>Repaus</div>
+                  <div style={{ padding: '10px 14px', width: '190px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)' }}>Client / Comandă</div>
+                  <div style={{ padding: '10px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)' }}>Încărcare</div>
+                  <div style={{ padding: '10px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)' }}>Descărcare</div>
+                  <div style={{ padding: '10px 14px', flex: 1, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)' }}>Observații</div>
+                </div>
+              </th>
+            </tr>
+          </thead>
           <tbody>
             {filteredTrucks.map((truck) => [
               <tr
@@ -943,22 +960,21 @@ const handleDeleteTrip = async (truck) => {
                       const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
                       return (
                         <div style={{ padding: '5px 10px', width: '155px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', gap: '5px', position: 'relative' }}>
-                          <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '2px' }}>Repaus</div>
 
                           {/* Pauza badge */}
-                          <div style={{ position: 'relative' }}>
-                            <div style={{ border: isActivePause ? '1px solid var(--orange)' : isReady ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isReady ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '3px 6px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '4px', minHeight: '30px', width: '100%' }}>
-                              {isActivePause ? (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>) : isReady ? (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg>) : null}
-                              <button onClick={(e) => { e.stopPropagation(); setPauseEditId(isPauseOpen ? null : truck.id); setStatusDropdownId(null); setOpenMenuId(null); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, color: isActivePause ? 'var(--orange)' : isReady ? 'var(--green)' : 'var(--gray-3)', padding: '2px', flexShrink: 0, fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>{dateDisplay || 'dată'}</button>
-                              {dateDisplay && <span style={{ color: 'var(--gray-3)', fontSize: '10px', flexShrink: 0 }}>·</span>}
-                              <input type="text" value={pauseTimeValues[truck.id] !== undefined ? pauseTimeValues[truck.id] : (truck.pause_time || '')} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); setPauseTimeValues(prev => ({...prev, [truck.id]: formatted})); }} onFocus={() => setPauseTimeValues(prev => ({...prev, [truck.id]: truck.pause_time || ''}))} onBlur={() => { const val = pauseTimeValues[truck.id] ?? truck.pause_time ?? ''; handleUpdate(truck, 'pause_time', val); setPauseTimeValues(prev => { const n={...prev}; delete n[truck.id]; return n; }); }} placeholder="HH:MM" maxLength={5} style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '12px', fontWeight: 700, color: isActivePause ? 'var(--orange)' : isReady ? 'var(--green)' : 'var(--gray-4)', width: '40px', flexShrink: 0, fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", userSelect: 'text', cursor: 'text' }} />
-                              {hasPause && (<button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); }} onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--gray-3)'} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-3)', fontSize: '14px', padding: '0 2px', marginLeft: 'auto', lineHeight: 1, fontFamily: 'system-ui', flexShrink: 0 }}>×</button>)}
-                            </div>
-                            {isPauseOpen && (
-                              <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, padding: '14px' }}>
-                                <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
-                                <input type="date" value={truck.pause_date || ''} onChange={(e) => { handleUpdate(truck, 'pause_date', e.target.value); setPauseEditId(null); }} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
+                          <div>
+                            {hasPause ? (
+                              <div style={{ border: isActivePause ? '1px solid var(--orange)' : isReady ? '1px solid var(--green)' : '1px solid var(--gray-3)', borderLeft: isActivePause ? '3px solid var(--orange)' : isReady ? '3px solid var(--green)' : '3px solid var(--gray-3)', borderRadius: '8px', padding: '3px 6px', boxSizing: 'border-box', display: 'flex', alignItems: 'center', gap: '4px', minHeight: '30px', width: '100%' }}>
+                                {isActivePause ? (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="2.5" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>) : isReady ? (<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" style={{ flexShrink: 0 }}><path d="M20 6L9 17l-5-5"/></svg>) : null}
+                                <button onClick={(e) => { e.stopPropagation(); if (isPauseOpen) { setPauseEditId(null); setPauseDropdownPos(null); } else { const container = e.currentTarget.parentElement; const rect = container.getBoundingClientRect(); const zoom = getBodyZoom(); setPauseDropdownPos({ top: rect.bottom / zoom, left: rect.left / zoom, width: rect.width / zoom }); setPauseEditId(truck.id); } setStatusDropdownId(null); setOpenMenuId(null); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 700, color: isActivePause ? 'var(--orange)' : isReady ? 'var(--green)' : 'var(--gray-3)', padding: '2px', flexShrink: 0, fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>{dateDisplay || 'dată'}</button>
+                                {dateDisplay && <span style={{ color: 'var(--gray-3)', fontSize: '10px', flexShrink: 0 }}>·</span>}
+                                <input type="text" value={pauseTimeValues[truck.id] !== undefined ? pauseTimeValues[truck.id] : (truck.pause_time || '')} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); setPauseTimeValues(prev => ({...prev, [truck.id]: formatted})); }} onFocus={() => setPauseTimeValues(prev => ({...prev, [truck.id]: truck.pause_time || ''}))} onBlur={() => { const val = pauseTimeValues[truck.id] ?? truck.pause_time ?? ''; handleUpdate(truck, 'pause_time', val); setPauseTimeValues(prev => { const n={...prev}; delete n[truck.id]; return n; }); }} placeholder="HH:MM" maxLength={5} style={{ background: 'transparent', border: 'none', outline: 'none', fontSize: '12px', fontWeight: 700, color: isActivePause ? 'var(--orange)' : isReady ? 'var(--green)' : 'var(--gray-4)', width: '40px', flexShrink: 0, fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", userSelect: 'text', cursor: 'text' }} />
+                                <button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); setPauseDropdownPos(null); }} onMouseEnter={e => e.currentTarget.style.color = 'var(--red)'} onMouseLeave={e => e.currentTarget.style.color = 'var(--gray-3)'} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-3)', fontSize: '14px', padding: '0 2px', marginLeft: 'auto', lineHeight: 1, fontFamily: 'system-ui', flexShrink: 0 }}>×</button>
                               </div>
+                            ) : (
+                              <button onClick={(e) => { e.stopPropagation(); if (isPauseOpen) { setPauseEditId(null); setPauseDropdownPos(null); } else { const rect = e.currentTarget.getBoundingClientRect(); const zoom = getBodyZoom(); setPauseDropdownPos({ top: rect.bottom / zoom, left: rect.left / zoom, width: rect.width / zoom }); setPauseEditId(truck.id); } setStatusDropdownId(null); setOpenMenuId(null); }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'} style={{ width: '100%', background: 'transparent', border: '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', transition: 'background 0.15s', boxSizing: 'border-box' }}>
+                                <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza 9h</div>
+                              </button>
                             )}
                           </div>
 
@@ -970,11 +986,12 @@ const handleDeleteTrip = async (truck) => {
                                 setWeekendEditId(null); setWeekendDropdownPos(null);
                               } else {
                                 const rect = e.currentTarget.getBoundingClientRect();
+                                const zoom = getBodyZoom();
                                 const wkH = 240;
                                 const spaceBelow = window.innerHeight - rect.bottom;
                                 setWeekendDropdownPos(spaceBelow >= wkH + 8
-                                  ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
-                                  : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+                                  ? { top: rect.bottom / zoom, left: rect.left / zoom, width: rect.width / zoom }
+                                  : { bottom: (window.innerHeight - rect.top) / zoom, left: rect.left / zoom, width: rect.width / zoom });
                                 setWeekendFormData({ duration: truck.weekend_duration || '45H', day: truck.weekend_day || 'Sâm', time: truck.weekend_time || '18:00' });
                                 setWeekendEditId(truck.id);
                               }
@@ -983,7 +1000,8 @@ const handleDeleteTrip = async (truck) => {
                             onMouseEnter={(e) => {
                               e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)';
                               const rect = e.currentTarget.getBoundingClientRect();
-                              setWeekendTooltipPos({ top: rect.bottom + 4, left: rect.left });
+                              const zoom = getBodyZoom();
+                              setWeekendTooltipPos({ bottom: (window.innerHeight - rect.top + 8) / zoom, left: rect.left / zoom });
                               setWeekendTooltipTruck(truck);
                             }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
@@ -1004,8 +1022,7 @@ const handleDeleteTrip = async (truck) => {
                     })()}
 
                     {/* ── Client / Comandă ── */}
-                    <div style={{ padding: '5px 14px', width: '190px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '6px' }}>Client / Comandă</div>
+                    <div style={{ padding: '5px 14px', width: '190px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                       {truck.client ? (
                         <div>
                           <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--black)', marginBottom: '1px' }}>{truck.client}</div>
@@ -1015,8 +1032,7 @@ const handleDeleteTrip = async (truck) => {
                     </div>
 
                     {/* ── Încărcare ── */}
-                    <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '6px' }}>Încărcare</div>
+                    <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                       {truck.load_location ? (
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}>
@@ -1032,8 +1048,7 @@ const handleDeleteTrip = async (truck) => {
                     </div>
 
                     {/* ── Descărcare ── */}
-                    <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '6px' }}>Descărcare</div>
+                    <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                       {truck.unload_location ? (
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}>
@@ -1049,8 +1064,7 @@ const handleDeleteTrip = async (truck) => {
                     </div>
 
                     {/* ── Observații ── */}
-                    <div style={{ padding: '5px 14px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                      <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '4px' }}>Observații</div>
+                    <div style={{ padding: '5px 14px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                       <textarea
                         value={truck.observations || ''}
                         onChange={(e) => handleUpdate(truck, 'observations', e.target.value)}
@@ -1482,24 +1496,16 @@ const handleDeleteTrip = async (truck) => {
   document.body
 )}
 
-{/* Fixed pause dropdown */}
+{/* Fixed pause dropdown — selecție dată + oră */}
 {pauseEditId !== null && pauseDropdownPos && (() => {
   const truck = trucks.find(t => t.id === pauseEditId);
   if (!truck) return null;
-  const hasPause = !!(truck.pause_date || truck.pause_time);
   return createPortal(
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(pauseDropdownPos.bottom !== undefined ? { bottom: pauseDropdownPos.bottom } : { top: pauseDropdownPos.top }), left: pauseDropdownPos.left, width: pauseDropdownPos.width, minWidth: '180px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 9999, padding: '14px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-      <div style={{ marginBottom: '10px' }}>
-        <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
-        <input type="date" value={truck.pause_date || ''} onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
-      </div>
-      <div style={{ marginBottom: hasPause ? '12px' : '0' }}>
-        <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la ora</label>
-        <input type="text" value={truck.pause_time || ''} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); handleUpdate(truck, 'pause_time', formatted); }} placeholder="HH:MM" maxLength={5} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
-      </div>
-      {hasPause && (
-        <button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); setPauseDropdownPos(null); }} style={{ width: '100%', padding: '7px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', color: 'var(--red)', cursor: 'pointer', fontWeight: 500 }}>Șterge pauza</button>
-      )}
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', top: pauseDropdownPos.top, left: pauseDropdownPos.left, width: Math.max(pauseDropdownPos.width, 180), background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 9999, padding: '14px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '6px' }}>Data</label>
+      <input type="date" value={truck.pause_date || ''} onChange={(e) => { handleUpdate(truck, 'pause_date', e.target.value); }} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none', marginBottom: '10px' }} />
+      <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '6px' }}>Ora</label>
+      <input type="text" value={pauseTimeValues[truck.id] !== undefined ? pauseTimeValues[truck.id] : (truck.pause_time || '')} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); setPauseTimeValues(prev => ({...prev, [truck.id]: formatted})); }} onBlur={() => { const val = pauseTimeValues[truck.id] ?? truck.pause_time ?? ''; handleUpdate(truck, 'pause_time', val); setPauseTimeValues(prev => { const n={...prev}; delete n[truck.id]; return n; }); }} placeholder="HH:MM" maxLength={5} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }} />
     </div>,
     document.body
   );
@@ -1516,33 +1522,30 @@ const handleDeleteTrip = async (truck) => {
   const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
   const days = ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum'];
   return createPortal(
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(weekendDropdownPos.bottom !== undefined ? { bottom: weekendDropdownPos.bottom } : { top: weekendDropdownPos.top }), left: weekendDropdownPos.left, width: weekendDropdownPos.width, minWidth: '200px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 9999, padding: '16px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
-      <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '12px' }}>Pauza Săptămânală — {truck.number}</div>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(weekendDropdownPos.bottom !== undefined ? { bottom: weekendDropdownPos.bottom } : { top: weekendDropdownPos.top }), left: weekendDropdownPos.left, width: weekendDropdownPos.width, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.2)', zIndex: 9999, padding: '12px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       {/* Durată */}
-      <div style={{ marginBottom: '12px' }}>
-        <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '6px' }}>Durată</div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {['24H', '45H'].map(d => (
-            <button key={d} type="button" onClick={() => setWeekendFormData(f => ({ ...f, duration: d }))} style={{ flex: 1, padding: '8px', background: weekendFormData.duration === d ? '#ff7a3d' : 'var(--gray-1)', border: `1px solid ${weekendFormData.duration === d ? '#ff7a3d' : 'var(--gray-3)'}`, borderRadius: '7px', fontSize: '14px', fontWeight: 600, color: weekendFormData.duration === d ? 'white' : 'var(--black)', cursor: 'pointer', transition: 'all 0.15s' }}>{d}</button>
-          ))}
+      <div style={{ display: 'flex', gap: '6px', marginBottom: '10px' }}>
+        {['24H', '45H'].map(d => (
+          <button key={d} type="button" onClick={() => setWeekendFormData(f => ({ ...f, duration: d }))} style={{ flex: 1, padding: '7px 4px', background: weekendFormData.duration === d ? 'var(--orange)' : 'var(--gray-1)', border: `1px solid ${weekendFormData.duration === d ? 'var(--orange)' : 'var(--gray-2)'}`, borderRadius: '7px', fontSize: '13px', fontWeight: 700, color: weekendFormData.duration === d ? 'white' : 'var(--black)', cursor: 'pointer', transition: 'all 0.15s' }}>{d}</button>
+        ))}
+      </div>
+      {/* Zi + Oră */}
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '4px' }}>Ziua</div>
+          <select value={weekendFormData.day} onChange={(e) => setWeekendFormData(f => ({ ...f, day: e.target.value }))} style={{ width: '100%', padding: '6px 6px', border: '1px solid var(--gray-3)', borderRadius: '6px', fontSize: '12px', background: 'var(--surface)', color: 'var(--black)', outline: 'none', cursor: 'pointer' }} onFocus={e => e.target.style.borderColor='var(--orange)'} onBlur={e => e.target.style.borderColor='var(--gray-3)'}>
+            {days.map(day => <option key={day} value={day}>{day}</option>)}
+          </select>
+        </div>
+        <div style={{ width: '64px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '4px' }}>Ora</div>
+          <input type="text" value={weekendFormData.time} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let f = digits.slice(0, 2); if (digits.length >= 3) f += ':' + digits.slice(2, 4); setWeekendFormData(prev => ({ ...prev, time: f })); }} placeholder="HH:MM" maxLength={5} style={{ width: '100%', padding: '6px 6px', border: '1px solid var(--gray-3)', borderRadius: '6px', fontSize: '12px', background: 'var(--surface)', color: 'var(--black)', outline: 'none', boxSizing: 'border-box' }} onFocus={e => e.target.style.borderColor='var(--orange)'} onBlur={e => e.target.style.borderColor='var(--gray-3)'} />
         </div>
       </div>
-      {/* Zi */}
-      <div style={{ marginBottom: '10px' }}>
-        <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '5px' }}>Ziua</div>
-        <select value={weekendFormData.day} onChange={(e) => setWeekendFormData(f => ({ ...f, day: e.target.value }))} style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--gray-3)', borderRadius: '7px', fontSize: '13px', background: 'var(--surface)', color: 'var(--black)', outline: 'none', cursor: 'pointer' }} onFocus={e => e.target.style.borderColor='#ff7a3d'} onBlur={e => e.target.style.borderColor='var(--gray-3)'}>
-          {days.map(day => <option key={day} value={day}>{day}</option>)}
-        </select>
-      </div>
-      {/* Oră */}
-      <div style={{ marginBottom: '12px' }}>
-        <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '5px' }}>Ora</div>
-        <input type="time" value={weekendFormData.time} onChange={(e) => setWeekendFormData(f => ({ ...f, time: e.target.value }))} style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--gray-3)', borderRadius: '7px', fontSize: '13px', background: 'var(--surface)', color: 'var(--black)', outline: 'none' }} onFocus={e => e.target.style.borderColor='#ff7a3d'} onBlur={e => e.target.style.borderColor='var(--gray-3)'} />
-      </div>
       {/* Butoane */}
-      <div style={{ display: 'flex', gap: '8px' }}>
-        <button onClick={() => handleSaveWeekend(truck, weekendFormData)} style={{ flex: 1, padding: '8px', background: '#ff7a3d', border: 'none', borderRadius: '7px', fontSize: '13px', fontWeight: 600, color: 'white', cursor: 'pointer' }}>Salvează</button>
-        {hasWeekend && <button onClick={() => handleClearWeekend(truck)} style={{ padding: '8px 12px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '7px', fontSize: '12px', color: 'var(--red)', cursor: 'pointer' }}>Șterge</button>}
+      <div style={{ display: 'flex', gap: '6px' }}>
+        <button onClick={() => handleSaveWeekend(truck, weekendFormData)} style={{ flex: 1, padding: '7px', background: 'var(--orange)', border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600, color: 'white', cursor: 'pointer' }}>Salvează</button>
+        {hasWeekend && <button onClick={() => handleClearWeekend(truck)} onMouseEnter={e => e.currentTarget.style.background='var(--red-light)'} onMouseLeave={e => e.currentTarget.style.background='transparent'} style={{ padding: '7px 10px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '7px', fontSize: '12px', color: 'var(--red)', cursor: 'pointer', transition: 'background 0.15s' }}>×</button>}
       </div>
     </div>,
     document.body
@@ -1561,7 +1564,7 @@ const handleDeleteTrip = async (truck) => {
   const pastWeeks = history.filter(h => h.week !== currentWeek);
   if (pastWeeks.length === 0) return null;
   return createPortal(
-    <div style={{ position: 'fixed', top: weekendTooltipPos.top, left: weekendTooltipPos.left, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '8px', padding: '8px 14px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', zIndex: 10000, whiteSpace: 'nowrap', fontSize: '12px', pointerEvents: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div style={{ position: 'fixed', bottom: weekendTooltipPos.bottom, left: weekendTooltipPos.left, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '8px', padding: '8px 14px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', zIndex: 10000, whiteSpace: 'nowrap', fontSize: '12px', pointerEvents: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '5px' }}>Istoric pauze</div>
       {pastWeeks.map((item, idx) => (
         <div key={idx} style={{ marginBottom: idx < pastWeeks.length - 1 ? '3px' : '0', color: 'var(--black)' }}>
