@@ -631,15 +631,12 @@ const handleDeleteTrip = async (truck) => {
                           onMouseEnter={(e) => {
                             e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)';
                             const rect = e.currentTarget.getBoundingClientRect();
-                            // Position tooltip to the right of button, or below if not enough space
-                            const spaceRight = window.innerWidth - rect.right;
-                            if (spaceRight >= 200) {
-                              // Show to the right
-                              setWeekendTooltipPos({ top: rect.top, left: rect.right + 8 });
-                            } else {
-                              // Show below
-                              setWeekendTooltipPos({ top: rect.bottom + 4, left: rect.left });
-                            }
+                            // Position tooltip ABOVE button, centered
+                            // We'll calculate center after rendering since we need tooltip width
+                            setWeekendTooltipPos({ 
+                              bottom: window.innerHeight - rect.top + 8, 
+                              left: rect.left + (rect.width / 2) // Will be adjusted with transform in rendering
+                            });
                             setWeekendTooltipTruck(truck);
                           }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
@@ -1045,15 +1042,11 @@ const handleDeleteTrip = async (truck) => {
                             onMouseEnter={(e) => {
                               e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)';
                               const rect = e.currentTarget.getBoundingClientRect();
-                              // Position tooltip to the right of button, or below if not enough space
-                              const spaceRight = window.innerWidth - rect.right;
-                              if (spaceRight >= 200) {
-                                // Show to the right
-                                setWeekendTooltipPos({ top: rect.top, left: rect.right + 8 });
-                              } else {
-                                // Show below
-                                setWeekendTooltipPos({ top: rect.bottom + 4, left: rect.left });
-                              }
+                              // Position tooltip ABOVE button, centered
+                              setWeekendTooltipPos({ 
+                                bottom: window.innerHeight - rect.top + 8, 
+                                left: rect.left + (rect.width / 2)
+                              });
                               setWeekendTooltipTruck(truck);
                             }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
@@ -1558,7 +1551,7 @@ const handleDeleteTrip = async (truck) => {
   if (!truck) return null;
   const hasPause = !!(truck.pause_date || truck.pause_time);
   return createPortal(
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(pauseDropdownPos.bottom !== undefined ? { bottom: pauseDropdownPos.bottom } : { top: pauseDropdownPos.top }), left: pauseDropdownPos.left, width: pauseDropdownPos.width || '180px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 9999, padding: '12px', boxSizing: 'border-box', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(pauseDropdownPos.bottom !== undefined ? { bottom: pauseDropdownPos.bottom } : { top: pauseDropdownPos.top }), left: pauseDropdownPos.left, width: '200px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 9999, padding: '12px', boxSizing: 'border-box', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ marginBottom: '10px' }}>
         <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
         <input 
@@ -1617,7 +1610,7 @@ const handleDeleteTrip = async (truck) => {
   const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
   const days = ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum'];
   return createPortal(
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(weekendDropdownPos.bottom !== undefined ? { bottom: weekendDropdownPos.bottom } : { top: weekendDropdownPos.top }), left: weekendDropdownPos.left, width: weekendDropdownPos.width || '200px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 9999, padding: '12px', boxSizing: 'border-box', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(weekendDropdownPos.bottom !== undefined ? { bottom: weekendDropdownPos.bottom } : { top: weekendDropdownPos.top }), left: weekendDropdownPos.left, width: '220px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 9999, padding: '12px', boxSizing: 'border-box', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '12px' }}>Pauza Săptămânală — {truck.number}</div>
       {/* Durată */}
       <div style={{ marginBottom: '12px' }}>
@@ -1701,7 +1694,8 @@ const handleDeleteTrip = async (truck) => {
         ? { bottom: weekendTooltipPos.bottom } 
         : { top: weekendTooltipPos.top }
       ), 
-      left: weekendTooltipPos.left, 
+      left: weekendTooltipPos.left,
+      transform: 'translateX(-50%)', // Center horizontally
       background: 'var(--surface)', 
       border: '1px solid var(--gray-2)', 
       borderRadius: '8px', 
