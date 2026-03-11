@@ -617,7 +617,8 @@ const handleDeleteTrip = async (truck) => {
                           onMouseEnter={(e) => {
                             e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)';
                             const rect = e.currentTarget.getBoundingClientRect();
-                            setWeekendTooltipPos({ top: rect.bottom + 4, left: rect.left });
+                            // Position tooltip ABOVE the button
+                            setWeekendTooltipPos({ bottom: window.innerHeight - rect.top + 4, left: rect.left });
                             setWeekendTooltipTruck(truck);
                           }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
@@ -1009,7 +1010,8 @@ const handleDeleteTrip = async (truck) => {
                             onMouseEnter={(e) => {
                               e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)';
                               const rect = e.currentTarget.getBoundingClientRect();
-                              setWeekendTooltipPos({ top: rect.bottom + 4, left: rect.left });
+                              // Position tooltip ABOVE the button
+                              setWeekendTooltipPos({ bottom: window.innerHeight - rect.top + 4, left: rect.left });
                               setWeekendTooltipTruck(truck);
                             }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
@@ -1514,7 +1516,7 @@ const handleDeleteTrip = async (truck) => {
   if (!truck) return null;
   const hasPause = !!(truck.pause_date || truck.pause_time);
   return createPortal(
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(pauseDropdownPos.bottom !== undefined ? { bottom: pauseDropdownPos.bottom } : { top: pauseDropdownPos.top }), left: pauseDropdownPos.left, width: pauseDropdownPos.width, minWidth: '180px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 9999, padding: '14px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(pauseDropdownPos.bottom !== undefined ? { bottom: pauseDropdownPos.bottom } : { top: pauseDropdownPos.top }), left: pauseDropdownPos.left, width: pauseDropdownPos.width || '180px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 9999, padding: '14px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ marginBottom: '10px' }}>
         <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
         <input type="date" value={truck.pause_date || ''} onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
@@ -1542,7 +1544,7 @@ const handleDeleteTrip = async (truck) => {
   const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
   const days = ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum'];
   return createPortal(
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(weekendDropdownPos.bottom !== undefined ? { bottom: weekendDropdownPos.bottom } : { top: weekendDropdownPos.top }), left: weekendDropdownPos.left, width: weekendDropdownPos.width, minWidth: '200px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 9999, padding: '16px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(weekendDropdownPos.bottom !== undefined ? { bottom: weekendDropdownPos.bottom } : { top: weekendDropdownPos.top }), left: weekendDropdownPos.left, width: weekendDropdownPos.width || '200px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 9999, padding: '16px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '12px' }}>Pauza Săptămânală — {truck.number}</div>
       {/* Durată */}
       <div style={{ marginBottom: '12px' }}>
@@ -1587,7 +1589,7 @@ const handleDeleteTrip = async (truck) => {
   const pastWeeks = history.filter(h => h.week !== currentWeek);
   if (pastWeeks.length === 0) return null;
   return createPortal(
-    <div style={{ position: 'fixed', top: weekendTooltipPos.top, left: weekendTooltipPos.left, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '8px', padding: '8px 14px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', zIndex: 10000, whiteSpace: 'nowrap', fontSize: '12px', pointerEvents: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div style={{ position: 'fixed', bottom: weekendTooltipPos.bottom, left: weekendTooltipPos.left, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '8px', padding: '8px 14px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', zIndex: 10000, whiteSpace: 'nowrap', fontSize: '12px', pointerEvents: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '5px' }}>Istoric pauze</div>
       {pastWeeks.map((item, idx) => (
         <div key={idx} style={{ marginBottom: idx < pastWeeks.length - 1 ? '3px' : '0', color: 'var(--black)' }}>
