@@ -582,11 +582,18 @@ const handleDeleteTrip = async (truck) => {
                                 setPauseEditId(null); setPauseDropdownPos(null);
                               } else {
                                 const rect = e.currentTarget.getBoundingClientRect();
-                                const pauseH = 160;
+                                const pauseH = 180; // Dropdown height estimate
                                 const spaceBelow = window.innerHeight - rect.bottom;
-                                setPauseDropdownPos(spaceBelow >= pauseH + 8
-                                  ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
-                                  : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+                                
+                                // Always position relative to button
+                                if (spaceBelow >= pauseH + 8) {
+                                  // Enough space below - show BELOW button
+                                  setPauseDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+                                } else {
+                                  // Not enough space below - show ABOVE button
+                                  setPauseDropdownPos({ bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+                                }
+                                
                                 setPauseEditId(truck.id);
                               }
                               setStatusDropdownId(null); setOpenMenuId(null);
@@ -604,11 +611,18 @@ const handleDeleteTrip = async (truck) => {
                               setWeekendEditId(null); setWeekendDropdownPos(null);
                             } else {
                               const rect = e.currentTarget.getBoundingClientRect();
-                              const wkH = 240;
+                              const wkH = 280; // Dropdown height estimate
                               const spaceBelow = window.innerHeight - rect.bottom;
-                              setWeekendDropdownPos(spaceBelow >= wkH + 8
-                                ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
-                                : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+                              
+                              // Always position relative to button
+                              if (spaceBelow >= wkH + 8) {
+                                // Enough space below - show BELOW button
+                                setWeekendDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+                              } else {
+                                // Not enough space below - show ABOVE button
+                                setWeekendDropdownPos({ bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+                              }
+                              
                               setWeekendFormData({ duration: truck.weekend_duration || '45H', day: truck.weekend_day || 'Sâm', time: truck.weekend_time || '18:00' });
                               setWeekendEditId(truck.id);
                             }
@@ -617,8 +631,15 @@ const handleDeleteTrip = async (truck) => {
                           onMouseEnter={(e) => {
                             e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)';
                             const rect = e.currentTarget.getBoundingClientRect();
-                            // Position tooltip ABOVE the button
-                            setWeekendTooltipPos({ bottom: window.innerHeight - rect.top + 4, left: rect.left });
+                            // Position tooltip to the right of button, or below if not enough space
+                            const spaceRight = window.innerWidth - rect.right;
+                            if (spaceRight >= 200) {
+                              // Show to the right
+                              setWeekendTooltipPos({ top: rect.top, left: rect.right + 8 });
+                            } else {
+                              // Show below
+                              setWeekendTooltipPos({ top: rect.bottom + 4, left: rect.left });
+                            }
                             setWeekendTooltipTruck(truck);
                           }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
@@ -960,11 +981,18 @@ const handleDeleteTrip = async (truck) => {
                                   setPauseEditId(null); setPauseDropdownPos(null);
                                 } else {
                                   const rect = e.currentTarget.getBoundingClientRect();
-                                  const pauseH = 160;
+                                  const pauseH = 180; // Dropdown height estimate
                                   const spaceBelow = window.innerHeight - rect.bottom;
-                                  setPauseDropdownPos(spaceBelow >= pauseH + 8
-                                    ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
-                                    : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+                                  
+                                  // Always position relative to button
+                                  if (spaceBelow >= pauseH + 8) {
+                                    // Enough space below - show BELOW button
+                                    setPauseDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+                                  } else {
+                                    // Not enough space below - show ABOVE button
+                                    setPauseDropdownPos({ bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+                                  }
+                                  
                                   setPauseEditId(truck.id);
                                 }
                                 setStatusDropdownId(null); setOpenMenuId(null);
@@ -997,11 +1025,18 @@ const handleDeleteTrip = async (truck) => {
                                 setWeekendEditId(null); setWeekendDropdownPos(null);
                               } else {
                                 const rect = e.currentTarget.getBoundingClientRect();
-                                const wkH = 240;
+                                const wkH = 280; // Dropdown height estimate
                                 const spaceBelow = window.innerHeight - rect.bottom;
-                                setWeekendDropdownPos(spaceBelow >= wkH + 8
-                                  ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
-                                  : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+                                
+                                // Always position relative to button
+                                if (spaceBelow >= wkH + 8) {
+                                  // Enough space below - show BELOW button
+                                  setWeekendDropdownPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
+                                } else {
+                                  // Not enough space below - show ABOVE button
+                                  setWeekendDropdownPos({ bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+                                }
+                                
                                 setWeekendFormData({ duration: truck.weekend_duration || '45H', day: truck.weekend_day || 'Sâm', time: truck.weekend_time || '18:00' });
                                 setWeekendEditId(truck.id);
                               }
@@ -1010,8 +1045,15 @@ const handleDeleteTrip = async (truck) => {
                             onMouseEnter={(e) => {
                               e.currentTarget.style.background = hasWeekend ? 'rgba(34,197,94,0.08)' : 'var(--gray-1)';
                               const rect = e.currentTarget.getBoundingClientRect();
-                              // Position tooltip ABOVE the button
-                              setWeekendTooltipPos({ bottom: window.innerHeight - rect.top + 4, left: rect.left });
+                              // Position tooltip to the right of button, or below if not enough space
+                              const spaceRight = window.innerWidth - rect.right;
+                              if (spaceRight >= 200) {
+                                // Show to the right
+                                setWeekendTooltipPos({ top: rect.top, left: rect.right + 8 });
+                              } else {
+                                // Show below
+                                setWeekendTooltipPos({ top: rect.bottom + 4, left: rect.left });
+                              }
                               setWeekendTooltipTruck(truck);
                             }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipPos(null); setWeekendTooltipTruck(null); }}
@@ -1516,14 +1558,45 @@ const handleDeleteTrip = async (truck) => {
   if (!truck) return null;
   const hasPause = !!(truck.pause_date || truck.pause_time);
   return createPortal(
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(pauseDropdownPos.bottom !== undefined ? { bottom: pauseDropdownPos.bottom } : { top: pauseDropdownPos.top }), left: pauseDropdownPos.left, width: pauseDropdownPos.width || '180px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 9999, padding: '14px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(pauseDropdownPos.bottom !== undefined ? { bottom: pauseDropdownPos.bottom } : { top: pauseDropdownPos.top }), left: pauseDropdownPos.left, width: pauseDropdownPos.width || '180px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 9999, padding: '12px', boxSizing: 'border-box', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ marginBottom: '10px' }}>
         <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la data</label>
-        <input type="date" value={truck.pause_date || ''} onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
+        <input 
+          type="date" 
+          value={truck.pause_date || ''} 
+          onChange={(e) => handleUpdate(truck, 'pause_date', e.target.value)} 
+          style={{ 
+            width: '100%', 
+            background: 'var(--gray-1)', 
+            border: '1px solid var(--gray-3)', 
+            borderRadius: '6px',
+            color: 'var(--black)', 
+            fontSize: '13px', 
+            padding: '8px 10px', 
+            outline: 'none',
+            cursor: 'pointer'
+          }} 
+        />
       </div>
       <div style={{ marginBottom: hasPause ? '12px' : '0' }}>
         <label style={{ display: 'block', fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '5px' }}>Pana la ora</label>
-        <input type="text" value={truck.pause_time || ''} onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); handleUpdate(truck, 'pause_time', formatted); }} placeholder="HH:MM" maxLength={5} style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--gray-2)', color: 'var(--black)', fontSize: '13px', padding: '4px 0', outline: 'none' }} />
+        <input 
+          type="text" 
+          value={truck.pause_time || ''} 
+          onChange={(e) => { const digits = e.target.value.replace(/\D/g, ''); let formatted = digits.slice(0, 2); if (digits.length >= 3) formatted += ':' + digits.slice(2, 4); handleUpdate(truck, 'pause_time', formatted); }} 
+          placeholder="HH:MM" 
+          maxLength={5} 
+          style={{ 
+            width: '100%', 
+            background: 'var(--gray-1)', 
+            border: '1px solid var(--gray-3)', 
+            borderRadius: '6px',
+            color: 'var(--black)', 
+            fontSize: '13px', 
+            padding: '8px 10px', 
+            outline: 'none' 
+          }} 
+        />
       </div>
       {hasPause && (
         <button onClick={async () => { const truckData = { ...truck, pause_date: '', pause_time: '', vignettes: typeof truck.vignettes === 'string' ? truck.vignettes : JSON.stringify(truck.vignettes || []), next_trip: typeof truck.next_trip === 'string' ? truck.next_trip : JSON.stringify(truck.next_trip || null), amazon_account: truck.amazon_account ? 1 : 0 }; setTrucks(trucks.map(t => t.id === truck.id ? { ...t, pause_date: '', pause_time: '' } : t)); await api.updateTruck(truck.id, truckData); setPauseEditId(null); setPauseDropdownPos(null); }} style={{ width: '100%', padding: '7px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '11px', color: 'var(--red)', cursor: 'pointer', fontWeight: 500 }}>Șterge pauza</button>
@@ -1544,7 +1617,7 @@ const handleDeleteTrip = async (truck) => {
   const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
   const days = ['Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm', 'Dum'];
   return createPortal(
-    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(weekendDropdownPos.bottom !== undefined ? { bottom: weekendDropdownPos.bottom } : { top: weekendDropdownPos.top }), left: weekendDropdownPos.left, width: weekendDropdownPos.width || '200px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 9999, padding: '16px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div onMouseDown={e => e.stopPropagation()} style={{ position: 'fixed', ...(weekendDropdownPos.bottom !== undefined ? { bottom: weekendDropdownPos.bottom } : { top: weekendDropdownPos.top }), left: weekendDropdownPos.left, width: weekendDropdownPos.width || '200px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 8px 28px rgba(0,0,0,0.2)', zIndex: 9999, padding: '12px', boxSizing: 'border-box', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
       <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--gray-4)', marginBottom: '12px' }}>Pauza Săptămânală — {truck.number}</div>
       {/* Durată */}
       <div style={{ marginBottom: '12px' }}>
@@ -1558,14 +1631,47 @@ const handleDeleteTrip = async (truck) => {
       {/* Zi */}
       <div style={{ marginBottom: '10px' }}>
         <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '5px' }}>Ziua</div>
-        <select value={weekendFormData.day} onChange={(e) => setWeekendFormData(f => ({ ...f, day: e.target.value }))} style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--gray-3)', borderRadius: '7px', fontSize: '13px', background: 'var(--surface)', color: 'var(--black)', outline: 'none', cursor: 'pointer' }} onFocus={e => e.target.style.borderColor='#ff7a3d'} onBlur={e => e.target.style.borderColor='var(--gray-3)'}>
+        <select 
+          value={weekendFormData.day} 
+          onChange={(e) => setWeekendFormData(f => ({ ...f, day: e.target.value }))} 
+          style={{ 
+            width: '100%', 
+            padding: '8px 10px', 
+            border: '1px solid var(--gray-3)', 
+            borderRadius: '7px', 
+            fontSize: '13px', 
+            background: 'var(--gray-1)', 
+            color: 'var(--black)', 
+            outline: 'none', 
+            cursor: 'pointer' 
+          }} 
+          onFocus={e => e.target.style.borderColor='#ff7a3d'} 
+          onBlur={e => e.target.style.borderColor='var(--gray-3)'}
+        >
           {days.map(day => <option key={day} value={day}>{day}</option>)}
         </select>
       </div>
       {/* Oră */}
       <div style={{ marginBottom: '12px' }}>
         <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '5px' }}>Ora</div>
-        <input type="time" value={weekendFormData.time} onChange={(e) => setWeekendFormData(f => ({ ...f, time: e.target.value }))} style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--gray-3)', borderRadius: '7px', fontSize: '13px', background: 'var(--surface)', color: 'var(--black)', outline: 'none' }} onFocus={e => e.target.style.borderColor='#ff7a3d'} onBlur={e => e.target.style.borderColor='var(--gray-3)'} />
+        <input 
+          type="time" 
+          value={weekendFormData.time} 
+          onChange={(e) => setWeekendFormData(f => ({ ...f, time: e.target.value }))} 
+          style={{ 
+            width: '100%', 
+            padding: '8px 10px', 
+            border: '1px solid var(--gray-3)', 
+            borderRadius: '7px', 
+            fontSize: '13px', 
+            background: 'var(--gray-1)', 
+            color: 'var(--black)', 
+            outline: 'none',
+            cursor: 'pointer'
+          }} 
+          onFocus={e => e.target.style.borderColor='#ff7a3d'} 
+          onBlur={e => e.target.style.borderColor='var(--gray-3)'} 
+        />
       </div>
       {/* Butoane */}
       <div style={{ display: 'flex', gap: '8px' }}>
@@ -1589,7 +1695,24 @@ const handleDeleteTrip = async (truck) => {
   const pastWeeks = history.filter(h => h.week !== currentWeek);
   if (pastWeeks.length === 0) return null;
   return createPortal(
-    <div style={{ position: 'fixed', bottom: weekendTooltipPos.bottom, left: weekendTooltipPos.left, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '8px', padding: '8px 14px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)', zIndex: 10000, whiteSpace: 'nowrap', fontSize: '12px', pointerEvents: 'none', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+    <div style={{ 
+      position: 'fixed', 
+      ...(weekendTooltipPos.bottom !== undefined 
+        ? { bottom: weekendTooltipPos.bottom } 
+        : { top: weekendTooltipPos.top }
+      ), 
+      left: weekendTooltipPos.left, 
+      background: 'var(--surface)', 
+      border: '1px solid var(--gray-2)', 
+      borderRadius: '8px', 
+      padding: '8px 14px', 
+      boxShadow: '0 4px 16px rgba(0,0,0,0.15)', 
+      zIndex: 10000, 
+      whiteSpace: 'nowrap', 
+      fontSize: '12px', 
+      pointerEvents: 'none', 
+      fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" 
+    }}>
       <div style={{ fontSize: '10px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', marginBottom: '5px' }}>Istoric pauze</div>
       {pastWeeks.map((item, idx) => (
         <div key={idx} style={{ marginBottom: idx < pastWeeks.length - 1 ? '3px' : '0', color: 'var(--black)' }}>
