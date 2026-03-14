@@ -41,6 +41,7 @@ function Tracking({ user, viewMode = 'card' }) {
   const [weekendFormData, setWeekendFormData] = useState({ duration: '45H', day: 'Sâm', time: '18:00' });
   const [weekendTooltipPos, setWeekendTooltipPos] = useState(null);
   const [weekendTooltipTruck, setWeekendTooltipTruck] = useState(null);
+  const [docPreview, setDocPreview] = useState(null);
 
   const handleCopyCoords = (key, lat, lng) => {
     if (!lat || !lng) return;
@@ -347,6 +348,25 @@ const handleDeleteTrip = async (truck) => {
     setTrucks(trucks.map(t => t.id === truckObj.id ? { ...t, pause_date: dateToSave, pause_time: pauseFormData.time } : t));
     await api.updateTruck(truckObj.id, truckData);
     setPauseEditId(null);
+  };
+
+  const handlePreviewDoc = async (truck) => {
+    setDocPreview({ loading: true });
+    try {
+      const res = await api.getTrips();
+      const trips = Array.isArray(res?.data) ? res.data : [];
+      const trip = trips.find(t =>
+        t.truck_number === truck.number &&
+        (!truck.order_number || t.order_number === truck.order_number)
+      );
+      if (trip?.file_data) {
+        setDocPreview({ fileData: trip.file_data, fileType: trip.file_type || 'application/pdf', fileName: trip.file_name || 'Comandă transport' });
+      } else {
+        setDocPreview({ notFound: true });
+      }
+    } catch (e) {
+      setDocPreview({ notFound: true });
+    }
   };
 
   const handleClearWeekend = async (truck) => {
@@ -775,7 +795,23 @@ const handleDeleteTrip = async (truck) => {
 
 {/* ── Client TD ── */}
                     <td style={{ padding: '8px 14px', verticalAlign: 'top', width: '200px', background: rowHoverId === truck.id ? 'var(--gray-1)' : 'var(--surface)', transition: 'background 0.15s' }}>
-                      {truck.client ? (<div><div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--black)', marginBottom: '1px' }}>{truck.client}</div><div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>{truck.order_number}</div></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
+                      {truck.client ? (
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '4px' }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--black)', marginBottom: '1px' }}>{truck.client}</div>
+                            <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>{truck.order_number}</div>
+                          </div>
+                          <button onClick={() => handlePreviewDoc(truck)} title="Preview comandă transport"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 3px', color: 'var(--gray-3)', display: 'flex', alignItems: 'center', flexShrink: 0, borderRadius: '5px', transition: 'color 0.15s', marginTop: '1px' }}
+                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--blue)'; e.currentTarget.style.background = 'var(--gray-1)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--gray-3)'; e.currentTarget.style.background = 'none'; }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>
+                            </svg>
+                          </button>
+                        </div>
+                      ) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
                     </td>
 
                     {/* ── Încărcare TD ── */}
@@ -1309,9 +1345,20 @@ const handleDeleteTrip = async (truck) => {
 {/* ── Client / Comandă ── */}
                     <div style={{ padding: '5px 14px', width: '190px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column' }}>
                       {truck.client ? (
-                        <div>
-                          <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--black)', marginBottom: '1px' }}>{truck.client}</div>
-                          <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>{truck.order_number}</div>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '4px' }}>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--black)', marginBottom: '1px' }}>{truck.client}</div>
+                            <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>{truck.order_number}</div>
+                          </div>
+                          <button onClick={() => handlePreviewDoc(truck)} title="Preview comandă transport"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 3px', color: 'var(--gray-3)', display: 'flex', alignItems: 'center', flexShrink: 0, borderRadius: '5px', transition: 'color 0.15s', marginTop: '1px' }}
+                            onMouseEnter={e => { e.currentTarget.style.color = 'var(--blue)'; e.currentTarget.style.background = 'var(--gray-1)'; }}
+                            onMouseLeave={e => { e.currentTarget.style.color = 'var(--gray-3)'; e.currentTarget.style.background = 'none'; }}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>
+                            </svg>
+                          </button>
                         </div>
                       ) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
                     </div>
@@ -1800,6 +1847,51 @@ const handleDeleteTrip = async (truck) => {
       <polyline points="20 6 9 17 4 12"/>
     </svg>
     {showToast === 'delete' ? 'Cursă ștearsă cu succes' : 'Salvat cu succes'}
+  </div>
+)}
+
+{/* Doc Preview Modal */}
+{docPreview && (
+  <div onClick={() => setDocPreview(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, backdropFilter: 'blur(6px)', padding: '32px' }}>
+    <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: '0 24px 64px rgba(0,0,0,0.4)', width: '100%', maxWidth: '860px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--gray-2)', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>
+          </svg>
+          <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--black)', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }}>
+            {docPreview.fileName || 'Comandă transport'}
+          </span>
+        </div>
+        <button onClick={() => setDocPreview(null)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', padding: '5px', borderRadius: '7px', transition: 'background 0.15s' }}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      {/* Content */}
+      <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        {docPreview.loading ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '320px', color: 'var(--gray-4)', fontSize: '14px', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }}>
+            Se încarcă...
+          </div>
+        ) : docPreview.notFound ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '320px', gap: '14px' }}>
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--gray-3)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/>
+            </svg>
+            <span style={{ color: 'var(--gray-4)', fontSize: '14px', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }}>Niciun document atașat la această cursă</span>
+          </div>
+        ) : docPreview.fileType?.startsWith('image/') ? (
+          <img src={`data:${docPreview.fileType};base64,${docPreview.fileData}`} alt={docPreview.fileName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        ) : (
+          <iframe src={`data:${docPreview.fileType};base64,${docPreview.fileData}`} style={{ width: '100%', height: '100%', border: 'none', minHeight: '620px' }} title={docPreview.fileName} />
+        )}
+      </div>
+    </div>
   </div>
 )}
 
