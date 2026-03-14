@@ -710,6 +710,7 @@ const handleDeleteTrip = async (truck) => {
                           {weekendTooltipTruck?.id === truck.id && weekendEditId !== truck.id && (() => {
                             let wh = [];
                             try { wh = typeof truck.weekend_history === 'string' ? JSON.parse(truck.weekend_history) : (Array.isArray(truck.weekend_history) ? truck.weekend_history : []); } catch(e) {}
+                            wh = wh.filter(h => h.week !== `W${getWeekNumber()}`);
                             if (!wh.length) return null;
                             return (
                               <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)', minWidth: '150px', background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', padding: '8px 10px', zIndex: 300, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
@@ -1242,6 +1243,7 @@ const handleDeleteTrip = async (truck) => {
                             {weekendTooltipTruck?.id === truck.id && weekendEditId !== truck.id && (() => {
                               let wh = [];
                               try { wh = typeof truck.weekend_history === 'string' ? JSON.parse(truck.weekend_history) : (Array.isArray(truck.weekend_history) ? truck.weekend_history : []); } catch(e) {}
+                              wh = wh.filter(h => h.week !== `W${getWeekNumber()}`);
                               if (!wh.length) return null;
                               return (
                                 <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)', minWidth: '150px', background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', padding: '8px 10px', zIndex: 300, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
