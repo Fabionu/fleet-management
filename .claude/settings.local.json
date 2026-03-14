@@ -20,7 +20,20 @@
       "Bash(curl -s http://localhost:5173)",
       "Bash(timeout /t 4)",
       "Bash(npx vite build)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(python3 -c \":*)",
+      "Bash(py --version)",
+      "Bash(python3.exe --version)",
+      "Bash(python -c \":*)",
+      "Bash(echo $TEMP)",
+      "Bash(ls /tmp/0*)",
+      "Bash(python -c \"import os; print\\(os.environ.get\\(''TEMP'', ''N/A''\\)\\); print\\(os.environ.get\\(''TMP'', ''N/A''\\)\\)\")",
+      "Bash(python -c \"import base64, os; print\\(os.environ.get\\(''TEMP''\\)\\)\")",
+      "Bash(node -e \"const fs = require\\(''fs''\\); fs.writeFileSync\\(''C:/Users/Home/AppData/Local/Temp/test_node.txt'', ''hello''\\); console.log\\(''ok''\\);\")",
+      "Bash(python:*)",
+      "Bash(set +H)",
+      "Bash(git -C \"C:/Users/Home/Desktop/fleet-management-react\" diff --stat)",
+      "Bash(del \"C:\\\\Users\\\\Home\\\\Desktop\\\\fleet-management-react\\\\fix_tracking.py\")"
     ]
   }
 }
