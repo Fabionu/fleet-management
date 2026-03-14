@@ -360,13 +360,23 @@ const handleDeleteTrip = async (truck) => {
         (!truck.order_number || t.order_number === truck.order_number)
       );
       if (trip?.file_data) {
-        setDocPreview({ fileData: trip.file_data, fileType: trip.file_type || 'application/pdf', fileName: trip.file_name || 'Comandă transport' });
+        const mime = trip.file_type || 'application/pdf';
+        const byteChars = atob(trip.file_data);
+        const byteArr = new Uint8Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+        const blobUrl = URL.createObjectURL(new Blob([byteArr], { type: mime }));
+        setDocPreview({ blobUrl, fileType: mime, fileName: trip.file_name || 'Comandă transport' });
       } else {
         setDocPreview({ notFound: true });
       }
     } catch (e) {
       setDocPreview({ notFound: true });
     }
+  };
+
+  const handleClosePreview = () => {
+    if (docPreview?.blobUrl) URL.revokeObjectURL(docPreview.blobUrl);
+    setDocPreview(null);
   };
 
   const handleClearWeekend = async (truck) => {
@@ -1852,7 +1862,7 @@ const handleDeleteTrip = async (truck) => {
 
 {/* Doc Preview Modal */}
 {docPreview && (
-  <div onClick={() => setDocPreview(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, backdropFilter: 'blur(6px)', padding: '32px' }}>
+  <div onClick={handleClosePreview} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, backdropFilter: 'blur(6px)', padding: '32px' }}>
     <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: '0 24px 64px rgba(0,0,0,0.4)', width: '100%', maxWidth: '860px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--gray-2)', flexShrink: 0 }}>
@@ -1864,7 +1874,7 @@ const handleDeleteTrip = async (truck) => {
             {docPreview.fileName || 'Comandă transport'}
           </span>
         </div>
-        <button onClick={() => setDocPreview(null)}
+        <button onClick={handleClosePreview}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', padding: '5px', borderRadius: '7px', transition: 'background 0.15s' }}
           onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
           onMouseLeave={e => e.currentTarget.style.background = 'none'}
@@ -1886,9 +1896,9 @@ const handleDeleteTrip = async (truck) => {
             <span style={{ color: 'var(--gray-4)', fontSize: '14px', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }}>Niciun document atașat la această cursă</span>
           </div>
         ) : docPreview.fileType?.startsWith('image/') ? (
-          <img src={`data:${docPreview.fileType};base64,${docPreview.fileData}`} alt={docPreview.fileName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          <img src={docPreview.blobUrl} alt={docPreview.fileName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         ) : (
-          <iframe src={`data:${docPreview.fileType};base64,${docPreview.fileData}`} style={{ width: '100%', height: '100%', border: 'none', minHeight: '620px' }} title={docPreview.fileName} />
+          <iframe src={docPreview.blobUrl} style={{ width: '100%', height: '100%', border: 'none', minHeight: '620px' }} title={docPreview.fileName} />
         )}
       </div>
     </div>
