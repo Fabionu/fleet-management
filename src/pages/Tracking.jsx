@@ -1860,8 +1860,8 @@ const handleDeleteTrip = async (truck) => {
 
 {/* Doc Preview Modal */}
 {docPreview && (
-  <div onClick={handleClosePreview} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, backdropFilter: 'blur(6px)', padding: '32px' }}>
-    <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: '0 24px 64px rgba(0,0,0,0.4)', width: '100%', maxWidth: '860px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+  <div onClick={handleClosePreview} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.72)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, backdropFilter: 'blur(6px)', padding: '16px' }}>
+    <div onClick={e => e.stopPropagation()} style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: '0 24px 64px rgba(0,0,0,0.4)', width: '100%', maxWidth: '1050px', height: '96vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: '1px solid var(--gray-2)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -1896,7 +1896,7 @@ const handleDeleteTrip = async (truck) => {
         ) : docPreview.fileType?.startsWith('image/') ? (
           <img src={docPreview.blobUrl} alt={docPreview.fileName} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
         ) : (
-          <iframe src={docPreview.blobUrl} style={{ width: '100%', height: '100%', border: 'none', minHeight: '620px' }} title={docPreview.fileName} />
+          <iframe src={docPreview.blobUrl} style={{ width: '100%', flex: 1, border: 'none', display: 'block', height: '100%' }} title={docPreview.fileName} />
         )}
       </div>
     </div>
