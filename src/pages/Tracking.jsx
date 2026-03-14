@@ -707,6 +707,22 @@ const handleDeleteTrip = async (truck) => {
                             style={{ width: '100%', background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'center', transition: 'background 0.15s', boxSizing: 'border-box' }}>
                             {hasWeekend ? (<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', whiteSpace: 'nowrap', fontSize: '12px' }}><span style={{ fontWeight: 700, color: 'var(--green)' }}>{truck.weekend_duration}</span><span style={{ color: 'var(--gray-3)', fontSize: '10px' }}>|</span><span style={{ color: 'var(--gray-4)' }}>{truck.weekend_day || '—'} {truck.weekend_time || '—'}</span></div>) : (<div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza sapt.</div>)}
                           </button>
+                          {weekendTooltipTruck?.id === truck.id && weekendEditId !== truck.id && (() => {
+                            let wh = [];
+                            try { wh = typeof truck.weekend_history === 'string' ? JSON.parse(truck.weekend_history) : (Array.isArray(truck.weekend_history) ? truck.weekend_history : []); } catch(e) {}
+                            if (!wh.length) return null;
+                            return (
+                              <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)', minWidth: '150px', background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', padding: '8px 10px', zIndex: 300, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+                                <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)', marginBottom: '6px' }}>Istoric pauze sapt.</div>
+                                {[...wh].reverse().map((h, i) => (
+                                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: '12px', padding: '2px 0', borderBottom: i < wh.length - 1 ? '1px solid var(--gray-1)' : 'none' }}>
+                                    <span style={{ color: 'var(--gray-4)' }}>{h.week}</span>
+                                    <span style={{ fontWeight: 700, color: 'var(--green)' }}>{h.duration}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
                           {weekendEditId === truck.id && (
                             <div
                               onMouseDown={e => e.stopPropagation()}
@@ -1223,6 +1239,22 @@ const handleDeleteTrip = async (truck) => {
                                 <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza sapt.</div>
                               )}
                             </button>
+                            {weekendTooltipTruck?.id === truck.id && weekendEditId !== truck.id && (() => {
+                              let wh = [];
+                              try { wh = typeof truck.weekend_history === 'string' ? JSON.parse(truck.weekend_history) : (Array.isArray(truck.weekend_history) ? truck.weekend_history : []); } catch(e) {}
+                              if (!wh.length) return null;
+                              return (
+                                <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)', minWidth: '150px', background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.18)', padding: '8px 10px', zIndex: 300, pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+                                  <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)', marginBottom: '6px' }}>Istoric pauze sapt.</div>
+                                  {[...wh].reverse().map((h, i) => (
+                                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: '16px', fontSize: '12px', padding: '2px 0', borderBottom: i < wh.length - 1 ? '1px solid var(--gray-1)' : 'none' }}>
+                                      <span style={{ color: 'var(--gray-4)' }}>{h.week}</span>
+                                      <span style={{ fontWeight: 700, color: 'var(--green)' }}>{h.duration}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })()}
                             {weekendEditId === truck.id && (
                               <div
                                 onMouseDown={e => e.stopPropagation()}
