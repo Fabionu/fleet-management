@@ -360,12 +360,10 @@ const handleDeleteTrip = async (truck) => {
         (!truck.order_number || t.order_number === truck.order_number)
       );
       if (trip?.file_data) {
-        const mime = trip.file_type || 'application/pdf';
-        const byteChars = atob(trip.file_data);
-        const byteArr = new Uint8Array(byteChars.length);
-        for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
-        const blobUrl = URL.createObjectURL(new Blob([byteArr], { type: mime }));
-        setDocPreview({ blobUrl, fileType: mime, fileName: trip.file_name || 'Comandă transport' });
+        const response = await fetch(trip.file_data);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        setDocPreview({ blobUrl, fileType: blob.type || trip.file_type || 'application/pdf', fileName: trip.file_name || 'Comandă transport' });
       } else {
         setDocPreview({ notFound: true });
       }
