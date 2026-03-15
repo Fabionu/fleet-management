@@ -142,20 +142,34 @@ function Login({ onLogin }) {
 
   const ic = (field) => focused === field ? '#ff7a3d' : 'rgba(255,255,255,0.25)';
 
-  const submitBtn = (loading) => ({
+  const submitBtn = (isLoading) => ({
     width: '100%',
     padding: '13px',
-    background: loading ? 'rgba(255,255,255,0.07)' : '#ff7a3d',
+    background: isLoading ? 'rgba(255,122,61,0.55)' : '#ff7a3d',
     border: 'none',
     borderRadius: '9px',
     fontSize: '14px',
     fontWeight: 600,
-    color: loading ? 'rgba(255,255,255,0.25)' : '#fff',
-    cursor: loading ? 'not-allowed' : 'pointer',
+    color: '#fff',
+    cursor: isLoading ? 'not-allowed' : 'pointer',
     transition: 'all 0.2s',
     fontFamily: 'inherit',
-    boxShadow: loading ? 'none' : '0 4px 16px rgba(255,122,61,0.3)',
+    boxShadow: isLoading ? 'none' : '0 4px 16px rgba(255,122,61,0.3)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
   });
+
+  const Spinner = () => (
+    <svg
+      width="16" height="16" viewBox="0 0 24 24" fill="none"
+      style={{ animation: 'spin-loader 0.65s linear infinite', transformOrigin: 'center', flexShrink: 0 }}
+    >
+      <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.25)" strokeWidth="2.5"/>
+      <path d="M12 3a9 9 0 0 1 9 9" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+    </svg>
+  );
 
   const ErrorBlock = ({ msg }) => (
     <div style={{
@@ -325,7 +339,7 @@ function Login({ onLogin }) {
               onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = '#ff8c52'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(255,122,61,0.5)'; } }}
               onMouseLeave={e => { if (!loading) { e.currentTarget.style.background = '#ff7a3d'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(255,122,61,0.3)'; } }}
             >
-              {loading ? 'Se autentifică...' : 'Autentificare →'}
+              {loading ? <><Spinner />Se autentifică...</> : 'Autentificare →'}
             </button>
           </form>
         )}
@@ -472,7 +486,7 @@ function Login({ onLogin }) {
               onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = '#ff8c52'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(255,122,61,0.5)'; } }}
               onMouseLeave={e => { if (!loading) { e.currentTarget.style.background = '#ff7a3d'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(255,122,61,0.3)'; } }}
             >
-              {loading ? 'Se creează contul...' : 'Creează cont →'}
+              {loading ? <><Spinner />Se creează contul...</> : 'Creează cont →'}
             </button>
 
             <p style={{

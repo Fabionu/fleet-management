@@ -64,6 +64,11 @@
   --btn-hover: rgba(255, 255, 255, 0.12);
 }
 
+@keyframes spin-loader {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 html { font-size: 16px; }
 
 body {
