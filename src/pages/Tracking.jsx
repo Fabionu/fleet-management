@@ -30,6 +30,9 @@ function Tracking({ user, viewMode = 'card' }) {
   const menuRef = useRef(null);
   const autoClearedPauses = useRef(new Set());
   const focusedETARef = useRef(false);
+  const [etaDrafts, setEtaDrafts] = useState({});
+  const etaDraftsRef = useRef({});
+  const etaSaveTimers = useRef({});
   const [showToast, setShowToast] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [editNextTrip, setEditNextTrip] = useState(null);
@@ -102,7 +105,8 @@ useEffect(() => {
         // Nu actualiza state-ul dacă userul editează un câmp (ETA, obs, pauza etc.)
         const active = document.activeElement;
         const isInputFocused = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
-        if (!isInputFocused) {
+        const hasDrafts = Object.keys(etaDraftsRef.current).length > 0;
+        if (!isInputFocused && !hasDrafts) {
           setTrucks(response.data);
         }
       }
@@ -147,6 +151,44 @@ const handleUpdate = async (truck, field, value) => {
     loadTrucks();
   }
 };
+
+// ── ETA helpers ──────────────────────────────────────────────
+const formatETA = (input) => {
+  const digits = input.replace(/\D/g, '').slice(0, 8);
+  if (digits.length === 0) return '';
+  let r = digits.slice(0, 2);
+  if (digits.length > 2) r += '/' + digits.slice(2, 4);
+  if (digits.length > 4) r += ' ' + digits.slice(4, 6);
+  if (digits.length > 6) r += ':' + digits.slice(6, 8);
+  return r;
+};
+
+const handleETAChange = (truck, field, rawValue) => {
+  const key = `${truck.id}_${field}`;
+  const formatted = formatETA(rawValue);
+  etaDraftsRef.current[key] = formatted;
+  setEtaDrafts(prev => ({ ...prev, [key]: formatted }));
+  if (etaSaveTimers.current[key]) clearTimeout(etaSaveTimers.current[key]);
+  etaSaveTimers.current[key] = setTimeout(() => {
+    handleUpdate(truck, field, formatted);
+    delete etaDraftsRef.current[key];
+    setEtaDrafts(prev => { const n = { ...prev }; delete n[key]; return n; });
+  }, 800);
+};
+
+const handleETABlur = (truck, field) => {
+  const key = `${truck.id}_${field}`;
+  if (etaSaveTimers.current[key]) {
+    clearTimeout(etaSaveTimers.current[key]);
+    delete etaSaveTimers.current[key];
+  }
+  if (key in etaDraftsRef.current) {
+    handleUpdate(truck, field, etaDraftsRef.current[key]);
+    delete etaDraftsRef.current[key];
+    setEtaDrafts(prev => { const n = { ...prev }; delete n[key]; return n; });
+  }
+};
+// ─────────────────────────────────────────────────────────────
 
 const handleDeleteTrip = async (truck) => {
   try {
@@ -858,12 +900,12 @@ const handleDeleteTrip = async (truck) => {
 
                     {/* ── Încărcare TD ── */}
                     <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
-                      {truck.load_location ? (<div><div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}><div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.load_location}</div><button type="button" onClick={() => handleCopyCoords(`${truck.id}-load`, truck.load_lat, truck.load_lng)} style={{ background: 'none', border: 'none', cursor: truck.load_lat && truck.load_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-load` ? '#22c55e' : 'var(--gray-4)', opacity: truck.load_lat && truck.load_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>{copiedKey === `${truck.id}-load` ? <CheckIcon /> : <CopyIcon />}</button></div><div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '4px' }}>{truck.load_date}</div><input type="text" value={truck.load_eta ? `ETA: ${truck.load_eta}` : ''} onChange={(e) => { const value = e.target.value.replace('ETA: ', ''); handleUpdate(truck, 'load_eta', value); }} placeholder="ETA: --/-- --:--" style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '140px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", transition: 'border-color 0.2s' }} onFocus={(e) => { if (!e.target.value.startsWith('ETA: ')) e.target.value = 'ETA: '; e.target.style.borderColor = '#60a5fa'; }} onBlur={(e) => { e.target.style.borderColor = 'transparent'; }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} /></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
+                      {truck.load_location ? (<div><div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}><div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.load_location}</div><button type="button" onClick={() => handleCopyCoords(`${truck.id}-load`, truck.load_lat, truck.load_lng)} style={{ background: 'none', border: 'none', cursor: truck.load_lat && truck.load_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-load` ? '#22c55e' : 'var(--gray-4)', opacity: truck.load_lat && truck.load_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>{copiedKey === `${truck.id}-load` ? <CheckIcon /> : <CopyIcon />}</button></div><div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '4px' }}>{truck.load_date}</div><div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}><span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--eta-text)', flexShrink: 0 }}>ETA</span><input type="text" value={etaDrafts[`${truck.id}_load_eta`] !== undefined ? etaDrafts[`${truck.id}_load_eta`] : (truck.load_eta || '')} onChange={(e) => handleETAChange(truck, 'load_eta', e.target.value)} onFocus={() => { const k=`${truck.id}_load_eta`; const v=truck.load_eta||''; etaDraftsRef.current[k]=v; setEtaDrafts(p=>({...p,[k]:v})); }} onBlur={() => handleETABlur(truck, 'load_eta')} placeholder="--/-- --:--" maxLength={11} style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '95px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", transition: 'border-color 0.2s' }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} /></div></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
                     </td>
 
                     {/* ── Descărcare TD ── */}
                     <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
-                      {truck.unload_location ? (<div><div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}><div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.unload_location}</div><button type="button" onClick={() => handleCopyCoords(`${truck.id}-unload`, truck.unload_lat, truck.unload_lng)} style={{ background: 'none', border: 'none', cursor: truck.unload_lat && truck.unload_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-unload` ? '#22c55e' : 'var(--gray-4)', opacity: truck.unload_lat && truck.unload_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>{copiedKey === `${truck.id}-unload` ? <CheckIcon /> : <CopyIcon />}</button></div><div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '4px' }}>{truck.unload_date}</div><input type="text" value={truck.eta ? `ETA: ${truck.eta}` : ''} onChange={(e) => { const value = e.target.value.replace('ETA: ', ''); handleUpdate(truck, 'eta', value); }} placeholder="ETA: --/-- --:--" style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '140px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", transition: 'border-color 0.2s' }} onFocus={(e) => { if (!e.target.value.startsWith('ETA: ')) e.target.value = 'ETA: '; e.target.style.borderColor = '#60a5fa'; }} onBlur={(e) => { e.target.style.borderColor = 'transparent'; }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} /></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
+                      {truck.unload_location ? (<div><div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}><div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.unload_location}</div><button type="button" onClick={() => handleCopyCoords(`${truck.id}-unload`, truck.unload_lat, truck.unload_lng)} style={{ background: 'none', border: 'none', cursor: truck.unload_lat && truck.unload_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-unload` ? '#22c55e' : 'var(--gray-4)', opacity: truck.unload_lat && truck.unload_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>{copiedKey === `${truck.id}-unload` ? <CheckIcon /> : <CopyIcon />}</button></div><div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '4px' }}>{truck.unload_date}</div><div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}><span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--eta-text)', flexShrink: 0 }}>ETA</span><input type="text" value={etaDrafts[`${truck.id}_eta`] !== undefined ? etaDrafts[`${truck.id}_eta`] : (truck.eta || '')} onChange={(e) => handleETAChange(truck, 'eta', e.target.value)} onFocus={() => { const k=`${truck.id}_eta`; const v=truck.eta||''; etaDraftsRef.current[k]=v; setEtaDrafts(p=>({...p,[k]:v})); }} onBlur={() => handleETABlur(truck, 'eta')} placeholder="--/-- --:--" maxLength={11} style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '95px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", transition: 'border-color 0.2s' }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} /></div></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
                     </td>
 
                     {/* ── Observații TD ── */}
@@ -1416,7 +1458,10 @@ const handleDeleteTrip = async (truck) => {
                             </button>
                           </div>
                           <div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '6px' }}>{truck.load_date}</div>
-                          <input type="text" value={truck.load_eta ? `ETA: ${truck.load_eta}` : ''} onChange={(e) => { const value = e.target.value.replace('ETA: ', ''); handleUpdate(truck, 'load_eta', value); }} placeholder="ETA: --/-- --:--" style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '140px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", transition: 'border-color 0.2s' }} onFocus={(e) => { if (!e.target.value.startsWith('ETA: ')) e.target.value = 'ETA: '; e.target.style.borderColor = '#60a5fa'; }} onBlur={(e) => { e.target.style.borderColor = 'transparent'; }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--eta-text)', flexShrink: 0 }}>ETA</span>
+                            <input type="text" value={etaDrafts[`${truck.id}_load_eta`] !== undefined ? etaDrafts[`${truck.id}_load_eta`] : (truck.load_eta || '')} onChange={(e) => handleETAChange(truck, 'load_eta', e.target.value)} onFocus={() => { const k=`${truck.id}_load_eta`; const v=truck.load_eta||''; etaDraftsRef.current[k]=v; setEtaDrafts(p=>({...p,[k]:v})); }} onBlur={() => handleETABlur(truck, 'load_eta')} placeholder="--/-- --:--" maxLength={11} style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '95px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", transition: 'border-color 0.2s' }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} />
+                          </div>
                         </div>
                       ) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
                     </div>
@@ -1432,7 +1477,10 @@ const handleDeleteTrip = async (truck) => {
                             </button>
                           </div>
                           <div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '6px' }}>{truck.unload_date}</div>
-                          <input type="text" value={truck.eta ? `ETA: ${truck.eta}` : ''} onChange={(e) => { const value = e.target.value.replace('ETA: ', ''); handleUpdate(truck, 'eta', value); }} placeholder="ETA: --/-- --:--" style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '140px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", transition: 'border-color 0.2s' }} onFocus={(e) => { if (!e.target.value.startsWith('ETA: ')) e.target.value = 'ETA: '; e.target.style.borderColor = '#60a5fa'; }} onBlur={(e) => { e.target.style.borderColor = 'transparent'; }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--eta-text)', flexShrink: 0 }}>ETA</span>
+                            <input type="text" value={etaDrafts[`${truck.id}_eta`] !== undefined ? etaDrafts[`${truck.id}_eta`] : (truck.eta || '')} onChange={(e) => handleETAChange(truck, 'eta', e.target.value)} onFocus={() => { const k=`${truck.id}_eta`; const v=truck.eta||''; etaDraftsRef.current[k]=v; setEtaDrafts(p=>({...p,[k]:v})); }} onBlur={() => handleETABlur(truck, 'eta')} placeholder="--/-- --:--" maxLength={11} style={{ fontSize: '13px', color: 'var(--eta-text)', background: 'var(--eta-bg)', border: '1px solid transparent', padding: '3px 4px', borderRadius: '8px', outline: 'none', width: '95px', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", transition: 'border-color 0.2s' }} onMouseEnter={(e) => { e.target.style.borderColor = '#60a5fa'; }} onMouseLeave={(e) => { if (document.activeElement !== e.target) e.target.style.borderColor = 'transparent'; }} />
+                          </div>
                         </div>
                       ) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
                     </div>
