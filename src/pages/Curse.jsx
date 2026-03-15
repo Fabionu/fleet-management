@@ -9,7 +9,7 @@ function Curse({ user }) {
   const [trips, setTrips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openMenuId, setOpenMenuId] = useState(null);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, right: 0 });
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
   const [showAddModal, setShowAddModal] = useState(false);
   const [trucks, setTrucks] = useState([]);
   const [deleteConfirmTrip, setDeleteConfirmTrip] = useState(null);
@@ -516,6 +516,8 @@ function Curse({ user }) {
                 <th style={{ padding: '16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '60px' }}>
                   ✓
                 </th>
+                <th style={{ padding: '16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '50px' }}>
+                </th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '140px' }}>
                   CLIENT
                 </th>
@@ -548,9 +550,6 @@ function Curse({ user }) {
                 </th>
                 <th style={{ padding: '16px', textAlign: 'right', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '80px' }}>
                   €/KM
-                </th>
-                <th style={{ padding: '16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '50px' }}>
-                  
                 </th>
               </tr>
             </thead>
@@ -619,54 +618,6 @@ function Curse({ user }) {
     )}
   </div>
 </td>
-                    <td style={{ padding: '16px', fontSize: '14px', color: cellColor, width: '140px', fontWeight: 500, verticalAlign: 'middle' }}>
-                      {trip.client}
-                    </td>
-                    <td style={{ padding: '16px', fontSize: '14px', color: cellColor, width: '130px', verticalAlign: 'middle' }}>
-                      {trip.order_number}
-                    </td>
-                    <td style={{ padding: '16px', width: '125px', verticalAlign: 'middle' }}>
-                      <div style={{ fontSize: '14px', color: cellColor, fontWeight: 600 }}>
-                        {trip.truck_number}
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'var(--gray-4)', marginTop: '3px' }}>
-                        {trip.driver}
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px', width: '185px', verticalAlign: 'middle' }}>
-                      <div style={{ fontSize: '14px', color: cellColor, marginBottom: '4px' }}>
-                        {trip.load_location}
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>
-                        {trip.load_date}
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px', width: '185px', verticalAlign: 'middle' }}>
-                      <div style={{ fontSize: '14px', color: cellColor, marginBottom: '4px' }}>
-                        {trip.unload_location}
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>
-                        {trip.unload_date}
-                      </div>
-                    </td>
-                    <td style={{ padding: '16px', fontSize: '13px', color: 'var(--gray-4)', width: '120px', verticalAlign: 'middle' }}>
-                      {trip.created_by || '—'}
-                    </td>
-                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: 'var(--gray-4)', verticalAlign: 'middle' }}>
-                      {trip.km_empty.toLocaleString()}
-                    </td>
-                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: cellColor, fontWeight: 500, verticalAlign: 'middle' }}>
-                      {trip.km_loaded.toLocaleString()}
-                    </td>
-                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: cellColor, fontWeight: 600, verticalAlign: 'middle' }}>
-                      {kmTotal.toLocaleString()}
-                    </td>
-                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: '#22c55e', fontWeight: 600, verticalAlign: 'middle' }}>
-                      {trip.price.toLocaleString()}
-                    </td>
-                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '13px', color: 'var(--gray-4)', verticalAlign: 'middle' }}>
-                      {euroPerKm.toFixed(2)}
-                    </td>
                     <td style={{ padding: '16px', verticalAlign: 'middle' }}>
                       <div style={{ position: 'relative' }}>
                         <button
@@ -677,7 +628,7 @@ function Curse({ user }) {
                               const btnRect = e.currentTarget.getBoundingClientRect();
                               setMenuPosition({
                                 top: btnRect.bottom + 4,
-                                right: window.innerWidth - btnRect.right
+                                left: btnRect.left
                               });
                               setOpenMenuId(trip.id);
                             }
@@ -712,7 +663,7 @@ function Curse({ user }) {
                             style={{
                               position: 'fixed',
                               top: menuPosition.top,
-                              right: menuPosition.right,
+                              left: menuPosition.left,
                               background: 'var(--bg-page)',
                               border: '1px solid var(--gray-2)',
                               borderRadius: '8px',
@@ -897,6 +848,54 @@ function Curse({ user }) {
                           document.body
                         )}
                       </div>
+                    </td>
+                    <td style={{ padding: '16px', fontSize: '14px', color: cellColor, width: '140px', fontWeight: 500, verticalAlign: 'middle' }}>
+                      {trip.client}
+                    </td>
+                    <td style={{ padding: '16px', fontSize: '14px', color: cellColor, width: '130px', verticalAlign: 'middle' }}>
+                      {trip.order_number}
+                    </td>
+                    <td style={{ padding: '16px', width: '125px', verticalAlign: 'middle' }}>
+                      <div style={{ fontSize: '14px', color: cellColor, fontWeight: 600 }}>
+                        {trip.truck_number}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--gray-4)', marginTop: '3px' }}>
+                        {trip.driver}
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px', width: '185px', verticalAlign: 'middle' }}>
+                      <div style={{ fontSize: '14px', color: cellColor, marginBottom: '4px' }}>
+                        {trip.load_location}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>
+                        {trip.load_date}
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px', width: '185px', verticalAlign: 'middle' }}>
+                      <div style={{ fontSize: '14px', color: cellColor, marginBottom: '4px' }}>
+                        {trip.unload_location}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>
+                        {trip.unload_date}
+                      </div>
+                    </td>
+                    <td style={{ padding: '16px', fontSize: '13px', color: 'var(--gray-4)', width: '120px', verticalAlign: 'middle' }}>
+                      {trip.created_by || '—'}
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: 'var(--gray-4)', verticalAlign: 'middle' }}>
+                      {trip.km_empty.toLocaleString()}
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: cellColor, fontWeight: 500, verticalAlign: 'middle' }}>
+                      {trip.km_loaded.toLocaleString()}
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: cellColor, fontWeight: 600, verticalAlign: 'middle' }}>
+                      {kmTotal.toLocaleString()}
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '14px', color: '#22c55e', fontWeight: 600, verticalAlign: 'middle' }}>
+                      {trip.price.toLocaleString()}
+                    </td>
+                    <td style={{ padding: '16px', textAlign: 'right', fontSize: '13px', color: 'var(--gray-4)', verticalAlign: 'middle' }}>
+                      {euroPerKm.toFixed(2)}
                     </td>
                   </tr>
                 );
