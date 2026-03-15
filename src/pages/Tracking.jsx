@@ -125,8 +125,8 @@ useEffect(() => {
 
 const handleUpdate = async (truck, field, value) => {
   try {
-    // Update optimist local
-    setTrucks(trucks.map(t => 
+    // Update optimist local — functional form to avoid stale closure
+    setTrucks(prev => prev.map(t =>
       t.id === truck.id ? { ...t, [field]: value } : t
     ));
 
@@ -170,9 +170,16 @@ const handleETAChange = (truck, field, rawValue) => {
   setEtaDrafts(prev => ({ ...prev, [key]: formatted }));
   if (etaSaveTimers.current[key]) clearTimeout(etaSaveTimers.current[key]);
   etaSaveTimers.current[key] = setTimeout(() => {
-    handleUpdate(truck, field, formatted);
-    delete etaDraftsRef.current[key];
-    setEtaDrafts(prev => { const n = { ...prev }; delete n[key]; return n; });
+    delete etaSaveTimers.current[key];
+    const latestValue = etaDraftsRef.current[key];
+    if (latestValue === undefined) return; // handled by blur already
+    handleUpdate(truck, field, latestValue).finally(() => {
+      // Delete draft AFTER save completes, so polling can't overwrite mid-save
+      if (etaDraftsRef.current[key] === latestValue) {
+        delete etaDraftsRef.current[key];
+        setEtaDrafts(prev => { const n = { ...prev }; delete n[key]; return n; });
+      }
+    });
   }, 800);
 };
 
@@ -182,11 +189,20 @@ const handleETABlur = (truck, field) => {
     clearTimeout(etaSaveTimers.current[key]);
     delete etaSaveTimers.current[key];
   }
-  if (key in etaDraftsRef.current) {
-    handleUpdate(truck, field, etaDraftsRef.current[key]);
+  if (!(key in etaDraftsRef.current)) return;
+  const valueToSave = etaDraftsRef.current[key];
+  const originalValue = truck[field] || '';
+  if (valueToSave === originalValue) {
+    // Nothing changed — just clear draft, no API call needed
     delete etaDraftsRef.current[key];
     setEtaDrafts(prev => { const n = { ...prev }; delete n[key]; return n; });
+    return;
   }
+  // Keep draft alive until save completes to block polling
+  handleUpdate(truck, field, valueToSave).finally(() => {
+    delete etaDraftsRef.current[key];
+    setEtaDrafts(prev => { const n = { ...prev }; delete n[key]; return n; });
+  });
 };
 // ─────────────────────────────────────────────────────────────
 
