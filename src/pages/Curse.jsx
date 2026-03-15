@@ -359,13 +359,39 @@ function Curse({ user }) {
 
   if (loading) {
     return (
-      <div style={{ 
-        padding: '60px', 
-        textAlign: 'center',
-        color: 'var(--gray-4)',
-        fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
+      <div style={{
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '100px 0', gap: '20px',
+        animation: 'fade-up-loader 0.4s ease both',
+        fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
       }}>
-        Se încarcă...
+        {/* Document icon pulsing */}
+        <div style={{
+          width: '52px', height: '52px',
+          background: 'rgba(255,122,61,0.08)',
+          border: '1px solid rgba(255,122,61,0.18)',
+          borderRadius: '14px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'pulse-loader 1.8s ease-in-out infinite',
+        }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </div>
+        {/* Spinner */}
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+          style={{ animation: 'spin-loader 0.7s linear infinite', transformOrigin: 'center' }}>
+          <circle cx="12" cy="12" r="9" stroke="var(--gray-2)" strokeWidth="2.5"/>
+          <path d="M12 3a9 9 0 0 1 9 9" stroke="var(--orange)" strokeWidth="2.5" strokeLinecap="round"/>
+        </svg>
+        {/* Text */}
+        <span style={{ fontSize: '13px', color: 'var(--gray-4)', fontWeight: 400, letterSpacing: '0.01em' }}>
+          Se încarcă cursele...
+        </span>
       </div>
     );
   }

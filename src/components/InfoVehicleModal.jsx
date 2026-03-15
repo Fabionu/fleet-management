@@ -81,8 +81,12 @@ function DriverDocsOverlay({ driverName, onClose }) {
 
         {/* Content */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '32px', color: 'var(--gray-4)', fontSize: '14px', fontFamily: "'SF Pro Display', -apple-system, sans-serif" }}>
-            Se încarcă...
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'40px', gap:'12px', fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ animation:'spin-loader 0.7s linear infinite', transformOrigin:'center' }}>
+              <circle cx="12" cy="12" r="9" stroke="var(--gray-2)" strokeWidth="2.5"/>
+              <path d="M12 3a9 9 0 0 1 9 9" stroke="var(--orange)" strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>
+            <span style={{ fontSize:'13px', color:'var(--gray-4)', fontWeight:400 }}>Se încarcă...</span>
           </div>
         ) : error ? (
           <div style={{ textAlign: 'center', padding: '32px', color: 'var(--red)', fontSize: '14px', fontFamily: "'SF Pro Display', -apple-system, sans-serif" }}>

@@ -1124,7 +1124,17 @@ const tdStyle = { padding:'11px 14px', verticalAlign:'middle' };
 const inputStyle = { padding:'8px 10px', borderRadius:'7px', border:'1px solid var(--gray-3)', background:'var(--gray-1)', color:'var(--black)', fontSize:'13px', width:'100%', boxSizing:'border-box' };
 const btnPrimary = { padding:'8px 16px', background:'#ff7a3d', color:'#fff', border:'none', borderRadius:'7px', cursor:'pointer', fontSize:'13px', fontWeight:600 };
 
-function Loader() { return <p style={{ color:'var(--gray-4)', padding:'24px 0', textAlign:'center' }}>Se încarcă...</p>; }
+function Loader() {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'32px 0', gap:'12px', animation:'fade-up-loader 0.3s ease both' }}>
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ animation:'spin-loader 0.7s linear infinite', transformOrigin:'center' }}>
+        <circle cx="12" cy="12" r="9" stroke="var(--gray-2)" strokeWidth="2.5"/>
+        <path d="M12 3a9 9 0 0 1 9 9" stroke="var(--orange)" strokeWidth="2.5" strokeLinecap="round"/>
+      </svg>
+      <span style={{ fontSize:'13px', color:'var(--gray-4)', fontWeight:400 }}>Se încarcă...</span>
+    </div>
+  );
+}
 function EmptyState({ msg }) { return <p style={{ color:'var(--gray-4)', textAlign:'center', padding:'40px 0', fontSize:'14px' }}>{msg}</p>; }
 function Avatar({ color='#ff7a3d', size=28 }) {
   const iconSize = Math.round(size * 0.52);

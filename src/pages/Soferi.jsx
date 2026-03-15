@@ -174,7 +174,13 @@ function DocsModal({ driver, onClose, isAdmin }) {
           {/* Left panel */}
           <div style={{ width: '270px', flexShrink: 0, borderRight: '1px solid var(--gray-2)', padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {loading ? (
-              <div style={{ color: 'var(--gray-4)', fontSize: '13px' }}>Se încarcă...</div>
+              <div style={{ display:'flex', alignItems:'center', gap:'8px', padding:'8px 0' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ animation:'spin-loader 0.7s linear infinite', transformOrigin:'center', flexShrink:0 }}>
+                  <circle cx="12" cy="12" r="9" stroke="var(--gray-2)" strokeWidth="2.5"/>
+                  <path d="M12 3a9 9 0 0 1 9 9" stroke="var(--orange)" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+                <span style={{ fontSize:'13px', color:'var(--gray-4)' }}>Se încarcă...</span>
+              </div>
             ) : DOC_TYPES.map(t => {
               const doc = getDoc(t.key);
               const p = getPending(t.key);
@@ -514,7 +520,21 @@ function Soferi({ user }) {
 
       {/* Table */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px', color: 'var(--gray-4)' }}>Se încarcă...</div>
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'80px 0', gap:'20px', animation:'fade-up-loader 0.4s ease both' }}>
+          <div style={{ width:'52px', height:'52px', background:'rgba(255,122,61,0.08)', border:'1px solid rgba(255,122,61,0.18)', borderRadius:'14px', display:'flex', alignItems:'center', justifyContent:'center', animation:'pulse-loader 1.8s ease-in-out infinite' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+          </div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ animation:'spin-loader 0.7s linear infinite', transformOrigin:'center' }}>
+            <circle cx="12" cy="12" r="9" stroke="var(--gray-2)" strokeWidth="2.5"/>
+            <path d="M12 3a9 9 0 0 1 9 9" stroke="var(--orange)" strokeWidth="2.5" strokeLinecap="round"/>
+          </svg>
+          <span style={{ fontSize:'13px', color:'var(--gray-4)', fontWeight:400, letterSpacing:'0.01em' }}>Se încarcă șoferii...</span>
+        </div>
       ) : filtered.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px', color: 'var(--gray-4)', fontSize: '14px' }}>
           {search ? `Niciun șofer găsit pentru "${search}".` : 'Niciun șofer adăugat.'}
