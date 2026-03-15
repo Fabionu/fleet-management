@@ -404,13 +404,38 @@ const handleDeleteTrip = async (truck) => {
 
   if (loading) {
     return (
-      <div style={{ 
-        padding: '80px', 
-        textAlign: 'center',
-        color: 'var(--gray-4)',
-        fontSize: '14px'
+      <div style={{
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        padding: '100px 0', gap: '20px',
+        animation: 'fade-up-loader 0.4s ease both',
       }}>
-        Se încarcă...
+        {/* Truck icon pulsing */}
+        <div style={{
+          width: '52px', height: '52px',
+          background: 'rgba(255,122,61,0.08)',
+          border: '1px solid rgba(255,122,61,0.18)',
+          borderRadius: '14px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'pulse-loader 1.8s ease-in-out infinite',
+        }}>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="1" y="5" width="15" height="10" rx="2"/>
+            <path d="M16 8h3l3 3v4h-3"/>
+            <circle cx="5.5" cy="17.5" r="2.5"/>
+            <circle cx="18.5" cy="17.5" r="2.5"/>
+          </svg>
+        </div>
+        {/* Spinner */}
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+          style={{ animation: 'spin-loader 0.7s linear infinite', transformOrigin: 'center' }}>
+          <circle cx="12" cy="12" r="9" stroke="var(--gray-2)" strokeWidth="2.5"/>
+          <path d="M12 3a9 9 0 0 1 9 9" stroke="var(--orange)" strokeWidth="2.5" strokeLinecap="round"/>
+        </svg>
+        {/* Text */}
+        <span style={{ fontSize: '13px', color: 'var(--gray-4)', fontWeight: 400, letterSpacing: '0.01em' }}>
+          Se încarcă datele...
+        </span>
       </div>
     );
   }
@@ -1892,8 +1917,13 @@ const handleDeleteTrip = async (truck) => {
       {/* Content */}
       <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
         {docPreview.loading ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '320px', color: 'var(--gray-4)', fontSize: '14px', fontFamily: "'SF Pro Display',-apple-system,sans-serif" }}>
-            Se încarcă...
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '320px', gap: '14px' }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+              style={{ animation: 'spin-loader 0.7s linear infinite', transformOrigin: 'center' }}>
+              <circle cx="12" cy="12" r="9" stroke="var(--gray-2)" strokeWidth="2.5"/>
+              <path d="M12 3a9 9 0 0 1 9 9" stroke="var(--orange)" strokeWidth="2.5" strokeLinecap="round"/>
+            </svg>
+            <span style={{ fontSize: '13px', color: 'var(--gray-4)', fontWeight: 400 }}>Se încarcă documentul...</span>
           </div>
         ) : docPreview.notFound ? (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '320px', gap: '14px' }}>
