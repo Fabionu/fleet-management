@@ -31,6 +31,7 @@
   --eta-text: #1d4ed8;
   --shadow: rgba(0,0,0,0.04);
   --picker-filter: none;
+  --sv-hover: #ebebea;
 }
 
 /* Dark theme */
@@ -58,6 +59,7 @@
   --eta-text: #60a5fa;
   --shadow: rgba(0,0,0,0.5);
   --picker-filter: invert(1);
+  --sv-hover: #303030;
 }
 
 html { font-size: 16px; }

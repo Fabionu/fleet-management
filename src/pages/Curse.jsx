@@ -17,6 +17,10 @@ function Curse({ user }) {
   const [docsTrip, setDocsTrip] = useState(null);
   const [toast, setToast] = useState(null);
   const [hoveredRowId, setHoveredRowId] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [filterInvoiced, setFilterInvoiced] = useState('all');
+  const [filterMonth, setFilterMonth] = useState('');
+  const [filterCreatedBy, setFilterCreatedBy] = useState('');
   const menuRef = useRef(null);
 
   const showToast = (message, type = 'success') => {
@@ -310,8 +314,39 @@ function Curse({ user }) {
     }
   };
 
-  // Calculate totals
-  const totals = trips.reduce((acc, trip) => {
+  // Filter helpers
+  const MONTHS_RO = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie','Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
+  const formatMonthLabel = (key) => {
+    const [year, month] = key.split('-');
+    return `${MONTHS_RO[parseInt(month, 10) - 1]} ${year}`;
+  };
+  const parseDateToMonthKey = (d) => {
+    if (!d) return '';
+    const parts = d.split('.');
+    if (parts.length >= 3) return `${parts[2].substring(0,4)}-${parts[1]}`;
+    if (d.includes('-')) return d.substring(0, 7);
+    return '';
+  };
+
+  const uniqueCreatedBy = [...new Set(trips.map(t => t.created_by).filter(Boolean))].sort();
+  const uniqueMonths = [...new Set(trips.map(t => parseDateToMonthKey(t.load_date)).filter(Boolean))].sort().reverse();
+
+  const filteredTrips = trips.filter(trip => {
+    if (searchText.trim()) {
+      const q = searchText.toLowerCase();
+      const haystack = [trip.client, trip.order_number, trip.truck_number, trip.driver, trip.load_location, trip.unload_location]
+        .filter(Boolean).join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    if (filterInvoiced === 'invoiced' && !trip.invoiced) return false;
+    if (filterInvoiced === 'not_invoiced' && trip.invoiced) return false;
+    if (filterMonth && parseDateToMonthKey(trip.load_date) !== filterMonth) return false;
+    if (filterCreatedBy && trip.created_by !== filterCreatedBy) return false;
+    return true;
+  });
+
+  // Calculate totals (on filtered trips)
+  const totals = filteredTrips.reduce((acc, trip) => {
     const kmTotal = trip.km_empty + trip.km_loaded;
     return {
       trips: acc.trips + 1,
@@ -371,6 +406,64 @@ function Curse({ user }) {
         >
           + Adaugă Cursă
         </button>
+      </div>
+
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
+        {/* Search */}
+        <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-4)', pointerEvents: 'none' }}>
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            placeholder="Caută client, comandă, camion, șofer..."
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            style={{ width: '100%', padding: '9px 12px 9px 32px', border: '1px solid var(--gray-2)', borderRadius: '8px', fontSize: '13px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", boxSizing: 'border-box' }}
+          />
+        </div>
+
+        {/* Month filter */}
+        <select
+          value={filterMonth}
+          onChange={e => setFilterMonth(e.target.value)}
+          style={{ padding: '9px 12px', border: '1px solid var(--gray-2)', borderRadius: '8px', fontSize: '13px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', cursor: 'pointer', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}
+        >
+          <option value="">Toate lunile</option>
+          {uniqueMonths.map(m => (
+            <option key={m} value={m}>{formatMonthLabel(m)}</option>
+          ))}
+        </select>
+
+        {/* Invoiced filter */}
+        <select
+          value={filterInvoiced}
+          onChange={e => setFilterInvoiced(e.target.value)}
+          style={{ padding: '9px 12px', border: '1px solid var(--gray-2)', borderRadius: '8px', fontSize: '13px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', cursor: 'pointer', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}
+        >
+          <option value="all">Toate</option>
+          <option value="not_invoiced">Nefacturate</option>
+          <option value="invoiced">Facturate</option>
+        </select>
+
+        {/* Created by filter */}
+        <select
+          value={filterCreatedBy}
+          onChange={e => setFilterCreatedBy(e.target.value)}
+          style={{ padding: '9px 12px', border: '1px solid var(--gray-2)', borderRadius: '8px', fontSize: '13px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', cursor: 'pointer', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}
+        >
+          <option value="">Toți utilizatorii</option>
+          {uniqueCreatedBy.map(u => (
+            <option key={u} value={u}>{u}</option>
+          ))}
+        </select>
+
+        {/* Counter */}
+        <span style={{ fontSize: '13px', color: 'var(--gray-4)', whiteSpace: 'nowrap', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>
+          {filteredTrips.length} / {trips.length} curse
+        </span>
       </div>
 
       {/* Table Container */}
@@ -436,7 +529,7 @@ function Curse({ user }) {
               </tr>
             </thead>
             <tbody>
-              {trips.map((trip) => {
+              {filteredTrips.map((trip) => {
                 const kmTotal = trip.km_empty + trip.km_loaded;
                 const euroPerKm = kmTotal > 0 ? trip.price / kmTotal : 0;
                 const isInvoiced = !!trip.invoiced;
@@ -832,13 +925,13 @@ function Curse({ user }) {
       </div>
 
       {trips.length === 0 && (
-        <div style={{
-          padding: '60px',
-          textAlign: 'center',
-          color: 'var(--gray-4)',
-          fontSize: '14px'
-        }}>
+        <div style={{ padding: '60px', textAlign: 'center', color: 'var(--gray-4)', fontSize: '14px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>
           Nicio cursă înregistrată
+        </div>
+      )}
+      {trips.length > 0 && filteredTrips.length === 0 && (
+        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--gray-4)', fontSize: '14px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>
+          Niciun rezultat pentru filtrele selectate
         </div>
       )}
 
