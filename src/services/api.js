@@ -19,8 +19,11 @@ apiClient.interceptors.request.use((config) => {
 // API functions
 export const api = {
   // Auth
-  login: (username, password) => 
+  login: (username, password) =>
     axios.post(`${API_BASE}/login`, { username, password }),
+
+  register: (companyName, vat, email, username, password) =>
+    axios.post(`${API_BASE}/register`, { companyName, vat, email, username, password }),
 
   // Trucks
   getTrucks: () => apiClient.get('/trucks'),

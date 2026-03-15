@@ -76,6 +76,77 @@ app.post('/api/login', async (req, res) => {
   }
 });
 
+// ── REGISTER ────────────────────────────────────────────────
+app.post('/api/register', async (req, res) => {
+  try {
+    const { companyName, vat, email, username, password } = req.body;
+
+    if (!companyName || !email || !username || !password) {
+      return res.status(400).json({ error: 'Toate câmpurile sunt obligatorii' });
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      return res.status(400).json({ error: 'Adresa de email nu este validă' });
+    }
+    if (username.trim().length < 3) {
+      return res.status(400).json({ error: 'Username-ul trebuie să aibă cel puțin 3 caractere' });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: 'Parola trebuie să aibă cel puțin 6 caractere' });
+    }
+
+    // Verifică dacă username-ul sau email-ul există deja
+    const existing = await pool.query(
+      'SELECT id FROM users WHERE username = $1 OR email = $2',
+      [username.trim(), email.trim()]
+    );
+    if (existing.rows.length > 0) {
+      return res.status(400).json({ error: 'Username-ul sau email-ul există deja' });
+    }
+
+    // Creează organizația
+    const orgResult = await pool.query(
+      'INSERT INTO organizations (name, vat) VALUES ($1, $2) RETURNING id',
+      [companyName.trim(), vat ? vat.trim() : null]
+    );
+    const orgId = orgResult.rows[0].id;
+
+    // Creează utilizatorul admin cu toate permisiunile
+    const hash = bcrypt.hashSync(password, 10);
+    const perms = JSON.stringify(defaultPermissions.admin);
+
+    const userResult = await pool.query(
+      'INSERT INTO users (username, email, password, role, permissions, organization_id) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id',
+      [username.trim(), email.trim(), hash, 'admin', perms, orgId]
+    );
+
+    // Token auto-login
+    const permissions = defaultPermissions.admin;
+    const token = jwt.sign(
+      {
+        id: userResult.rows[0].id,
+        username: username.trim(),
+        role: 'admin',
+        permissions,
+        organization_id: orgId,
+        organization_name: companyName.trim()
+      },
+      SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      token,
+      username: username.trim(),
+      role: 'admin',
+      permissions,
+      organization_name: companyName.trim()
+    });
+  } catch (err) {
+    console.error('❌ POST /api/register error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── TRUCKS ──────────────────────────────────────────────────
 app.get('/api/trucks', authMiddleware, async (req, res) => {
   try {
