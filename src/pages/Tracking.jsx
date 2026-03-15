@@ -171,11 +171,15 @@ const handleDeleteTrip = async (truck) => {
         status: 'incarcare',
         client: nextTrip.client,
         order_number: nextTrip.order_number,
+        load_firm: nextTrip.load_firm || '',
+        load_street: nextTrip.load_street || '',
         load_location: nextTrip.load_location,
         load_date: nextTrip.load_date,
         load_time: nextTrip.load_time,
         load_lat: nextTrip.load_lat,
         load_lng: nextTrip.load_lng,
+        unload_firm: nextTrip.unload_firm || '',
+        unload_street: nextTrip.unload_street || '',
         unload_location: nextTrip.unload_location,
         unload_date: nextTrip.unload_date,
         unload_time: nextTrip.unload_time,
@@ -183,8 +187,8 @@ const handleDeleteTrip = async (truck) => {
         unload_lng: nextTrip.unload_lng,
         observations: nextTrip.observations || '',
         next_trip: JSON.stringify(remainingTrips),
-        vignettes: typeof truck.vignettes === 'string' 
-          ? truck.vignettes 
+        vignettes: typeof truck.vignettes === 'string'
+          ? truck.vignettes
           : JSON.stringify(truck.vignettes || []),
         amazon_account: truck.amazon_account === true || truck.amazon_account === 1 ? 1 : 0
       };
@@ -195,11 +199,15 @@ const handleDeleteTrip = async (truck) => {
         status: 'liber',
         client: null,
         order_number: null,
+        load_firm: '',
+        load_street: '',
         load_location: null,
         load_date: null,
         load_time: null,
         load_lat: null,
         load_lng: null,
+        unload_firm: '',
+        unload_street: '',
         unload_location: null,
         unload_date: null,
         unload_time: null,
@@ -207,8 +215,8 @@ const handleDeleteTrip = async (truck) => {
         unload_lng: null,
         observations: '',
         next_trip: JSON.stringify([]),
-        vignettes: typeof truck.vignettes === 'string' 
-          ? truck.vignettes 
+        vignettes: typeof truck.vignettes === 'string'
+          ? truck.vignettes
           : JSON.stringify(truck.vignettes || []),
         amazon_account: truck.amazon_account === true || truck.amazon_account === 1 ? 1 : 0
       };
@@ -578,7 +586,7 @@ const handleDeleteTrip = async (truck) => {
                           <button
                             onClick={(e) => { e.stopPropagation(); setOpenMenuId(isMenuOpen ? null : truck.id); setStatusDropdownId(null); }}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '7px 10px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: '6px' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--btn-hover)'}
                             onMouseLeave={e => e.currentTarget.style.background = 'none'}
                           >
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
@@ -587,9 +595,9 @@ const handleDeleteTrip = async (truck) => {
                         {/* Status trigger */}
                         <div
                           onClick={(e) => { e.stopPropagation(); setStatusDropdownId(isOpen ? null : truck.id); setOpenMenuId(null); }}
-                          style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', padding: '3px 6px', borderRadius: '6px', background: isOpen ? 'var(--gray-2)' : 'transparent', transition: 'background 0.15s', userSelect: 'none' }}
-                          onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'}
-                          onMouseLeave={e => e.currentTarget.style.background = isOpen ? 'var(--gray-2)' : 'transparent'}
+                          style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', padding: '3px 6px', borderRadius: '6px', background: isOpen ? 'var(--btn-hover)' : 'transparent', transition: 'background 0.15s', userSelect: 'none' }}
+                          onMouseEnter={e => e.currentTarget.style.background = 'var(--btn-hover)'}
+                          onMouseLeave={e => e.currentTarget.style.background = isOpen ? 'var(--btn-hover)' : 'transparent'}
                         >
                           <span style={{ width: 7, height: 7, borderRadius: '50%', background: statusColor, display: 'inline-block', flexShrink: 0, boxShadow: `0 0 0 2px ${statusColor}30` }} />
                           <span style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: statusColor }}>{statusLabel}</span>
