@@ -58,6 +58,12 @@ export const api = {
   updateDriverDocument: (id, doc) => apiClient.put(`/driver-documents/${id}`, doc),
   deleteDriverDocument: (id) => apiClient.delete(`/driver-documents/${id}`),
 
+  // Trailers
+  getTrailers: () => apiClient.get('/trailers'),
+  createTrailer: (trailer) => apiClient.post('/trailers', trailer),
+  updateTrailer: (id, trailer) => apiClient.put(`/trailers/${id}`, trailer),
+  deleteTrailer: (id) => apiClient.delete(`/trailers/${id}`),
+
   // Logs
   getLogs: () => apiClient.get('/logs'),
 };

@@ -164,6 +164,21 @@ async function initDb() {
       )
     `);
 
+    // Trailers
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS trailers (
+        id SERIAL PRIMARY KEY,
+        number TEXT NOT NULL,
+        type TEXT,
+        status TEXT DEFAULT 'libera',
+        current_truck TEXT,
+        itp_expiry TEXT,
+        rca_expiry TEXT,
+        observations TEXT,
+        organization_id INTEGER REFERENCES organizations(id)
+      )
+    `);
+
     // Logs
     await client.query(`
       CREATE TABLE IF NOT EXISTS logs (
@@ -256,6 +271,21 @@ async function initDb() {
 
     // Migration: add email column to users
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`);
+
+    // Migration: add trailers table (for existing DBs)
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS trailers (
+        id SERIAL PRIMARY KEY,
+        number TEXT NOT NULL,
+        type TEXT,
+        status TEXT DEFAULT 'libera',
+        current_truck TEXT,
+        itp_expiry TEXT,
+        rca_expiry TEXT,
+        observations TEXT,
+        organization_id INTEGER REFERENCES organizations(id)
+      )
+    `);
 
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {

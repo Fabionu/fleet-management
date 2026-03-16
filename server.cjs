@@ -673,6 +673,69 @@ app.delete('/api/driver-documents/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// ── TRAILERS ────────────────────────────────────────────────
+app.get('/api/trailers', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM trailers WHERE organization_id = $1 ORDER BY number ASC`,
+      [req.user.organization_id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ GET /api/trailers error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/trailers', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
+    const { number, type, status, current_truck, itp_expiry, rca_expiry, observations } = req.body;
+    if (!number?.trim()) return res.status(400).json({ error: 'Numărul remorcii este obligatoriu' });
+    const result = await pool.query(
+      `INSERT INTO trailers (number, type, status, current_truck, itp_expiry, rca_expiry, observations, organization_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
+      [number.trim(), type||null, status||'libera', current_truck||null, itp_expiry||null, rca_expiry||null, observations||null, req.user.organization_id]
+    );
+    await addLog(req.user.organization_id, req.user.username, 'Adăugat remorcă', 'trailer', result.rows[0].id, number.trim());
+    res.json({ id: result.rows[0].id });
+  } catch (err) {
+    console.error('❌ POST /api/trailers error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/trailers/:id', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
+    const { number, type, status, current_truck, itp_expiry, rca_expiry, observations } = req.body;
+    await pool.query(
+      `UPDATE trailers SET number=$1, type=$2, status=$3, current_truck=$4, itp_expiry=$5, rca_expiry=$6, observations=$7
+       WHERE id=$8 AND organization_id=$9`,
+      [number, type||null, status||'libera', current_truck||null, itp_expiry||null, rca_expiry||null, observations||null, req.params.id, req.user.organization_id]
+    );
+    await addLog(req.user.organization_id, req.user.username, 'Editat remorcă', 'trailer', req.params.id, number);
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ PUT /api/trailers/:id error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/trailers/:id', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
+    const tr = await pool.query(`SELECT number FROM trailers WHERE id=$1 AND organization_id=$2`, [req.params.id, req.user.organization_id]);
+    const num = tr.rows[0]?.number || req.params.id;
+    await pool.query(`DELETE FROM trailers WHERE id=$1 AND organization_id=$2`, [req.params.id, req.user.organization_id]);
+    await addLog(req.user.organization_id, req.user.username, 'Șters remorcă', 'trailer', req.params.id, num);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('❌ DELETE /api/trailers/:id error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── SPA fallback (React Router) ─────────────────────────────
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));

@@ -164,6 +164,18 @@ const IconBack = () => (
   </svg>
 );
 
+const IconTrailer = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="1" y="5" width="19" height="10" rx="1.5"/>
+    <line x1="7"  y1="5" x2="7"  y2="15"/>
+    <line x1="13" y1="5" x2="13" y2="15"/>
+    <circle cx="5.5"  cy="18" r="2"/>
+    <circle cx="14.5" cy="18" r="2"/>
+    <line x1="20" y1="10" x2="23" y2="10"/>
+    <circle cx="23" cy="10" r="1" fill="currentColor" stroke="none"/>
+  </svg>
+);
+
 const IconChevron = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="9 18 15 12 9 6"/>
@@ -269,6 +281,15 @@ function Dashboard({ onSelect, counts }) {
       color: '#22c55e',
       count: counts.drivers,
       countLabel: 'șoferi',
+    },
+    {
+      key: 'remorci',
+      icon: <IconTrailer />,
+      title: 'Remorci',
+      desc: 'Gestiune remorci, ITP, RCA și stare',
+      color: '#0d9488',
+      count: counts.trailers,
+      countLabel: 'remorci',
     },
     {
       key: 'jurnal',
@@ -1244,19 +1265,276 @@ function ModalFooter({ onCancel, onSave, saving }) {
   );
 }
 
+// ── Secțiunea Remorci ─────────────────────────────────────
+const TRAILER_TYPES = [
+  { value: 'prelata',     label: 'Prelată',     color: '#ff7a3d' },
+  { value: 'frigorific',  label: 'Frigorific',  color: '#3b82f6' },
+  { value: 'caroserie',   label: 'Caroserie',   color: '#6b7280' },
+  { value: 'cisterna',    label: 'Cisternă',    color: '#8b5cf6' },
+  { value: 'platforma',   label: 'Platformă',   color: '#0d9488' },
+  { value: 'basculabila', label: 'Basculabilă', color: '#f59e0b' },
+];
+
+const TRAILER_STATUSES = [
+  { value: 'libera',   label: 'Liberă',  color: '#22c55e' },
+  { value: 'atasata',  label: 'Atașată', color: '#3b82f6' },
+  { value: 'service',  label: 'Service', color: '#f59e0b' },
+  { value: 'defecta',  label: 'Defectă', color: '#ef4444' },
+];
+
+function TrailerTypeBadge({ type }) {
+  const t = TRAILER_TYPES.find(x => x.value === type);
+  if (!t) return <span style={{ color: 'var(--gray-3)' }}>—</span>;
+  return (
+    <span style={{ display:'inline-flex', alignItems:'center', padding:'2px 8px', borderRadius:'5px', background: t.color + '1a', fontSize:'11px', fontWeight:600, color: t.color, whiteSpace:'nowrap' }}>
+      {t.label}
+    </span>
+  );
+}
+
+function ExpiryBadge({ date }) {
+  if (!date) return <span style={{ color: 'var(--gray-3)' }}>—</span>;
+  const d = new Date(date);
+  const diffDays = Math.ceil((d - new Date()) / (1000 * 60 * 60 * 24));
+  const color = diffDays < 0 ? '#ef4444' : diffDays <= 30 ? '#f59e0b' : '#22c55e';
+  const [y, m, z] = date.split('-');
+  const formatted = z ? `${z}.${m}.${y}` : date;
+  return (
+    <span style={{ fontSize:'12px', fontWeight: diffDays <= 30 ? 600 : 400, color }}>
+      {formatted}
+    </span>
+  );
+}
+
+function SectionRemorci({ onBack }) {
+  const [trailers, setTrailers] = useState([]);
+  const [trucks, setTrucks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ number:'', type:'', status:'libera', current_truck:'', itp_expiry:'', rca_expiry:'', observations:'' });
+  const [confirm, setConfirm] = useState(null);
+  const [toast, setToast] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [trRes, tkRes] = await Promise.all([api.getTrailers(), api.getTrucks()]);
+      setTrailers(trRes.data);
+      setTrucks(tkRes.data);
+    } catch {}
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const openAdd = () => {
+    setForm({ number:'', type:'', status:'libera', current_truck:'', itp_expiry:'', rca_expiry:'', observations:'' });
+    setModal({ mode:'add' });
+  };
+
+  const openEdit = (t) => {
+    setForm({
+      number:       t.number       || '',
+      type:         t.type         || '',
+      status:       t.status       || 'libera',
+      current_truck: t.current_truck || '',
+      itp_expiry:   t.itp_expiry   || '',
+      rca_expiry:   t.rca_expiry   || '',
+      observations: t.observations || '',
+    });
+    setModal({ mode:'edit', trailer: t });
+  };
+
+  const handleSave = async () => {
+    if (!form.number.trim()) return;
+    setSaving(true);
+    try {
+      if (modal.mode === 'add') {
+        await api.createTrailer(form);
+        setToast('Remorcă adăugată');
+      } else {
+        await api.updateTrailer(modal.trailer.id, form);
+        setToast('Remorcă actualizată');
+      }
+      setModal(null);
+      load();
+    } catch (err) {
+      setToast(err.response?.data?.error || 'Eroare la salvare');
+    }
+    setSaving(false);
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await api.deleteTrailer(id);
+      setToast('Remorcă ștearsă');
+      load();
+    } catch { setToast('Eroare la ștergere'); }
+    setConfirm(null);
+  };
+
+  const filtered = trailers.filter(t => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return [t.number, t.type, t.status, t.current_truck, t.observations]
+      .filter(Boolean).join(' ').toLowerCase().includes(q);
+  });
+
+  const f = (k) => (e) => setForm(prev => ({ ...prev, [k]: e.target.value }));
+
+  return (
+    <div>
+      <Toast msg={toast} onClose={() => setToast('')} />
+      <ConfirmDialog
+        msg={confirm?.msg}
+        onConfirm={() => handleDelete(confirm.id)}
+        onCancel={() => setConfirm(null)}
+      />
+
+      <SectionHeader
+        title="Remorci"
+        icon={<IconTrailer />}
+        count={trailers.length}
+        onBack={onBack}
+        action={
+          <button onClick={openAdd} style={btnPrimary}>
+            + Adaugă remorcă
+          </button>
+        }
+      />
+
+      {/* Search */}
+      <div style={{ marginBottom:'16px' }}>
+        <input
+          type="text"
+          placeholder="Caută după număr, tip, status..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ ...inputStyle, width:'300px' }}
+        />
+      </div>
+
+      {loading ? <Loader /> : filtered.length === 0 ? (
+        <EmptyState msg={search ? 'Nicio remorcă găsită' : 'Nicio remorcă înregistrată'} />
+      ) : (
+        <Table headers={['Nr. Remorcă','Tip','Status','Camion','ITP','RCA','Observații','Acțiuni']}>
+          {filtered.map((t, i) => {
+            const statusInfo = TRAILER_STATUSES.find(s => s.value === t.status);
+            return (
+              <tr key={t.id} style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--gray-2)' : 'none' }}>
+                <td style={tdStyle}>
+                  <span style={{ fontWeight:700, color:'var(--black)', fontFamily:'monospace', fontSize:'13px' }}>{t.number}</span>
+                </td>
+                <td style={tdStyle}><TrailerTypeBadge type={t.type} /></td>
+                <td style={tdStyle}>
+                  {statusInfo
+                    ? <Badge label={statusInfo.label} color={statusInfo.color} />
+                    : <span style={{ color:'var(--gray-4)' }}>—</span>}
+                </td>
+                <td style={{ ...tdStyle, color:'var(--gray-4)' }}>{t.current_truck || '—'}</td>
+                <td style={tdStyle}><ExpiryBadge date={t.itp_expiry} /></td>
+                <td style={tdStyle}><ExpiryBadge date={t.rca_expiry} /></td>
+                <td style={{ ...tdStyle, color:'var(--gray-4)', maxWidth:160, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                  {t.observations || '—'}
+                </td>
+                <td style={tdStyle}>
+                  <Actions
+                    onEdit={() => openEdit(t)}
+                    onDelete={() => setConfirm({ msg:`Ștergi remorca "${t.number}"?`, id:t.id })}
+                  />
+                </td>
+              </tr>
+            );
+          })}
+        </Table>
+      )}
+
+      {/* Modal adăugare / editare */}
+      {modal && (
+        <Modal
+          title={modal.mode === 'add' ? 'Adaugă remorcă' : `Editează remorca ${modal.trailer?.number}`}
+          onClose={() => setModal(null)}
+          width={560}
+        >
+          <div style={{ display:'flex', flexDirection:'column', gap:'14px' }}>
+            <Field label="Număr remorcă *">
+              <input
+                style={inputStyle}
+                value={form.number}
+                onChange={f('number')}
+                placeholder="ex: RO-12-TRL"
+                disabled={modal.mode === 'edit'}
+              />
+            </Field>
+
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
+              <Field label="Tip remorcă">
+                <select style={inputStyle} value={form.type} onChange={f('type')}>
+                  <option value="">— Selectează —</option>
+                  {TRAILER_TYPES.map(tp => (
+                    <option key={tp.value} value={tp.value}>{tp.label}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Status">
+                <select style={inputStyle} value={form.status} onChange={f('status')}>
+                  {TRAILER_STATUSES.map(s => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+
+            <Field label="Camion atașat">
+              <select style={inputStyle} value={form.current_truck} onChange={f('current_truck')}>
+                <option value="">— Fără camion —</option>
+                {trucks.map(tk => (
+                  <option key={tk.id} value={tk.number}>{tk.number}</option>
+                ))}
+              </select>
+            </Field>
+
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px' }}>
+              <Field label="Expirare ITP">
+                <input type="date" style={inputStyle} value={form.itp_expiry} onChange={f('itp_expiry')} />
+              </Field>
+              <Field label="Expirare RCA">
+                <input type="date" style={inputStyle} value={form.rca_expiry} onChange={f('rca_expiry')} />
+              </Field>
+            </div>
+
+            <Field label="Observații">
+              <textarea
+                style={{ ...inputStyle, resize:'vertical', minHeight:'72px' }}
+                value={form.observations}
+                onChange={f('observations')}
+                placeholder="Observații opționale..."
+              />
+            </Field>
+          </div>
+          <ModalFooter onCancel={() => setModal(null)} onSave={handleSave} saving={saving} />
+        </Modal>
+      )}
+    </div>
+  );
+}
+
 // ── Admin principal ────────────────────────────────────────
 function Admin({ user }) {
   const [active, setActive] = useState(() => localStorage.getItem('adminSection') || null);
-  const [counts, setCounts] = useState({ users:null, trucks:null, drivers:null, logs:null });
+  const [counts, setCounts] = useState({ users:null, trucks:null, drivers:null, trailers:null, logs:null });
 
   useEffect(() => {
     Promise.all([
       api.getUsers().then(r => r.data.length).catch(() => null),
       api.getTrucks().then(r => r.data.length).catch(() => null),
       api.getDrivers().then(r => r.data.length).catch(() => null),
+      api.getTrailers().then(r => r.data.length).catch(() => null),
       api.getLogs().then(r => r.data.length).catch(() => null),
-    ]).then(([users, trucks, drivers, logs]) => {
-      setCounts({ users, trucks, drivers, logs });
+    ]).then(([users, trucks, drivers, trailers, logs]) => {
+      setCounts({ users, trucks, drivers, trailers, logs });
     });
   }, [active]); // reîncarcă contoarele la revenire
 
@@ -1272,6 +1550,7 @@ function Admin({ user }) {
       {active === 'utilizatori' && <SectionUtilizatori onBack={() => goTo(null)} />}
       {active === 'camioane'    && <SectionCamioane    onBack={() => goTo(null)} />}
       {active === 'soferi'      && <SectionSoferi      onBack={() => goTo(null)} />}
+      {active === 'remorci'     && <SectionRemorci     onBack={() => goTo(null)} />}
       {active === 'jurnal'      && <SectionJurnal      onBack={() => goTo(null)} />}
     </div>
   );
