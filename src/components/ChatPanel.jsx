@@ -24,26 +24,29 @@ function avatarColor(username) {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
-// Văzut — ochi minimalist cu pupilă
-function SeenIcon({ color = '#ff7a3d' }) {
+// Aceeași formă de bifă — culoare diferită transmite starea
+const CHECK_POINTS = "1 4.2 4.2 7.5 11 1";
+
+// Văzut — bifă portocalie
+function SeenIcon() {
   return (
-    <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
-      <path
-        d="M1 5C3.2 1.8 5.4 0.5 8 0.5C10.6 0.5 12.8 1.8 15 5C12.8 8.2 10.6 9.5 8 9.5C5.4 9.5 3.2 8.2 1 5Z"
-        stroke={color} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round"
+    <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
+      <polyline
+        points={CHECK_POINTS}
+        stroke="#ff7a3d" strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round"
       />
-      <circle cx="8" cy="5" r="2" stroke={color} strokeWidth="1.1"/>
     </svg>
   );
 }
 
-// Trimis — bifă subțire, discretă
+// Trimis — bifă albă semi-transparentă
 function SentIcon() {
   return (
     <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
       <polyline
-        points="1 4.2 4.2 7.5 11 1"
-        stroke="rgba(255,255,255,0.38)" strokeWidth="1.3"
+        points={CHECK_POINTS}
+        stroke="rgba(255,255,255,0.35)" strokeWidth="1.3"
         strokeLinecap="round" strokeLinejoin="round"
       />
     </svg>
@@ -535,7 +538,7 @@ export default function ChatPanel({ user }) {
                       <div style={{
                         maxWidth: '80%', padding: '8px 12px',
                         borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px',
-                        background: isMe ? '#ff7a3d' : 'var(--gray-1)',
+                        background: isMe ? '#1d4ed8' : 'var(--gray-1)',
                         color: isMe ? 'white' : 'var(--black)',
                         fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word',
                       }}>
@@ -557,7 +560,7 @@ export default function ChatPanel({ user }) {
                           {isMe && (
                             <span title={isRead(msg) ? 'Văzut' : 'Trimis'}>
                               {isRead(msg)
-                                ? <SeenIcon color="#ff7a3d" />
+                                ? <SeenIcon />
                                 : <SentIcon />
                               }
                             </span>
