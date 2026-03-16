@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
+const { Server: SocketServer } = require('socket.io');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -7,8 +9,40 @@ const path = require('path');
 const { pool, defaultPermissions, initDb } = require('./database/db.cjs');
 
 const app = express();
+const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 3000;
 const SECRET = process.env.JWT_SECRET || 'fleet-management-secret-key-2026';
+
+// ── Socket.io ────────────────────────────────────────────────
+const io = new SocketServer(httpServer, {
+  cors: { origin: '*', methods: ['GET', 'POST'] },
+  transports: ['websocket', 'polling'],
+});
+
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) return next(new Error('Neautorizat'));
+  try {
+    socket.user = jwt.verify(token, SECRET);
+    next();
+  } catch {
+    next(new Error('Token invalid'));
+  }
+});
+
+io.on('connection', (socket) => {
+  const orgId = socket.user.organization_id;
+  socket.join(`org_${orgId}`);
+  console.log(`⚡ Socket: ${socket.user.username} conectat (org ${orgId})`);
+  socket.on('disconnect', () => {
+    console.log(`⚡ Socket: ${socket.user.username} deconectat`);
+  });
+});
+
+// Helper: trimite eveniment la toți clienții din aceeași organizație
+function emitToOrg(organizationId, event, payload = {}) {
+  io.to(`org_${organizationId}`).emit(event, payload);
+}
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -197,6 +231,7 @@ app.post('/api/trucks', authMiddleware, async (req, res) => {
       req.user.organization_id
     ]);
     await addLog(req.user.organization_id, req.user.username, 'Adăugat camion', 'truck', result.rows[0].id, t.number);
+    emitToOrg(req.user.organization_id, 'trucks_updated');
     res.json({ id: result.rows[0].id });
   } catch (err) {
     console.error('❌ POST /api/trucks error:', err.message);
@@ -232,6 +267,7 @@ app.put('/api/trucks/:id', authMiddleware, async (req, res) => {
       t.driver_1 || null, t.driver_2 || null,
       req.params.id
     ]);
+    emitToOrg(req.user.organization_id, 'trucks_updated');
     res.json({ success: true });
   } catch (err) {
     console.error('❌ PUT /api/trucks/:id error:', err.message);
@@ -245,6 +281,7 @@ app.delete('/api/trucks/:id', authMiddleware, requirePermission('deleteTruckRow'
     const truckNumber = truckResult.rows[0]?.number || req.params.id;
     await pool.query('DELETE FROM trucks WHERE id=$1', [req.params.id]);
     await addLog(req.user.organization_id, req.user.username, 'Șters camion', 'truck', req.params.id, truckNumber);
+    emitToOrg(req.user.organization_id, 'trucks_updated');
     res.json({ ok: true });
   } catch (err) {
     console.error('❌ DELETE /api/trucks/:id error:', err.message);
@@ -303,6 +340,7 @@ app.post('/api/trips', authMiddleware, requirePermission('addTrip'), async (req,
       req.user.organization_id
     ]);
     await addLog(req.user.organization_id, req.user.username, 'Adăugat cursă', 'trip', result.rows[0].id, `${t.client || ''} / ${t.truck_number || ''}`);
+    emitToOrg(req.user.organization_id, 'trips_updated');
     res.json({ id: result.rows[0].id });
   } catch (err) {
     console.error('❌ POST /api/trips error:', err.message);
@@ -338,6 +376,7 @@ app.put('/api/trips/:id', authMiddleware, requirePermission('editTrip'), async (
       t.invoice_file_name ?? null, t.invoice_file_data ?? null, t.invoice_file_type ?? null,
       req.params.id
     ]);
+    emitToOrg(req.user.organization_id, 'trips_updated');
     res.json({ success: true });
   } catch (err) {
     console.error('❌ PUT /api/trips/:id error:', err.message);
@@ -351,6 +390,7 @@ app.delete('/api/trips/:id', authMiddleware, requirePermission('deleteTrip'), as
     const trip = tripResult.rows[0];
     await pool.query('DELETE FROM trips WHERE id=$1', [req.params.id]);
     await addLog(req.user.organization_id, req.user.username, 'Șters cursă', 'trip', req.params.id, trip ? `${trip.client || ''} / ${trip.truck_number || ''}` : null);
+    emitToOrg(req.user.organization_id, 'trips_updated');
     res.json({ ok: true });
   } catch (err) {
     console.error('❌ DELETE /api/trips/:id error:', err.message);
@@ -596,6 +636,7 @@ app.put('/api/drivers/:id/truck', authMiddleware, async (req, res) => {
     await client.query('UPDATE drivers SET assigned_truck=$1 WHERE id=$2', [truck_number || null, driverId]);
 
     await client.query('COMMIT');
+    emitToOrg(req.user.organization_id, 'trucks_updated');
     res.json({ success: true });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -744,7 +785,7 @@ app.use((req, res) => {
 // ── START ───────────────────────────────────────────────────
 initDb()
   .then(() => {
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`✓ Server pornit la http://localhost:${PORT}`);
     });
   })

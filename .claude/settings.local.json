@@ -33,7 +33,8 @@
       "Bash(python:*)",
       "Bash(set +H)",
       "Bash(git -C \"C:/Users/Home/Desktop/fleet-management-react\" diff --stat)",
-      "Bash(del \"C:\\\\Users\\\\Home\\\\Desktop\\\\fleet-management-react\\\\fix_tracking.py\")"
+      "Bash(del \"C:\\\\Users\\\\Home\\\\Desktop\\\\fleet-management-react\\\\fix_tracking.py\")",
+      "Bash(npm install socket.io socket.io-client)"
     ]
   }
 }

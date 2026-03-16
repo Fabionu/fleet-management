@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
+import { getSocket } from '../services/socket';
 import useStore from '../store/useStore';
 import InfoVehicleModal from '../components/InfoVehicleModal';
 import EditTripModal from '../components/EditTripModal';
@@ -119,8 +120,20 @@ useEffect(() => {
 
   useEffect(() => {
     loadTrucks();
-    const interval = setInterval(loadTrucks, 2000); // 2 secunde
-    return () => clearInterval(interval);
+
+    // ── Socket: refresh la eveniment trucks_updated ──────────
+    const socket = getSocket();
+    if (socket) {
+      socket.on('trucks_updated', loadTrucks);
+    }
+
+    // ── Fallback polling la 30s (dacă socket-ul cade) ────────
+    const fallback = setInterval(loadTrucks, 30000);
+
+    return () => {
+      if (socket) socket.off('trucks_updated', loadTrucks);
+      clearInterval(fallback);
+    };
   }, []);
 
 const handleUpdate = async (truck, field, value) => {

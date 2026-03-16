@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '../services/api';
+import { getSocket } from '../services/socket';
 import AddCurseModal from '../components/AddCurseModal';
 import EditCurseModal from '../components/EditCurseModal';
 import TripDocsModal from '../components/TripDocsModal';
@@ -31,6 +32,16 @@ function Curse({ user }) {
   useEffect(() => {
     loadTrips();
     loadTrucks();
+
+    // ── Socket: refresh la eveniment trips_updated ───────────
+    const socket = getSocket();
+    if (socket) {
+      socket.on('trips_updated', loadTrips);
+    }
+
+    return () => {
+      if (socket) socket.off('trips_updated', loadTrips);
+    };
   }, []);
 
   useEffect(() => {

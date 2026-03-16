@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Tracking from './pages/Tracking';
 import Admin from './pages/Admin';
 import Curse from './pages/Curse';
+import { connectSocket, disconnectSocket, getSocket } from './services/socket';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -12,6 +13,7 @@ function App() {
   );
   const [theme, setTheme] = useState('dark');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [socketConnected, setSocketConnected] = useState(false);
   const [trackingView, setTrackingView] = useState(
     () => localStorage.getItem('trackingView') || 'card'
   );
@@ -79,7 +81,7 @@ function App() {
     localStorage.setItem('role', data.role);
     localStorage.setItem('permissions', JSON.stringify(data.permissions));
     localStorage.setItem('organizationName', data.organization_name);
-    
+
     setIsAuthenticated(true);
     setUser({
       username: data.username,
@@ -87,15 +89,43 @@ function App() {
       permissions: data.permissions,
       organizationName: data.organization_name
     });
+
+    // Conectează socket după login
+    const sock = connectSocket();
+    if (sock) {
+      sock.on('connect', () => setSocketConnected(true));
+      sock.on('disconnect', () => setSocketConnected(false));
+      if (sock.connected) setSocketConnected(true);
+    }
   };
 
   const handleLogout = () => {
+    disconnectSocket();
+    setSocketConnected(false);
     localStorage.clear();
     setIsAuthenticated(false);
     setUser(null);
     setCurrentPage('tracking');
     localStorage.setItem('currentPage', 'tracking');
   };
+
+  // Conectează socket dacă e deja autentificat (refresh pagină)
+  useEffect(() => {
+    if (isAuthenticated) {
+      const sock = connectSocket();
+      if (sock) {
+        const onConnect = () => setSocketConnected(true);
+        const onDisconnect = () => setSocketConnected(false);
+        sock.on('connect', onConnect);
+        sock.on('disconnect', onDisconnect);
+        if (sock.connected) setSocketConnected(true);
+        return () => {
+          sock.off('connect', onConnect);
+          sock.off('disconnect', onDisconnect);
+        };
+      }
+    }
+  }, [isAuthenticated]);
 
   const toggleTheme = () => {
     const newTheme = theme === 'dark' ? 'light' : 'dark';
@@ -152,6 +182,16 @@ function App() {
         >
           {theme === 'dark' ? '☼' : '☾'}
         </button>
+
+        {/* Socket status indicator */}
+        <div title={socketConnected ? 'Timp real activ' : 'Reconectare...'} style={{
+          position: 'absolute', top: '40px', right: '72px',
+          width: 8, height: 8, borderRadius: '50%',
+          background: socketConnected ? '#22c55e' : '#f59e0b',
+          boxShadow: socketConnected ? '0 0 0 2px #22c55e33' : '0 0 0 2px #f59e0b33',
+          transition: 'all 0.4s',
+          zIndex: 101,
+        }} />
 
         {/* User Menu - Absolute Position */}
         <div style={{ position: 'absolute', top: '32px', right: '80px', zIndex: 100 }} ref={userMenuRef}>
