@@ -141,7 +141,7 @@ app.post('/api/chat/messages', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Marchează conversația cu peer-ul ca citită
+// Marchează conversația cu peer-ul ca citită + notifică sender-ul
 app.put('/api/chat/read/:peer', authMiddleware, async (req, res) => {
   try {
     const now = new Date();
@@ -151,7 +151,22 @@ app.put('/api/chat/read/:peer', authMiddleware, async (req, res) => {
        ON CONFLICT (username, peer_username, organization_id) DO UPDATE SET last_read_at = $4`,
       [req.user.username, req.params.peer, req.user.organization_id, now]
     );
+    // Notifică sender-ul că mesajele lui au fost citite
+    io.to(`user_${req.params.peer}_org_${req.user.organization_id}`)
+      .emit('peer_read', { reader: req.user.username, last_read_at: now.toISOString() });
     res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Când a citit peer-ul ultima oară conversația cu mine (pentru read receipts)
+app.get('/api/chat/peer-read/:peer', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT last_read_at FROM chat_conv_read
+       WHERE username = $1 AND peer_username = $2 AND organization_id = $3`,
+      [req.params.peer, req.user.username, req.user.organization_id]
+    );
+    res.json(result.rows[0] || { last_read_at: null });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
