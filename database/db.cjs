@@ -287,6 +287,40 @@ async function initDb() {
       )
     `);
 
+    // Chat tables
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id SERIAL PRIMARY KEY,
+        organization_id INTEGER REFERENCES organizations(id),
+        username TEXT NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS chat_read (
+        username TEXT NOT NULL,
+        organization_id INTEGER NOT NULL,
+        last_read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (username, organization_id)
+      )
+    `);
+
+    // Migration: add receiver_username for private messages
+    await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS receiver_username TEXT`);
+
+    // Per-conversation read tracking
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS chat_conv_read (
+        username TEXT NOT NULL,
+        peer_username TEXT NOT NULL,
+        organization_id INTEGER NOT NULL,
+        last_read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (username, peer_username, organization_id)
+      )
+    `);
+
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {
     client.release();

@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Tracking from './pages/Tracking';
 import Admin from './pages/Admin';
 import Curse from './pages/Curse';
+import ChatPanel from './components/ChatPanel';
 import { connectSocket, disconnectSocket, getSocket } from './services/socket';
 
 function App() {
@@ -443,6 +444,7 @@ function App() {
         {currentPage === 'curse' && <Curse user={user} />}
 {currentPage === 'admin' && <Admin user={user} />}
       </div>
+      <ChatPanel user={user} />
     </div>
   );
 }

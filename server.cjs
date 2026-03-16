@@ -30,12 +30,34 @@ io.use((socket, next) => {
   }
 });
 
+// Online users per org: orgId → Map<socketId, username>
+const onlineUsers = new Map();
+
+function getOnlineList(orgId) {
+  const orgMap = onlineUsers.get(orgId);
+  if (!orgMap) return [];
+  return [...new Set(orgMap.values())];
+}
+
 io.on('connection', (socket) => {
   const orgId = socket.user.organization_id;
+  const username = socket.user.username;
+
   socket.join(`org_${orgId}`);
-  console.log(`⚡ Socket: ${socket.user.username} conectat (org ${orgId})`);
+  console.log(`⚡ Socket: ${username} conectat (org ${orgId})`);
+
+  if (!onlineUsers.has(orgId)) onlineUsers.set(orgId, new Map());
+  onlineUsers.get(orgId).set(socket.id, username);
+  io.to(`org_${orgId}`).emit('users_online', getOnlineList(orgId));
+
   socket.on('disconnect', () => {
-    console.log(`⚡ Socket: ${socket.user.username} deconectat`);
+    console.log(`⚡ Socket: ${username} deconectat`);
+    const orgMap = onlineUsers.get(orgId);
+    if (orgMap) {
+      orgMap.delete(socket.id);
+      if (orgMap.size === 0) onlineUsers.delete(orgId);
+    }
+    io.to(`org_${orgId}`).emit('users_online', getOnlineList(orgId));
   });
 });
 
@@ -68,6 +90,61 @@ function requirePermission(perm) {
     res.status(403).json({ error: 'Acces interzis', permission: perm });
   };
 }
+
+// ── CHAT ────────────────────────────────────────────────────
+app.get('/api/chat/messages', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM chat_messages WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 100`,
+      [req.user.organization_id]
+    );
+    res.json(result.rows.reverse());
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/chat/messages', authMiddleware, async (req, res) => {
+  const { message } = req.body;
+  if (!message?.trim()) return res.status(400).json({ error: 'Mesaj gol' });
+  try {
+    const result = await pool.query(
+      `INSERT INTO chat_messages (organization_id, username, message) VALUES ($1, $2, $3) RETURNING *`,
+      [req.user.organization_id, req.user.username, message.trim()]
+    );
+    emitToOrg(req.user.organization_id, 'new_message', result.rows[0]);
+    res.json(result.rows[0]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/chat/read', authMiddleware, async (req, res) => {
+  try {
+    const now = new Date();
+    await pool.query(
+      `INSERT INTO chat_read (username, organization_id, last_read_at)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (username, organization_id) DO UPDATE SET last_read_at = $3`,
+      [req.user.username, req.user.organization_id, now]
+    );
+    emitToOrg(req.user.organization_id, 'user_read', {
+      username: req.user.username,
+      last_read_at: now.toISOString()
+    });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/chat/read', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT username, last_read_at FROM chat_read WHERE organization_id = $1`,
+      [req.user.organization_id]
+    );
+    res.json(result.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.get('/api/chat/online', authMiddleware, (req, res) => {
+  res.json(getOnlineList(req.user.organization_id));
+});
 
 // ── AUTH ────────────────────────────────────────────────────
 app.post('/api/login', async (req, res) => {
