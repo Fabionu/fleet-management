@@ -141,6 +141,95 @@ function DriverDocsOverlay({ driverName, onClose }) {
   );
 }
 
+function TrailerDocsOverlay({ trailerNumber, trailerInfo, onClose }) {
+  const expiryColor = (dateStr) => {
+    if (!dateStr) return 'var(--gray-4)';
+    const diff = Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
+    return diff < 0 ? 'var(--red)' : diff <= 30 ? 'var(--orange)' : 'var(--green)';
+  };
+  const fmtDate = (dateStr) => {
+    if (!dateStr) return '—';
+    const [y, m, d] = dateStr.split('-');
+    return d ? `${d}.${m}.${y}` : dateStr;
+  };
+  const expiryLabel = (dateStr) => {
+    if (!dateStr) return '';
+    const diff = Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
+    if (diff < 0) return ` · expirat de ${Math.abs(diff)} zile`;
+    if (diff === 0) return ' · expiră azi!';
+    if (diff <= 30) return ` · expiră în ${diff} zile`;
+    return '';
+  };
+  const TRAILER_TYPE_LABELS = {
+    prelata: 'Prelată', frigorific: 'Frigorific', caroserie: 'Caroserie',
+    cisterna: 'Cisternă', platforma: 'Platformă', basculabila: 'Basculabilă',
+  };
+  const CalIcon = ({ color }) => (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round">
+      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+      <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+  );
+
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.5)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:3000, backdropFilter:'blur(4px)', padding:'20px' }}>
+      <div onClick={e => e.stopPropagation()} style={{ background:'var(--bg-page)', border:'1px solid var(--gray-2)', borderRadius:'14px', padding:'28px', width:'100%', maxWidth:'400px', boxShadow:'0 24px 48px rgba(0,0,0,0.35)' }}>
+        {/* Header */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:'20px', paddingBottom:'16px', borderBottom:'1px solid var(--gray-2)' }}>
+          <div>
+            <div style={{ fontSize:'16px', fontWeight:600, color:'var(--black)', fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>Detalii remorcă</div>
+            <div style={{ fontSize:'13px', color:'var(--gray-4)', marginTop:'2px', fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>{trailerNumber}</div>
+          </div>
+          <button onClick={onClose} style={{ background:'transparent', border:'none', cursor:'pointer', color:'var(--gray-4)', padding:'4px', display:'flex', alignItems:'center', borderRadius:'6px' }}
+            onMouseEnter={e => e.currentTarget.style.background='var(--gray-2)'} onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        {!trailerInfo ? (
+          <div style={{ textAlign:'center', padding:'32px', color:'var(--gray-4)', fontSize:'14px', fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>
+            Remorca nu este înregistrată în sistem.
+          </div>
+        ) : (
+          <div style={{ display:'flex', flexDirection:'column', gap:'10px' }}>
+            {trailerInfo.type && (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 14px', background:'var(--gray-1)', border:'1px solid var(--gray-2)', borderRadius:'8px' }}>
+                <span style={{ fontSize:'13px', color:'var(--gray-4)', fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>Tip</span>
+                <span style={{ fontSize:'13px', fontWeight:600, color:'var(--black)', fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>
+                  {TRAILER_TYPE_LABELS[trailerInfo.type] || trailerInfo.type}
+                </span>
+              </div>
+            )}
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 14px', background:'var(--gray-1)', border:'1px solid var(--gray-2)', borderRadius:'8px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                <CalIcon color={expiryColor(trailerInfo.itp_expiry)} />
+                <span style={{ fontSize:'13px', color:'var(--gray-4)', fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>ITP</span>
+              </div>
+              <span style={{ fontSize:'13px', fontWeight:600, color:expiryColor(trailerInfo.itp_expiry), fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>
+                {fmtDate(trailerInfo.itp_expiry)}<span style={{ fontWeight:400, fontSize:'12px' }}>{expiryLabel(trailerInfo.itp_expiry)}</span>
+              </span>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px 14px', background:'var(--gray-1)', border:'1px solid var(--gray-2)', borderRadius:'8px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                <CalIcon color={expiryColor(trailerInfo.rca_expiry)} />
+                <span style={{ fontSize:'13px', color:'var(--gray-4)', fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>RCA</span>
+              </div>
+              <span style={{ fontSize:'13px', fontWeight:600, color:expiryColor(trailerInfo.rca_expiry), fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>
+                {fmtDate(trailerInfo.rca_expiry)}<span style={{ fontWeight:400, fontSize:'12px' }}>{expiryLabel(trailerInfo.rca_expiry)}</span>
+              </span>
+            </div>
+            {trailerInfo.observations && (
+              <div style={{ padding:'12px 14px', background:'var(--gray-1)', border:'1px solid var(--gray-2)', borderRadius:'8px' }}>
+                <div style={{ fontSize:'12px', color:'var(--gray-4)', marginBottom:'5px', fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>Observații</div>
+                <div style={{ fontSize:'13px', color:'var(--black)', lineHeight:1.5, fontFamily:"'SF Pro Display', -apple-system, sans-serif" }}>{trailerInfo.observations}</div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function InfoVehicleModal({ truck, onClose, onSave, user }) {
   const [formData, setFormData] = useState({
     phone: truck.phone || '',
@@ -152,10 +241,20 @@ function InfoVehicleModal({ truck, onClose, onSave, user }) {
   const [showToast, setShowToast] = useState(false);
   const [driverDocsFor, setDriverDocsFor] = useState(null); // driver name
   const [showTruckDoc, setShowTruckDoc] = useState(false);
+  const [trailerInfo, setTrailerInfo] = useState(null);
+  const [showTrailerDoc, setShowTrailerDoc] = useState(false);
 
   // Per-driver Amazon state
   const [driverMap, setDriverMap] = useState({}); // name → { id, amazon_account }
   const [driverAmazon, setDriverAmazon] = useState({}); // name → 0|1
+
+  useEffect(() => {
+    if (!truck.trailer) return;
+    api.getTrailers().then(res => {
+      const found = res.data.find(t => t.number === truck.trailer);
+      setTrailerInfo(found || null);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!truck.driver_1 && !truck.driver_2) return;
@@ -296,29 +395,71 @@ Phone number: ${formData.phone || 'N/A'}`;
             </button>
           </div>
 
-          {/* Camion row */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={labelStyle}>Camion</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '8px' }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ff7a3d22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2">
-                  <rect x="1" y="5" width="15" height="10" rx="2"/>
-                  <path d="M16 8h3l3 3v4h-3"/>
-                  <circle cx="5.5" cy="17.5" r="2.5"/>
-                  <circle cx="18.5" cy="17.5" r="2.5"/>
-                </svg>
+          {/* Camion + Remorcă rows */}
+          <div style={{ marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Camion */}
+            <div>
+              <label style={labelStyle}>Camion</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '8px' }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ff7a3d22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2">
+                    <rect x="1" y="5" width="15" height="10" rx="2"/>
+                    <path d="M16 8h3l3 3v4h-3"/>
+                    <circle cx="5.5" cy="17.5" r="2.5"/>
+                    <circle cx="18.5" cy="17.5" r="2.5"/>
+                  </svg>
+                </div>
+                <span style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 500, flex: 1, fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>{truck.number}</span>
+                <button
+                  type="button"
+                  title="Documente vehicul"
+                  onClick={() => setShowTruckDoc(true)}
+                  style={{ padding: '5px 7px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', cursor: 'pointer', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
+                >
+                  <DocIcon />
+                </button>
               </div>
-              <span style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 500, flex: 1, fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>{truck.number}</span>
-              <button
-                type="button"
-                title="Documente vehicul"
-                onClick={() => setShowTruckDoc(true)}
-                style={{ padding: '5px 7px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', cursor: 'pointer', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
-              >
-                <DocIcon />
-              </button>
+            </div>
+
+            {/* Remorcă */}
+            <div>
+              <label style={labelStyle}>Remorcă</label>
+              {truck.trailer ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '8px' }}>
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#ff7a3d22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="1" y="5" width="17" height="9" rx="1.5"/>
+                      <line x1="5" y1="5" x2="5" y2="14"/>
+                      <line x1="11" y1="5" x2="11" y2="14"/>
+                      <circle cx="4.5" cy="16.5" r="2"/>
+                      <circle cx="12.5" cy="16.5" r="2"/>
+                      <line x1="18" y1="9.5" x2="21" y2="9.5"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontSize: '14px', color: 'var(--black)', fontWeight: 500, flex: 1, fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>{truck.trailer}</span>
+                  <button
+                    type="button"
+                    title="Detalii remorcă"
+                    onClick={() => setShowTrailerDoc(true)}
+                    style={{ padding: '5px 7px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', cursor: 'pointer', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
+                  >
+                    <DocIcon />
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '8px' }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray-3)" strokeWidth="1.8" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <span style={{ fontSize: '14px', color: 'var(--gray-4)', fontStyle: 'italic', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+                    Fără remorcă atribuită
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -422,33 +563,6 @@ Phone number: ${formData.phone || 'N/A'}`;
                 onChange={isAdmin ? (e) => setFormData({ ...formData, phone: e.target.value }) : undefined}
                 readOnly={!isAdmin}
                 placeholder="Ex: +40 123 456 789"
-                style={{
-                  width: '100%',
-                  padding: '12px 14px',
-                  border: '1px solid var(--gray-3)',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  background: isAdmin ? 'var(--bg-page)' : 'var(--gray-1)',
-                  color: 'var(--black)',
-                  outline: 'none',
-                  fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
-                  transition: 'border-color 0.2s',
-                  cursor: isAdmin ? 'text' : 'default',
-                }}
-                onFocus={isAdmin ? (e) => e.target.style.borderColor = '#ff7a3d' : undefined}
-                onBlur={isAdmin ? (e) => e.target.style.borderColor = 'var(--gray-3)' : undefined}
-              />
-            </div>
-
-            {/* Remorcă */}
-            <div style={{ marginBottom: '24px' }}>
-              <label style={labelStyle}>Remorcă</label>
-              <input
-                type="text"
-                value={formData.trailer}
-                onChange={isAdmin ? (e) => setFormData({ ...formData, trailer: e.target.value }) : undefined}
-                readOnly={!isAdmin}
-                placeholder="Ex: SV-123-ABC"
                 style={{
                   width: '100%',
                   padding: '12px 14px',
@@ -634,6 +748,15 @@ Phone number: ${formData.phone || 'N/A'}`;
             )}
           </div>
         </div>
+      )}
+
+      {/* Trailer docs overlay */}
+      {showTrailerDoc && (
+        <TrailerDocsOverlay
+          trailerNumber={truck.trailer}
+          trailerInfo={trailerInfo}
+          onClose={() => setShowTrailerDoc(false)}
+        />
       )}
 
       {/* Driver docs overlay */}

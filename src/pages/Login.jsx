@@ -209,8 +209,8 @@ function Login({ onLogin }) {
         justifyContent: 'center',
         alignItems: 'center',
         padding: '48px 44px',
-        background: '#0a0a0a',
-        borderRight: '1px solid rgba(255,255,255,0.06)',
+        background: '#060606',
+        borderRight: '1px solid rgba(255,255,255,0.1)',
         overflowY: 'auto',
       }}>
         <div style={{ width: '100%', maxWidth: '400px' }}>
@@ -507,7 +507,7 @@ function Login({ onLogin }) {
       <div style={{
         flex: 1,
         position: 'relative',
-        background: '#0d0d0d',
+        background: '#17120d',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center',
@@ -517,7 +517,7 @@ function Login({ onLogin }) {
         {/* Dot grid */}
         <div style={{
           position: 'absolute', inset: 0,
-          backgroundImage: 'radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)',
           backgroundSize: '28px 28px',
           pointerEvents: 'none',
         }} />
@@ -525,16 +525,16 @@ function Login({ onLogin }) {
         {/* Glow top-right */}
         <div style={{
           position: 'absolute', top: '-100px', right: '-60px',
-          width: '520px', height: '520px',
-          background: 'radial-gradient(circle, rgba(255,122,61,0.12) 0%, transparent 65%)',
+          width: '580px', height: '580px',
+          background: 'radial-gradient(circle, rgba(255,122,61,0.22) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
 
         {/* Glow bottom-left */}
         <div style={{
           position: 'absolute', bottom: '-80px', left: '15%',
-          width: '320px', height: '320px',
-          background: 'radial-gradient(circle, rgba(255,122,61,0.05) 0%, transparent 65%)',
+          width: '360px', height: '360px',
+          background: 'radial-gradient(circle, rgba(255,122,61,0.1) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
 
