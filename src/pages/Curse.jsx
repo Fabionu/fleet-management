@@ -78,11 +78,12 @@ function Curse({ user }) {
 
   const handleInvoiceToggle = async (trip) => {
     const newInvoiced = !trip.invoiced;
-    setTrips(trips.map(t => t.id === trip.id ? { ...t, invoiced: newInvoiced } : t));
+    setTrips(prev => prev.map(t => t.id === trip.id ? { ...t, invoiced: newInvoiced } : t));
     try {
       await api.updateTrip(trip.id, { ...trip, invoiced: newInvoiced });
+      loadTrips(); // confirmă din DB
     } catch (error) {
-      setTrips(trips.map(t => t.id === trip.id ? { ...t, invoiced: trip.invoiced } : t));
+      setTrips(prev => prev.map(t => t.id === trip.id ? { ...t, invoiced: trip.invoiced } : t));
       console.error('Eroare la actualizarea statusului factură:', error);
     }
   };

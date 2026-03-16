@@ -44,6 +44,7 @@ io.on('connection', (socket) => {
   const username = socket.user.username;
 
   socket.join(`org_${orgId}`);
+  socket.join(`user_${username}_org_${orgId}`); // cameră privată pentru DM-uri
   console.log(`⚡ Socket: ${username} conectat (org ${orgId})`);
 
   if (!onlineUsers.has(orgId)) onlineUsers.set(orgId, new Map());
@@ -92,56 +93,113 @@ function requirePermission(perm) {
 }
 
 // ── CHAT ────────────────────────────────────────────────────
-app.get('/api/chat/messages', authMiddleware, async (req, res) => {
+
+// Toți userii din organizație (pentru lista de contacte)
+app.get('/api/chat/users', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT * FROM chat_messages WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 100`,
-      [req.user.organization_id]
-    );
-    res.json(result.rows.reverse());
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.post('/api/chat/messages', authMiddleware, async (req, res) => {
-  const { message } = req.body;
-  if (!message?.trim()) return res.status(400).json({ error: 'Mesaj gol' });
-  try {
-    const result = await pool.query(
-      `INSERT INTO chat_messages (organization_id, username, message) VALUES ($1, $2, $3) RETURNING *`,
-      [req.user.organization_id, req.user.username, message.trim()]
-    );
-    emitToOrg(req.user.organization_id, 'new_message', result.rows[0]);
-    res.json(result.rows[0]);
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.put('/api/chat/read', authMiddleware, async (req, res) => {
-  try {
-    const now = new Date();
-    await pool.query(
-      `INSERT INTO chat_read (username, organization_id, last_read_at)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (username, organization_id) DO UPDATE SET last_read_at = $3`,
-      [req.user.username, req.user.organization_id, now]
-    );
-    emitToOrg(req.user.organization_id, 'user_read', {
-      username: req.user.username,
-      last_read_at: now.toISOString()
-    });
-    res.json({ ok: true });
-  } catch (e) { res.status(500).json({ error: e.message }); }
-});
-
-app.get('/api/chat/read', authMiddleware, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT username, last_read_at FROM chat_read WHERE organization_id = $1`,
-      [req.user.organization_id]
+      `SELECT username, role FROM users WHERE organization_id = $1 AND username != $2 ORDER BY username`,
+      [req.user.organization_id, req.user.username]
     );
     res.json(result.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Conversație privată cu un peer (ultimele 100 mesaje)
+app.get('/api/chat/messages/:peer', authMiddleware, async (req, res) => {
+  try {
+    const me = req.user.username;
+    const { peer } = req.params;
+    const result = await pool.query(
+      `SELECT * FROM chat_messages
+       WHERE organization_id = $1
+         AND ((username = $2 AND receiver_username = $3)
+           OR (username = $3 AND receiver_username = $2))
+       ORDER BY created_at DESC LIMIT 100`,
+      [req.user.organization_id, me, peer]
+    );
+    res.json(result.rows.reverse());
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Trimite mesaj privat
+app.post('/api/chat/messages', authMiddleware, async (req, res) => {
+  const { to, message } = req.body;
+  if (!to || !message?.trim()) return res.status(400).json({ error: 'Date lipsă' });
+  try {
+    const result = await pool.query(
+      `INSERT INTO chat_messages (organization_id, username, receiver_username, message)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [req.user.organization_id, req.user.username, to, message.trim()]
+    );
+    const msg = result.rows[0];
+    const orgId = req.user.organization_id;
+    // Emit în camerele private ale ambelor părți (suport multi-tab)
+    io.to(`user_${to}_org_${orgId}`).emit('new_private_message', msg);
+    io.to(`user_${req.user.username}_org_${orgId}`).emit('new_private_message', msg);
+    res.json(msg);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Marchează conversația cu peer-ul ca citită
+app.put('/api/chat/read/:peer', authMiddleware, async (req, res) => {
+  try {
+    const now = new Date();
+    await pool.query(
+      `INSERT INTO chat_conv_read (username, peer_username, organization_id, last_read_at)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (username, peer_username, organization_id) DO UPDATE SET last_read_at = $4`,
+      [req.user.username, req.params.peer, req.user.organization_id, now]
+    );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Număr mesaje necitite per conversație
+app.get('/api/chat/unread', authMiddleware, async (req, res) => {
+  try {
+    const me = req.user.username;
+    const orgId = req.user.organization_id;
+    const result = await pool.query(
+      `SELECT cm.username AS peer, COUNT(*) AS unread
+       FROM chat_messages cm
+       LEFT JOIN chat_conv_read cr
+         ON cr.username = $1 AND cr.peer_username = cm.username AND cr.organization_id = $2
+       WHERE cm.receiver_username = $1
+         AND cm.organization_id = $2
+         AND (cr.last_read_at IS NULL OR cm.created_at > cr.last_read_at)
+       GROUP BY cm.username`,
+      [me, orgId]
+    );
+    const counts = {};
+    result.rows.forEach(r => { counts[r.peer] = parseInt(r.unread); });
+    res.json(counts);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Ultimul mesaj per conversație (pentru preview în contacts list)
+app.get('/api/chat/last-messages', authMiddleware, async (req, res) => {
+  try {
+    const me = req.user.username;
+    const orgId = req.user.organization_id;
+    const result = await pool.query(
+      `SELECT DISTINCT ON (peer)
+         CASE WHEN username = $1 THEN receiver_username ELSE username END AS peer,
+         username AS sender, message, created_at
+       FROM chat_messages
+       WHERE organization_id = $2
+         AND receiver_username IS NOT NULL
+         AND (username = $1 OR receiver_username = $1)
+       ORDER BY peer, created_at DESC`,
+      [me, orgId]
+    );
+    const lastMsgs = {};
+    result.rows.forEach(r => { lastMsgs[r.peer] = r; });
+    res.json(lastMsgs);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Useri online curent (fallback REST)
 app.get('/api/chat/online', authMiddleware, (req, res) => {
   res.json(getOnlineList(req.user.organization_id));
 });

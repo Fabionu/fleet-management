@@ -157,10 +157,9 @@ const handleUpdate = async (truck, field, value) => {
     };
     
     await api.updateTruck(truck.id, truckData);
-    // Nu mai facem loadTrucks() aici - update-ul local e suficient
+    loadTrucks(); // confirmă din DB (guard-ul din loadTrucks blochează dacă e input focusat)
   } catch (error) {
     console.error('Error updating:', error);
-    // La eroare, reîncarcă din backend
     loadTrucks();
   }
 };
