@@ -181,15 +181,6 @@ function App() {
           {theme === 'dark' ? '☼' : '☾'}
         </button>
 
-        {/* Socket status indicator */}
-        <div title={socketConnected ? 'Timp real activ' : 'Reconectare...'} style={{
-          position: 'absolute', top: '40px', right: '72px',
-          width: 8, height: 8, borderRadius: '50%',
-          background: socketConnected ? '#22c55e' : '#f59e0b',
-          boxShadow: socketConnected ? '0 0 0 2px #22c55e33' : '0 0 0 2px #f59e0b33',
-          transition: 'all 0.4s',
-          zIndex: 101,
-        }} />
 
         {/* User Menu - Absolute Position */}
         <div style={{ position: 'absolute', top: '32px', right: '80px', zIndex: 100 }} ref={userMenuRef}>
@@ -215,19 +206,35 @@ function App() {
               e.currentTarget.style.borderColor = 'var(--gray-3)';
             }}
           >
-            <div style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              background: '#ff7a3d',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontWeight: 600,
-              fontSize: '14px'
-            }}>
-              {user.username.charAt(0).toUpperCase()}
+            <div style={{ position: 'relative', width: '32px', height: '32px', flexShrink: 0 }}>
+              <div style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: '#ff7a3d',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontWeight: 600,
+                fontSize: '14px'
+              }}>
+                {user.username.charAt(0).toUpperCase()}
+              </div>
+              <div
+                title={socketConnected ? 'Timp real activ' : 'Reconectare...'}
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  width: 9,
+                  height: 9,
+                  borderRadius: '50%',
+                  background: socketConnected ? '#22c55e' : '#f59e0b',
+                  border: '2px solid var(--gray-1)',
+                  transition: 'background 0.4s',
+                }}
+              />
             </div>
             <div style={{ textAlign: 'left' }}>
               <div style={{
