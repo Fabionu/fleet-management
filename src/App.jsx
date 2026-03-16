@@ -60,6 +60,14 @@ function App() {
     const token = localStorage.getItem('authToken');
     const username = localStorage.getItem('fleetUser');
     if (token && username) {
+      // Conectează socket-ul ÎNAINTE de setIsAuthenticated
+      // astfel încât getSocket() returnează instanța când Tracking.jsx se montează
+      const sock = connectSocket();
+      if (sock) {
+        sock.on('connect', () => setSocketConnected(true));
+        sock.on('disconnect', () => setSocketConnected(false));
+        if (sock.connected) setSocketConnected(true);
+      }
       setIsAuthenticated(true);
       setUser({
         username,
@@ -109,21 +117,11 @@ function App() {
     localStorage.setItem('currentPage', 'tracking');
   };
 
-  // Conectează socket dacă e deja autentificat (refresh pagină)
+  // Actualizează starea socketConnected dacă socket-ul era deja conectat la mount
   useEffect(() => {
     if (isAuthenticated) {
       const sock = connectSocket();
-      if (sock) {
-        const onConnect = () => setSocketConnected(true);
-        const onDisconnect = () => setSocketConnected(false);
-        sock.on('connect', onConnect);
-        sock.on('disconnect', onDisconnect);
-        if (sock.connected) setSocketConnected(true);
-        return () => {
-          sock.off('connect', onConnect);
-          sock.off('disconnect', onDisconnect);
-        };
-      }
+      if (sock?.connected) setSocketConnected(true);
     }
   }, [isAuthenticated]);
 
