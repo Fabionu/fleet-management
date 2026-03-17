@@ -51,6 +51,16 @@ io.on('connection', (socket) => {
   onlineUsers.get(orgId).set(socket.id, username);
   io.to(`org_${orgId}`).emit('users_online', getOnlineList(orgId));
 
+  // Logout explicit — actualizează imediat lista online, înainte ca socket-ul să se închidă
+  socket.on('user_logout', () => {
+    const orgMap = onlineUsers.get(orgId);
+    if (orgMap) {
+      orgMap.delete(socket.id);
+      if (orgMap.size === 0) onlineUsers.delete(orgId);
+    }
+    io.to(`org_${orgId}`).emit('users_online', getOnlineList(orgId));
+  });
+
   socket.on('disconnect', () => {
     console.log(`⚡ Socket: ${username} deconectat`);
     const orgMap = onlineUsers.get(orgId);

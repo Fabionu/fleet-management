@@ -37,9 +37,12 @@ export function connectSocket() {
 
 /**
  * Deconectează și curăță instanța socket.
+ * Emite 'user_logout' explicit înainte de disconnect, pentru a garanta
+ * că serverul actualizează lista online imediat (fără a aștepta pingTimeout).
  */
 export function disconnectSocket() {
   if (socket) {
+    if (socket.connected) socket.emit('user_logout');
     socket.disconnect();
     socket = null;
   }

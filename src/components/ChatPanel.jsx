@@ -55,6 +55,8 @@ function SentIcon() {
 
 export default function ChatPanel({ user }) {
   const [open, setOpen]           = useState(false);
+  const [isClosing, setIsClosing] = useState(false);
+  const [slideDir, setSlideDir]   = useState('right'); // 'right' | 'left'
   const [view, setView]           = useState('contacts'); // 'contacts' | 'chat'
   const [peer, setPeer]           = useState(null);
 
@@ -172,7 +174,13 @@ export default function ChatPanel({ user }) {
   }, [view, peer?.username]);
 
   // ── Acțiuni ───────────────────────────────────────────────
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => { setOpen(false); setIsClosing(false); setSlideDir('right'); }, 210);
+  };
+
   const openConversation = async (u) => {
+    setSlideDir('right');
     setPeer(u);
     setView('chat');
     setPeerReadAt(null);
@@ -204,6 +212,7 @@ export default function ChatPanel({ user }) {
   };
 
   const goBack = () => {
+    setSlideDir('left');
     setView('contacts');
     setPeer(null);
     setInputVal('');
@@ -275,6 +284,7 @@ export default function ChatPanel({ user }) {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             boxShadow: '0 4px 16px rgba(255,122,61,0.45)',
             transition: 'transform 0.2s, box-shadow 0.2s', position: 'relative',
+            animation: 'chatPanelIn 0.28s cubic-bezier(0.34,1.56,0.64,1)',
           }}
           onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.boxShadow = '0 6px 22px rgba(255,122,61,0.65)'; }}
           onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(255,122,61,0.45)'; }}
@@ -304,6 +314,9 @@ export default function ChatPanel({ user }) {
           boxShadow: '0 12px 48px rgba(0,0,0,0.22)',
           display: 'flex', flexDirection: 'column', overflow: 'hidden',
           fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+          animation: isClosing
+            ? 'chatPanelOut 0.2s ease forwards'
+            : 'chatPanelIn 0.28s cubic-bezier(0.34,1.56,0.64,1)',
         }}>
 
           {/* ════ HEADER ════ */}
@@ -324,7 +337,7 @@ export default function ChatPanel({ user }) {
                     · {onlineUsers.filter(u => u !== user.username).length} online
                   </span>
                 </div>
-                <CloseBtn onClick={() => setOpen(false)} />
+                <CloseBtn onClick={handleClose} />
               </div>
 
               {/* Căutare user */}
@@ -415,13 +428,16 @@ export default function ChatPanel({ user }) {
                 </div>
               </div>
 
-              <CloseBtn onClick={() => setOpen(false)} />
+              <CloseBtn onClick={handleClose} />
             </div>
           )}
 
           {/* ════ CONTACTS LIST ════ */}
           {view === 'contacts' && (
-            <div style={{ flex: 1, overflowY: 'auto' }}>
+            <div style={{
+              flex: 1, overflowY: 'auto',
+              animation: slideDir === 'left' ? 'chatSlideFromLeft 0.2s ease' : 'none',
+            }}>
               {filteredUsers.length === 0 && (
                 <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 13, marginTop: 60, lineHeight: 1.7 }}>
                   {search ? `Niciun user „${search}"` : 'Niciun coleg în organizație.'}
@@ -442,6 +458,8 @@ export default function ChatPanel({ user }) {
                       padding: '10px 14px',
                       borderBottom: i < filteredUsers.length - 1 ? '1px solid var(--gray-2)' : 'none',
                       cursor: 'pointer', background: 'transparent', transition: 'background 0.12s',
+                      animation: 'chatItemIn 0.22s ease both',
+                      animationDelay: `${Math.min(i * 40, 220)}ms`,
                     }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
@@ -509,7 +527,10 @@ export default function ChatPanel({ user }) {
 
           {/* ════ CONVERSAȚIE ════ */}
           {view === 'chat' && (
-            <>
+            <div style={{
+              display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0,
+              animation: 'chatSlideFromRight 0.2s ease',
+            }}>
               {/* Mesaje */}
               <div style={{
                 flex: 1, overflowY: 'auto', padding: '12px 14px',
@@ -611,7 +632,7 @@ export default function ChatPanel({ user }) {
                   </svg>
                 </button>
               </div>
-            </>
+            </div>
           )}
         </div>
       )}
