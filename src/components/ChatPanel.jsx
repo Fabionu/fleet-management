@@ -609,6 +609,7 @@ export default function ChatPanel({ user }) {
                   onKeyDown={handleKeyDown}
                   placeholder={`Mesaj pentru ${peer?.username}...`}
                   rows={1}
+                  className="chat-scroll"
                   style={{
                     flex: 1, resize: 'none', border: '1px solid var(--gray-3)',
                     borderRadius: 10, padding: '9px 12px', fontSize: 14,

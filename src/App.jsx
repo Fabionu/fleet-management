@@ -57,9 +57,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('authToken');
-    const username = localStorage.getItem('fleetUser');
+    // Check if user is logged in — verifică ambele storages (localStorage = "ține-mă minte", sessionStorage = sesiune temporară)
+    const storage = localStorage.getItem('authToken') ? localStorage : sessionStorage;
+    const token = storage.getItem('authToken');
+    const username = storage.getItem('fleetUser');
     if (token && username) {
       // Conectează socket-ul ÎNAINTE de setIsAuthenticated
       // astfel încât getSocket() returnează instanța când Tracking.jsx se montează
@@ -72,9 +73,9 @@ function App() {
       setIsAuthenticated(true);
       setUser({
         username,
-        role: localStorage.getItem('role'),
-        permissions: JSON.parse(localStorage.getItem('permissions') || '{}'),
-        organizationName: localStorage.getItem('organizationName')
+        role: storage.getItem('role'),
+        permissions: JSON.parse(storage.getItem('permissions') || '{}'),
+        organizationName: storage.getItem('organizationName')
       });
     }
 
@@ -84,12 +85,13 @@ function App() {
     document.documentElement.setAttribute('data-theme', savedTheme);
   }, []);
 
-  const handleLogin = (data) => {
-    localStorage.setItem('authToken', data.token);
-    localStorage.setItem('fleetUser', data.username);
-    localStorage.setItem('role', data.role);
-    localStorage.setItem('permissions', JSON.stringify(data.permissions));
-    localStorage.setItem('organizationName', data.organization_name);
+  const handleLogin = (data, rememberMe = true) => {
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem('authToken', data.token);
+    storage.setItem('fleetUser', data.username);
+    storage.setItem('role', data.role);
+    storage.setItem('permissions', JSON.stringify(data.permissions));
+    storage.setItem('organizationName', data.organization_name);
 
     setIsAuthenticated(true);
     setUser({
@@ -112,6 +114,7 @@ function App() {
     disconnectSocket();
     setSocketConnected(false);
     localStorage.clear();
+    sessionStorage.clear();
     setIsAuthenticated(false);
     setUser(null);
     setCurrentPage('tracking');

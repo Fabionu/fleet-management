@@ -1,9 +1,40 @@
 /**
- * Chat notification sounds — generate via Web Audio API.
- * Fără fișiere externe, totul sintetizat în browser.
+ * Chat notification sounds — Web Audio API, fără fișiere externe.
+ *
+ * Problema browserelor moderne: AudioContext pornește în stare "suspended"
+ * și NU poate reda sunete până când userul nu interacționează cu pagina
+ * (click, tastă, touch). Aceasta este o politică de securitate a browserului.
+ *
+ * Soluție: la primul eveniment de interacțiune (oriunde pe pagină), deblocăm
+ * contextul audio în avans, astfel încât sunetele funcționează pentru toți userii.
  */
 
 let _ctx = null;
+
+// ── Deblocare AudioContext la prima interacțiune ───────────
+function unlockAudio() {
+  if (_ctx) {
+    if (_ctx.state === 'suspended') _ctx.resume();
+    return;
+  }
+  try {
+    _ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_ctx.state === 'suspended') _ctx.resume();
+  } catch (_) {}
+}
+
+// Ascultă primul eveniment de interacțiune și deblochează contextul audio
+if (typeof document !== 'undefined') {
+  const bootstrap = () => {
+    unlockAudio();
+    document.removeEventListener('click',      bootstrap);
+    document.removeEventListener('keydown',    bootstrap);
+    document.removeEventListener('touchstart', bootstrap);
+  };
+  document.addEventListener('click',      bootstrap, { once: true, passive: true });
+  document.addEventListener('keydown',    bootstrap, { once: true, passive: true });
+  document.addEventListener('touchstart', bootstrap, { once: true, passive: true });
+}
 
 function getCtx() {
   if (!_ctx || _ctx.state === 'closed') {
@@ -13,11 +44,13 @@ function getCtx() {
   return _ctx;
 }
 
+// ── Sinteză ────────────────────────────────────────────────
+
 /**
  * Bell cu 3 parțiale armonice:
- *   - fundamentala  (100% volum, decay lung)
- *   - octava 2x     (35% volum, decay mediu) — strălucire
- *   - parțiala 2.756x (20% volum, decay scurt) — caracter metalic de clopot real
+ *   - fundamentala   (100% vol, decay lung)     — corpul sunetului
+ *   - octava 2×      (35%  vol, decay mediu)    — strălucire
+ *   - parțiala 2.756× (18% vol, decay scurt)   — caracter metalic de clopot real
  */
 function chime(ac, freq, t, duration, vol) {
   const master = ac.createGain();
@@ -38,7 +71,6 @@ function chime(ac, freq, t, duration, vol) {
     osc.connect(env);
     env.connect(master);
 
-    // Atac rapid (9ms), decay exponențial
     env.gain.setValueAtTime(0, t);
     env.gain.linearRampToValueAtTime(amplitude, t + 0.009);
     env.gain.exponentialRampToValueAtTime(0.0001, t + decay);
@@ -48,27 +80,28 @@ function chime(ac, freq, t, duration, vol) {
   });
 }
 
+// ── API publică ────────────────────────────────────────────
+
 /**
- * Mesaj primit — două note ascendente: A5 → E6 (interval de cvintă perfectă)
- * Sună cald, profesional, muzical. Primul ton anunță, al doilea confirmă.
+ * Mesaj primit — două note ascendente: A5 → E6 (cvintă perfectă)
+ * Sună cald, profesional, muzical.
  */
 export function playReceived() {
   try {
     const ac = getCtx();
     const t  = ac.currentTime;
     chime(ac, 880,    t,        0.52, 0.44);  // A5 — nota principală
-    chime(ac, 1318.5, t + 0.15, 0.62, 0.36); // E6 — cvintă perfectă, rezoluție plăcută
+    chime(ac, 1318.5, t + 0.15, 0.62, 0.36); // E6 — cvintă perfectă
   } catch (_) {}
 }
 
 /**
- * Mesaj trimis — un singur chime discret (A5, volum redus).
- * Subtil, confirmă fără a deranja.
+ * Mesaj trimis — chime discret, confirmare subtilă.
  */
 export function playSent() {
   try {
     const ac = getCtx();
     const t  = ac.currentTime;
-    chime(ac, 880, t, 0.2, 0.18); // A5 — scurt și discret
+    chime(ac, 880, t, 0.2, 0.18); // A5 scurt
   } catch (_) {}
 }

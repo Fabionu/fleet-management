@@ -64,6 +64,8 @@ function Login({ onLogin }) {
   const [regPassword, setRegPassword] = useState('');
   const [regConfirm, setRegConfirm] = useState('');
 
+  const [rememberMe, setRememberMe] = useState(true);
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(null);
@@ -74,7 +76,7 @@ function Login({ onLogin }) {
     setLoading(true);
     try {
       const response = await api.login(username, password);
-      onLogin(response.data);
+      onLogin(response.data, rememberMe);
     } catch (err) {
       setError(err.response?.data?.error || 'Utilizator sau parolă incorectă');
     } finally {
@@ -310,7 +312,7 @@ function Login({ onLogin }) {
               </div>
             </div>
 
-            <div style={{ marginBottom: '24px' }}>
+            <div style={{ marginBottom: '20px' }}>
               <label style={lStyle}>Parolă</label>
               <div style={{ position: 'relative' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={ic('pw')} strokeWidth="2" strokeLinecap="round" style={iconAbsStyle}>
@@ -328,6 +330,37 @@ function Login({ onLogin }) {
                   style={iField('pw')}
                 />
               </div>
+            </div>
+
+            {/* ── Remember me ── */}
+            <div
+              onClick={() => setRememberMe(v => !v)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '10px',
+                marginBottom: '22px', cursor: 'pointer', userSelect: 'none',
+              }}
+            >
+              {/* Checkbox custom */}
+              <div style={{
+                width: 17, height: 17, borderRadius: 5, flexShrink: 0,
+                border: `1.5px solid ${rememberMe ? '#ff7a3d' : 'rgba(255,255,255,0.18)'}`,
+                background: rememberMe ? '#ff7a3d' : 'transparent',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'all 0.18s ease',
+              }}>
+                {rememberMe && (
+                  <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+                    <polyline
+                      points="1 3.5 3.5 6 8 1"
+                      stroke="white" strokeWidth="1.6"
+                      strokeLinecap="round" strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
+              </div>
+              <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1 }}>
+                Ține-mă minte
+              </span>
             </div>
 
             {error && <ErrorBlock msg={error} />}
