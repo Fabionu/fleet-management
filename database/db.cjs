@@ -321,6 +321,48 @@ async function initDb() {
       )
     `);
 
+    // Chat Groups tables
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS chat_groups (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        organization_id INTEGER REFERENCES organizations(id),
+        created_by TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS chat_group_members (
+        group_id INTEGER REFERENCES chat_groups(id) ON DELETE CASCADE,
+        username TEXT NOT NULL,
+        organization_id INTEGER NOT NULL,
+        added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (group_id, username)
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS chat_group_messages (
+        id SERIAL PRIMARY KEY,
+        group_id INTEGER REFERENCES chat_groups(id) ON DELETE CASCADE,
+        organization_id INTEGER NOT NULL,
+        username TEXT NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS chat_group_read (
+        username TEXT NOT NULL,
+        group_id INTEGER NOT NULL,
+        organization_id INTEGER NOT NULL,
+        last_read_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (username, group_id)
+      )
+    `);
+
     // Migration: add load_eta column to trucks if not exists
     await client.query(`ALTER TABLE trucks ADD COLUMN IF NOT EXISTS load_eta TEXT`);
 

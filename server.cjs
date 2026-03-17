@@ -39,13 +39,26 @@ function getOnlineList(orgId) {
   return [...new Set(orgMap.values())];
 }
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   const orgId = socket.user.organization_id;
   const username = socket.user.username;
 
   socket.join(`org_${orgId}`);
   socket.join(`user_${username}_org_${orgId}`); // cameră privată pentru DM-uri
   console.log(`⚡ Socket: ${username} conectat (org ${orgId})`);
+
+  // Join în camerele grupurilor din care face parte userul
+  try {
+    const groupsRes = await pool.query(
+      'SELECT group_id FROM chat_group_members WHERE username=$1 AND organization_id=$2',
+      [username, orgId]
+    );
+    groupsRes.rows.forEach(({ group_id }) => {
+      socket.join(`group_${group_id}_org_${orgId}`);
+    });
+  } catch (e) {
+    console.warn('⚡ Eroare join group rooms:', e.message);
+  }
 
   if (!onlineUsers.has(orgId)) onlineUsers.set(orgId, new Map());
   onlineUsers.get(orgId).set(socket.id, username);
@@ -59,6 +72,14 @@ io.on('connection', (socket) => {
       if (orgMap.size === 0) onlineUsers.delete(orgId);
     }
     io.to(`org_${orgId}`).emit('users_online', getOnlineList(orgId));
+  });
+
+  // Grup events — clientul cere să intre/iasă dintr-o cameră de grup
+  socket.on('join_group', (groupId) => {
+    socket.join(`group_${groupId}_org_${orgId}`);
+  });
+  socket.on('leave_group', (groupId) => {
+    socket.leave(`group_${groupId}_org_${orgId}`);
   });
 
   socket.on('disconnect', () => {
@@ -227,6 +248,246 @@ app.get('/api/chat/last-messages', authMiddleware, async (req, res) => {
 // Useri online curent (fallback REST)
 app.get('/api/chat/online', authMiddleware, (req, res) => {
   res.json(getOnlineList(req.user.organization_id));
+});
+
+// ── CHAT GROUPS ──────────────────────────────────────────────
+
+// Mesaje necitite per grup — ÎNAINTE de /:id pentru a evita conflict de rută
+app.get('/api/chat/groups/unread', authMiddleware, async (req, res) => {
+  try {
+    const me = req.user.username;
+    const orgId = req.user.organization_id;
+    const result = await pool.query(
+      `SELECT gm.group_id, COUNT(*) AS unread
+       FROM chat_group_messages gm
+       LEFT JOIN chat_group_read gr ON gr.group_id = gm.group_id AND gr.username = $1
+       WHERE gm.organization_id = $2
+         AND gm.username != $1
+         AND (gr.last_read_at IS NULL OR gm.created_at > gr.last_read_at)
+         AND gm.group_id IN (
+           SELECT group_id FROM chat_group_members WHERE username = $1 AND organization_id = $2
+         )
+       GROUP BY gm.group_id`,
+      [me, orgId]
+    );
+    const counts = {};
+    result.rows.forEach(r => { counts[r.group_id] = parseInt(r.unread); });
+    res.json(counts);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Lista grupurilor din care face parte userul curent
+app.get('/api/chat/groups', authMiddleware, async (req, res) => {
+  try {
+    const me = req.user.username;
+    const orgId = req.user.organization_id;
+    const result = await pool.query(
+      `SELECT g.id, g.name, g.created_by, g.created_at,
+         array_agg(gm2.username ORDER BY gm2.username) AS members
+       FROM chat_groups g
+       JOIN chat_group_members gm ON gm.group_id = g.id AND gm.username = $1
+       JOIN chat_group_members gm2 ON gm2.group_id = g.id
+       WHERE g.organization_id = $2
+       GROUP BY g.id
+       ORDER BY g.created_at DESC`,
+      [me, orgId]
+    );
+    res.json(result.rows);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Creare grup (admin only)
+app.post('/api/chat/groups', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Doar adminii pot crea grupuri' });
+  const { name, members } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'Numele grupului este obligatoriu' });
+  if (!Array.isArray(members) || members.length === 0) return res.status(400).json({ error: 'Selectează cel puțin un membru' });
+
+  const orgId = req.user.organization_id;
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const grpRes = await client.query(
+      `INSERT INTO chat_groups (name, organization_id, created_by) VALUES ($1, $2, $3) RETURNING *`,
+      [name.trim(), orgId, req.user.username]
+    );
+    const group = grpRes.rows[0];
+
+    // Adaugă membrii (inclusiv creatorul dacă nu e deja în listă)
+    const allMembers = [...new Set([...members, req.user.username])];
+    for (const m of allMembers) {
+      await client.query(
+        `INSERT INTO chat_group_members (group_id, username, organization_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+        [group.id, m, orgId]
+      );
+    }
+    await client.query('COMMIT');
+
+    const fullGroup = { ...group, members: allMembers };
+
+    // Notifică fiecare membru în real-time
+    allMembers.forEach(m => {
+      io.to(`user_${m}_org_${orgId}`).emit('group_created', fullGroup);
+    });
+
+    res.json(fullGroup);
+  } catch (e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally {
+    client.release();
+  }
+});
+
+// Ștergere grup (admin only)
+app.delete('/api/chat/groups/:id', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Doar adminii pot șterge grupuri' });
+  const orgId = req.user.organization_id;
+  const groupId = parseInt(req.params.id);
+  try {
+    // Obține membrii înainte de ștergere (pentru emit)
+    const membersRes = await pool.query(
+      `SELECT username FROM chat_group_members WHERE group_id = $1 AND organization_id = $2`,
+      [groupId, orgId]
+    );
+    const members = membersRes.rows.map(r => r.username);
+
+    await pool.query(
+      `DELETE FROM chat_groups WHERE id = $1 AND organization_id = $2`,
+      [groupId, orgId]
+    );
+
+    // Notifică membrii în real-time (CASCADE sterge automat membrii, mesajele, read receipts)
+    io.to(`group_${groupId}_org_${orgId}`).emit('group_deleted', { id: groupId });
+    members.forEach(m => {
+      io.to(`user_${m}_org_${orgId}`).emit('group_deleted', { id: groupId });
+    });
+
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Actualizare membri grup (admin only) — body: { members: ['user1', ...] }
+app.put('/api/chat/groups/:id/members', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Doar adminii pot modifica membrii' });
+  const { members } = req.body;
+  if (!Array.isArray(members)) return res.status(400).json({ error: 'Lista de membri este obligatorie' });
+
+  const orgId = req.user.organization_id;
+  const groupId = parseInt(req.params.id);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    // Lista existentă de membri
+    const existingRes = await client.query(
+      `SELECT username FROM chat_group_members WHERE group_id = $1 AND organization_id = $2`,
+      [groupId, orgId]
+    );
+    const existing = existingRes.rows.map(r => r.username);
+
+    // Creatorul rămâne mereu în grup
+    const creatorRes = await client.query(`SELECT created_by FROM chat_groups WHERE id=$1`, [groupId]);
+    const creator = creatorRes.rows[0]?.created_by;
+    const newMembers = [...new Set([...members, creator].filter(Boolean))];
+
+    const toAdd = newMembers.filter(m => !existing.includes(m));
+    const toRemove = existing.filter(m => !newMembers.includes(m));
+
+    for (const m of toAdd) {
+      await client.query(
+        `INSERT INTO chat_group_members (group_id, username, organization_id) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
+        [groupId, m, orgId]
+      );
+    }
+    for (const m of toRemove) {
+      await client.query(
+        `DELETE FROM chat_group_members WHERE group_id=$1 AND username=$2`,
+        [groupId, m]
+      );
+    }
+    await client.query('COMMIT');
+
+    // Notifică membrii adăugați să intre în camera de grup
+    toAdd.forEach(m => {
+      io.to(`user_${m}_org_${orgId}`).emit('group_member_added', { groupId });
+    });
+    // Notifică membrii scoși să iasă din camera de grup
+    toRemove.forEach(m => {
+      io.to(`user_${m}_org_${orgId}`).emit('group_member_removed', { groupId });
+    });
+    // Actualizează lista de membri pentru toți
+    io.to(`group_${groupId}_org_${orgId}`).emit('group_updated', { id: groupId, members: newMembers });
+    // Notifică și membrii adăugați (nu sunt încă în cameră)
+    toAdd.forEach(m => {
+      io.to(`user_${m}_org_${orgId}`).emit('group_updated', { id: groupId, members: newMembers });
+    });
+
+    res.json({ members: newMembers });
+  } catch (e) {
+    await client.query('ROLLBACK');
+    res.status(500).json({ error: e.message });
+  } finally {
+    client.release();
+  }
+});
+
+// Mesajele unui grup (ultimele 100)
+app.get('/api/chat/groups/:id/messages', authMiddleware, async (req, res) => {
+  try {
+    const orgId = req.user.organization_id;
+    const groupId = parseInt(req.params.id);
+    // Verifică că userul e membru
+    const memRes = await pool.query(
+      `SELECT 1 FROM chat_group_members WHERE group_id=$1 AND username=$2 AND organization_id=$3`,
+      [groupId, req.user.username, orgId]
+    );
+    if (memRes.rows.length === 0) return res.status(403).json({ error: 'Nu ești membru al acestui grup' });
+
+    const result = await pool.query(
+      `SELECT * FROM chat_group_messages WHERE group_id=$1 AND organization_id=$2 ORDER BY created_at DESC LIMIT 100`,
+      [groupId, orgId]
+    );
+    res.json(result.rows.reverse());
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Trimite mesaj în grup
+app.post('/api/chat/groups/:id/messages', authMiddleware, async (req, res) => {
+  const { message } = req.body;
+  if (!message?.trim()) return res.status(400).json({ error: 'Mesajul este gol' });
+  const orgId = req.user.organization_id;
+  const groupId = parseInt(req.params.id);
+  try {
+    // Verifică că userul e membru
+    const memRes = await pool.query(
+      `SELECT 1 FROM chat_group_members WHERE group_id=$1 AND username=$2 AND organization_id=$3`,
+      [groupId, req.user.username, orgId]
+    );
+    if (memRes.rows.length === 0) return res.status(403).json({ error: 'Nu ești membru al acestui grup' });
+
+    const result = await pool.query(
+      `INSERT INTO chat_group_messages (group_id, organization_id, username, message) VALUES ($1, $2, $3, $4) RETURNING *`,
+      [groupId, orgId, req.user.username, message.trim()]
+    );
+    const msg = result.rows[0];
+    io.to(`group_${groupId}_org_${orgId}`).emit('new_group_message', msg);
+    res.json(msg);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Marchează grupul ca citit de userul curent
+app.put('/api/chat/groups/:id/read', authMiddleware, async (req, res) => {
+  try {
+    const groupId = parseInt(req.params.id);
+    await pool.query(
+      `INSERT INTO chat_group_read (username, group_id, organization_id, last_read_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (username, group_id) DO UPDATE SET last_read_at = NOW()`,
+      [req.user.username, groupId, req.user.organization_id]
+    );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ── AUTH ────────────────────────────────────────────────────
