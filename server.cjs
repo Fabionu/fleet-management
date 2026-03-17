@@ -395,18 +395,18 @@ app.put('/api/trucks/:id', authMiddleware, async (req, res) => {
     await pool.query(`
       UPDATE trucks SET
         number=$1, status=$2, client=$3, order_number=$4,
-        load_firm=$5, load_street=$6, load_location=$7, load_date=$8, load_lat=$9, load_lng=$10,
-        unload_firm=$11, unload_street=$12, unload_location=$13, unload_date=$14, unload_lat=$15, unload_lng=$16,
-        eta=$17, observations=$18, pause_date=$19, pause_time=$20,
-        weekend_duration=$21, weekend_day=$22, weekend_time=$23, weekend_week=$24, weekend_history=$25,
-        drivers=$26, phone=$27, trailer=$28, fuel_card=$29, fuel_card_expiry=$30,
-        amazon_account=$31, vignettes=$32, next_trip=$33,
-        file_name=$34, file_data=$35, file_type=$36, vehicle_type=$37,
-        driver_1=$38, driver_2=$39
-      WHERE id=$40
+        load_firm=$5, load_street=$6, load_location=$7, load_date=$8, load_eta=$9, load_lat=$10, load_lng=$11,
+        unload_firm=$12, unload_street=$13, unload_location=$14, unload_date=$15, unload_lat=$16, unload_lng=$17,
+        eta=$18, observations=$19, pause_date=$20, pause_time=$21,
+        weekend_duration=$22, weekend_day=$23, weekend_time=$24, weekend_week=$25, weekend_history=$26,
+        drivers=$27, phone=$28, trailer=$29, fuel_card=$30, fuel_card_expiry=$31,
+        amazon_account=$32, vignettes=$33, next_trip=$34,
+        file_name=$35, file_data=$36, file_type=$37, vehicle_type=$38,
+        driver_1=$39, driver_2=$40
+      WHERE id=$41
     `, [
       t.number, t.status, t.client, t.order_number,
-      t.load_firm ?? null, t.load_street ?? null, t.load_location, t.load_date, t.load_lat, t.load_lng,
+      t.load_firm ?? null, t.load_street ?? null, t.load_location, t.load_date, t.load_eta ?? null, t.load_lat, t.load_lng,
       t.unload_firm ?? null, t.unload_street ?? null, t.unload_location, t.unload_date, t.unload_lat, t.unload_lng,
       t.eta, t.observations, t.pause_date, t.pause_time,
       t.weekend_duration, t.weekend_day, t.weekend_time, t.weekend_week,

@@ -321,6 +321,9 @@ async function initDb() {
       )
     `);
 
+    // Migration: add load_eta column to trucks if not exists
+    await client.query(`ALTER TABLE trucks ADD COLUMN IF NOT EXISTS load_eta TEXT`);
+
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {
     client.release();
