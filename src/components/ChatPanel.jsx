@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { getSocket } from '../services/socket';
+import { playReceived, playSent } from '../services/sounds';
 import axios from 'axios';
 
 function formatTime(ts) {
@@ -121,6 +122,7 @@ export default function ChatPanel({ user }) {
         if (chatOpen) {
           axios.put(`/api/chat/read/${peerOfMsg}`, {}, { headers }).catch(() => {});
         } else {
+          playReceived(); // 🔔 notificare sonoră — mesaj nou în conversație inactivă
           setUnreadCounts(prev => {
             const updated = { ...prev, [peerOfMsg]: (prev[peerOfMsg] || 0) + 1 };
             setTotalUnread(Object.values(updated).reduce((a, b) => a + b, 0));
@@ -225,6 +227,7 @@ export default function ChatPanel({ user }) {
     setInputVal('');
     try {
       await axios.post('/api/chat/messages', { to: peer.username, message: msg }, { headers });
+      playSent(); // 🔔 confirmare sonoră discretă la trimitere
     } catch {}
   };
 
