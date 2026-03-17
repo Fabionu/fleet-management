@@ -59,6 +59,89 @@ function GroupIcon({ size = 18, color = 'currentColor' }) {
   );
 }
 
+function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder }) {
+  return (
+    <div style={{
+      padding: '10px 12px', borderTop: '1px solid var(--gray-2)',
+      display: 'flex', gap: 8, alignItems: 'flex-end', flexShrink: 0,
+    }}>
+      <textarea
+        ref={inputRef}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+        rows={1}
+        className="chat-scroll"
+        style={{
+          flex: 1, resize: 'none', border: '1px solid var(--gray-3)',
+          borderRadius: 10, padding: '9px 12px', fontSize: 14,
+          background: 'var(--gray-1)', color: 'var(--black)', outline: 'none',
+          fontFamily: 'inherit', lineHeight: 1.4, maxHeight: 80, overflowY: 'auto',
+          transition: 'border-color 0.2s', boxSizing: 'border-box',
+        }}
+        onFocus={e => e.target.style.borderColor = '#ff7a3d'}
+        onBlur={e => e.target.style.borderColor = 'var(--gray-3)'}
+      />
+      <button
+        onClick={onSend}
+        disabled={!value.trim()}
+        style={{
+          width: 38, height: 38, borderRadius: '50%',
+          background: value.trim() ? '#ff7a3d' : 'var(--gray-2)',
+          border: 'none', cursor: value.trim() ? 'pointer' : 'default',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'background 0.2s', flexShrink: 0,
+        }}
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="white" stroke="none">
+          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+function Checkbox({ checked, onChange, label }) {
+  return (
+    <div
+      onClick={onChange}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 10,
+        padding: '8px 14px', cursor: 'pointer',
+        transition: 'background 0.12s',
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >
+      <div style={{
+        width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+        border: `1.5px solid ${checked ? '#ff7a3d' : 'var(--gray-3)'}`,
+        background: checked ? '#ff7a3d' : 'transparent',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'all 0.15s',
+      }}>
+        {checked && (
+          <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
+            <polyline points="1 3.5 3.5 6 8 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        )}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: '50%',
+          background: avatarColor(label),
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'white', fontWeight: 600, fontSize: 12,
+        }}>
+          {label.charAt(0).toUpperCase()}
+        </div>
+        <span style={{ fontSize: 14, color: 'var(--black)' }}>{label}</span>
+      </div>
+    </div>
+  );
+}
+
 export default function ChatPanel({ user }) {
   // ── View state ─────────────────────────────────────────────
   const [open, setOpen]           = useState(false);
@@ -259,6 +342,16 @@ export default function ChatPanel({ user }) {
     };
   }, []);
 
+  // Cere lista online după ce listener-ul a fost înregistrat, evitând race condition
+  useEffect(() => {
+    const socket = getSocket();
+    if (socket?.connected) {
+      socket.emit('get_online_users');
+    } else if (socket) {
+      socket.once('connect', () => socket.emit('get_online_users'));
+    }
+  }, []);
+
   useEffect(() => { openRef.current = open; }, [open]);
   useEffect(() => { peerRef.current = peer; }, [peer]);
   useEffect(() => { activeGroupRef.current = activeGroup; }, [activeGroup]);
@@ -402,7 +495,9 @@ export default function ChatPanel({ user }) {
     if (!newGroupName.trim() || newGroupMembers.length === 0) return;
     setGroupSaving(true);
     try {
-      await axios.post('/api/chat/groups', { name: newGroupName.trim(), members: newGroupMembers }, { headers });
+      const res = await axios.post('/api/chat/groups', { name: newGroupName.trim(), members: newGroupMembers }, { headers });
+      // Adaugă grupul direct în state (socket event-ul poate întârzia sau fi duplicat)
+      setGroups(prev => prev.some(g => g.id === res.data.id) ? prev : [res.data, ...prev]);
       setView('contacts');
     } catch (e) {
       alert(e.response?.data?.error || 'Eroare la creare grup');
@@ -504,86 +599,9 @@ export default function ChatPanel({ user }) {
     </button>
   );
 
-  // ── Shared input/send ──────────────────────────────────────
-  const ChatInput = ({ placeholder }) => (
-    <div style={{
-      padding: '10px 12px', borderTop: '1px solid var(--gray-2)',
-      display: 'flex', gap: 8, alignItems: 'flex-end', flexShrink: 0,
-    }}>
-      <textarea
-        ref={inputRef}
-        value={inputVal}
-        onChange={e => setInputVal(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        rows={1}
-        className="chat-scroll"
-        style={{
-          flex: 1, resize: 'none', border: '1px solid var(--gray-3)',
-          borderRadius: 10, padding: '9px 12px', fontSize: 14,
-          background: 'var(--gray-1)', color: 'var(--black)', outline: 'none',
-          fontFamily: 'inherit', lineHeight: 1.4, maxHeight: 80, overflowY: 'auto',
-          transition: 'border-color 0.2s', boxSizing: 'border-box',
-        }}
-        onFocus={e => e.target.style.borderColor = '#ff7a3d'}
-        onBlur={e => e.target.style.borderColor = 'var(--gray-3)'}
-      />
-      <button
-        onClick={sendMessage}
-        disabled={!inputVal.trim()}
-        style={{
-          width: 38, height: 38, borderRadius: '50%',
-          background: inputVal.trim() ? '#ff7a3d' : 'var(--gray-2)',
-          border: 'none', cursor: inputVal.trim() ? 'pointer' : 'default',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          transition: 'background 0.2s', flexShrink: 0,
-        }}
-      >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="white" stroke="none">
-          <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-      </button>
-    </div>
-  );
 
-  // ── Checkbox stilizat ──────────────────────────────────────
-  const Checkbox = ({ checked, onChange, label }) => (
-    <div
-      onClick={onChange}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '8px 14px', cursor: 'pointer',
-        transition: 'background 0.12s',
-      }}
-      onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
-      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-    >
-      <div style={{
-        width: 16, height: 16, borderRadius: 4, flexShrink: 0,
-        border: `1.5px solid ${checked ? '#ff7a3d' : 'var(--gray-3)'}`,
-        background: checked ? '#ff7a3d' : 'transparent',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'all 0.15s',
-      }}>
-        {checked && (
-          <svg width="9" height="7" viewBox="0 0 9 7" fill="none">
-            <polyline points="1 3.5 3.5 6 8 1" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        )}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
-        <div style={{
-          width: 28, height: 28, borderRadius: '50%',
-          background: avatarColor(label),
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: 'white', fontWeight: 600, fontSize: 12,
-        }}>
-          {label.charAt(0).toUpperCase()}
-        </div>
-        <span style={{ fontSize: 14, color: 'var(--black)' }}>{label}</span>
-      </div>
-    </div>
-  );
+
+
 
   // ── Render ─────────────────────────────────────────────────
   return (
@@ -1031,7 +1049,7 @@ export default function ChatPanel({ user }) {
                 })}
                 <div ref={messagesEndRef}/>
               </div>
-              <ChatInput placeholder={`Mesaj pentru ${peer?.username}...`} />
+              <ChatInput inputRef={inputRef} value={inputVal} onChange={setInputVal} onKeyDown={handleKeyDown} onSend={sendMessage} placeholder={`Mesaj pentru ${peer?.username}...`} />
             </div>
           )}
 
@@ -1076,7 +1094,7 @@ export default function ChatPanel({ user }) {
                 })}
                 <div ref={messagesEndRef}/>
               </div>
-              <ChatInput placeholder={`Mesaj în ${activeGroup?.name}...`} />
+              <ChatInput inputRef={inputRef} value={inputVal} onChange={setInputVal} onKeyDown={handleKeyDown} onSend={sendMessage} placeholder={`Mesaj în ${activeGroup?.name}...`} />
             </div>
           )}
 

@@ -74,6 +74,11 @@ io.on('connection', async (socket) => {
     io.to(`org_${orgId}`).emit('users_online', getOnlineList(orgId));
   });
 
+  // Client cere lista curentă de useri online (după ce și-a înregistrat listener-ul)
+  socket.on('get_online_users', () => {
+    socket.emit('users_online', getOnlineList(orgId));
+  });
+
   // Grup events — clientul cere să intre/iasă dintr-o cameră de grup
   socket.on('join_group', (groupId) => {
     socket.join(`group_${groupId}_org_${orgId}`);
