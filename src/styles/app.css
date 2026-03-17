@@ -33,6 +33,10 @@
   --picker-filter: none;
   --sv-hover: #ebebea;
   --btn-hover: rgba(0, 0, 0, 0.08);
+  --chat-recv-bg: #e4e4e0;
+  --chat-recv-text: #111110;
+  --chat-sent-bg: #1d4ed8;
+  --chat-sent-text: #ffffff;
 }
 
 /* Dark theme */
@@ -62,6 +66,10 @@
   --picker-filter: invert(1);
   --sv-hover: #303030;
   --btn-hover: rgba(255, 255, 255, 0.12);
+  --chat-recv-bg: #2e2e2e;
+  --chat-recv-text: #e8e8e8;
+  --chat-sent-bg: #2563eb;
+  --chat-sent-text: #ffffff;
 }
 
 @keyframes spin-loader {
@@ -1218,6 +1226,33 @@ body.card-view tbody tr td {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+}
+
+/* ── Chat panel — scrollbar minimalist ─────────────────── */
+.chat-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.3s;
+}
+.chat-scroll:hover {
+  scrollbar-color: var(--gray-3) transparent;
+}
+.chat-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+.chat-scroll:hover::-webkit-scrollbar-thumb {
+  background: var(--gray-3);
+}
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-4);
 }
 
 /* ── Chat panel animations ─────────────────────────────── */

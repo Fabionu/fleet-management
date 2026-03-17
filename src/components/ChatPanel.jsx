@@ -434,7 +434,7 @@ export default function ChatPanel({ user }) {
 
           {/* ════ CONTACTS LIST ════ */}
           {view === 'contacts' && (
-            <div style={{
+            <div className="chat-scroll" style={{
               flex: 1, overflowY: 'auto',
               animation: slideDir === 'left' ? 'chatSlideFromLeft 0.2s ease' : 'none',
             }}>
@@ -532,7 +532,7 @@ export default function ChatPanel({ user }) {
               animation: 'chatSlideFromRight 0.2s ease',
             }}>
               {/* Mesaje */}
-              <div style={{
+              <div className="chat-scroll" style={{
                 flex: 1, overflowY: 'auto', padding: '12px 14px',
                 display: 'flex', flexDirection: 'column', gap: 4,
               }}>
@@ -559,8 +559,8 @@ export default function ChatPanel({ user }) {
                       <div style={{
                         maxWidth: '80%', padding: '8px 12px',
                         borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px',
-                        background: isMe ? '#1d4ed8' : 'var(--gray-1)',
-                        color: isMe ? 'white' : 'var(--black)',
+                        background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)',
+                        color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)',
                         fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word',
                       }}>
                         {msg.message}
@@ -574,7 +574,7 @@ export default function ChatPanel({ user }) {
                           paddingRight: isMe ? 4 : 0,
                           flexDirection: isMe ? 'row-reverse' : 'row',
                         }}>
-                          <span style={{ fontSize: 10, color: 'var(--gray-3)' }}>
+                          <span style={{ fontSize: 10, color: 'var(--gray-4)' }}>
                             {formatTime(msg.created_at)}
                           </span>
                           {/* Read receipt — doar la mesajele mele */}
