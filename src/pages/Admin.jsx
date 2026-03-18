@@ -30,7 +30,9 @@ const PERM_GROUPS = [
     label: 'Administrare',
     icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>,
     items: [
-      { key: 'accessAdmin', label: 'Acces panou admin', desc: 'Permite accesul la panoul de administrare (utilizatori, camioane, șoferi, jurnal)', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+      { key: 'accessAdmin', label: 'Acces panou admin',       desc: 'Permite accesul la panou + secțiunile Camioane, Șoferi, Remorci',     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+      { key: 'accessUsers', label: 'Secțiunea Utilizatori',   desc: 'Poate vedea și gestiona conturile utilizatorilor din organizație',      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+      { key: 'accessLogs',  label: 'Jurnal activitate',       desc: 'Poate consulta istoricul acțiunilor efectuate în aplicație',           icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> },
     ],
   },
   {
@@ -47,9 +49,9 @@ const PERM_GROUPS = [
 ];
 
 const DEFAULT_PERMISSIONS = {
-  admin:      { editVehicleInfo:true,  toggleAmazon:true,  addTrip:true,  editTrip:true,  deleteTrip:true,  clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:true,  accessAdmin:true  },
-  dispatcher: { editVehicleInfo:false, toggleAmazon:false, addTrip:true,  editTrip:true,  deleteTrip:false, clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:false, accessAdmin:false },
-  contabil:   { editVehicleInfo:false, toggleAmazon:false, addTrip:false, editTrip:true,  deleteTrip:false, clearTruckData:false, deleteTruckRow:false, addNextTrip:false, markInvoiced:true,  accessAdmin:false },
+  admin:      { editVehicleInfo:true,  toggleAmazon:true,  addTrip:true,  editTrip:true,  deleteTrip:true,  clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:true,  accessAdmin:true,  accessUsers:true,  accessLogs:true  },
+  dispatcher: { editVehicleInfo:false, toggleAmazon:false, addTrip:true,  editTrip:true,  deleteTrip:false, clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:false, accessAdmin:false, accessUsers:false, accessLogs:false },
+  contabil:   { editVehicleInfo:false, toggleAmazon:false, addTrip:false, editTrip:true,  deleteTrip:false, clearTruckData:false, deleteTruckRow:false, addNextTrip:false, markInvoiced:true,  accessAdmin:false, accessUsers:false, accessLogs:false },
 };
 
 const DOC_TYPES = DRIVER_DOC_TYPES;
@@ -284,8 +286,8 @@ function SectionHeader({ title, icon, count, onBack, action }) {
 }
 
 // ── Dashboard carduri ──────────────────────────────────────
-function Dashboard({ onSelect, counts }) {
-  const cards = [
+function Dashboard({ onSelect, counts, canSeeUsers, canSeeLogs }) {
+  const allCards = [
     {
       key: 'utilizatori',
       icon: <IconUsers />,
@@ -332,6 +334,12 @@ function Dashboard({ onSelect, counts }) {
       countLabel: 'înregistrări',
     },
   ];
+
+  const cards = allCards.filter(c => {
+    if (c.key === 'utilizatori') return canSeeUsers;
+    if (c.key === 'jurnal') return canSeeLogs;
+    return true;
+  });
 
   return (
     <div>
@@ -1838,14 +1846,17 @@ function Admin({ user }) {
     else localStorage.removeItem('adminSection');
   };
 
+  const canSeeUsers = user.role === 'admin' || user.permissions?.accessUsers;
+  const canSeeLogs  = user.role === 'admin' || user.permissions?.accessLogs;
+
   return (
     <div style={{ paddingTop:'16px' }}>
-      {!active && <Dashboard onSelect={goTo} counts={counts} />}
-      {active === 'utilizatori' && <SectionUtilizatori onBack={() => goTo(null)} />}
+      {!active && <Dashboard onSelect={goTo} counts={counts} canSeeUsers={canSeeUsers} canSeeLogs={canSeeLogs} />}
+      {active === 'utilizatori' && canSeeUsers && <SectionUtilizatori onBack={() => goTo(null)} />}
       {active === 'camioane'    && <SectionCamioane    onBack={() => goTo(null)} />}
       {active === 'soferi'      && <SectionSoferi      onBack={() => goTo(null)} />}
       {active === 'remorci'     && <SectionRemorci     onBack={() => goTo(null)} />}
-      {active === 'jurnal'      && <SectionJurnal      onBack={() => goTo(null)} />}
+      {active === 'jurnal'      && canSeeLogs  && <SectionJurnal      onBack={() => goTo(null)} />}
     </div>
   );
 }

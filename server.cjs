@@ -932,12 +932,10 @@ app.delete('/api/trips/:id', authMiddleware, requirePermission('deleteTrip'), as
   }
 });
 
-// ── USERS (admin sau accessAdmin) ───────────────────────────
-const hasAdminAccess = (user) => user.role === 'admin' || user.permissions?.accessAdmin;
-
+// ── USERS ────────────────────────────────────────────────────
 app.get('/api/users', authMiddleware, async (req, res) => {
   try {
-    if (!hasAdminAccess(req.user)) return res.status(403).json({ error: 'Acces interzis' });
+    if (req.user.role !== 'admin' && !req.user.permissions?.accessUsers) return res.status(403).json({ error: 'Acces interzis' });
     const result = await pool.query(
       'SELECT id, username, role, permissions, first_name, last_name FROM users WHERE organization_id = $1',
       [req.user.organization_id]
@@ -954,7 +952,7 @@ app.get('/api/users', authMiddleware, async (req, res) => {
 
 app.post('/api/users', authMiddleware, async (req, res) => {
   try {
-    if (!hasAdminAccess(req.user)) return res.status(403).json({ error: 'Acces interzis' });
+    if (req.user.role !== 'admin' && !req.user.permissions?.accessUsers) return res.status(403).json({ error: 'Acces interzis' });
     const { username, password, role, permissions, first_name, last_name } = req.body;
     const hash = bcrypt.hashSync(password, 10);
     const perms = JSON.stringify(permissions || {});
@@ -971,7 +969,7 @@ app.post('/api/users', authMiddleware, async (req, res) => {
 
 app.put('/api/users/:id', authMiddleware, async (req, res) => {
   try {
-    if (!hasAdminAccess(req.user)) return res.status(403).json({ error: 'Acces interzis' });
+    if (req.user.role !== 'admin' && !req.user.permissions?.accessUsers) return res.status(403).json({ error: 'Acces interzis' });
     const { password, role, permissions, first_name, last_name } = req.body;
     if (password) {
       const hash = bcrypt.hashSync(password, 10);
@@ -995,7 +993,7 @@ app.put('/api/users/:id', authMiddleware, async (req, res) => {
 
 app.delete('/api/users/:id', authMiddleware, async (req, res) => {
   try {
-    if (!hasAdminAccess(req.user)) return res.status(403).json({ error: 'Acces interzis' });
+    if (req.user.role !== 'admin' && !req.user.permissions?.accessUsers) return res.status(403).json({ error: 'Acces interzis' });
     const userResult = await pool.query('SELECT organization_id, username FROM users WHERE id = $1', [req.params.id]);
     const user = userResult.rows[0];
     if (!user || user.organization_id !== req.user.organization_id) {
@@ -1025,7 +1023,7 @@ async function addLog(organizationId, username, action, entityType, entityId, de
 
 app.get('/api/logs', authMiddleware, async (req, res) => {
   try {
-    if (!hasAdminAccess(req.user)) return res.status(403).json({ error: 'Acces interzis' });
+    if (req.user.role !== 'admin' && !req.user.permissions?.accessLogs) return res.status(403).json({ error: 'Acces interzis' });
     const result = await pool.query(
       `SELECT * FROM logs WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 500`,
       [req.user.organization_id]
