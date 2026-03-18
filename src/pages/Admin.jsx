@@ -919,7 +919,8 @@ function SectionCamioane({ onBack }) {
                       <button onClick={() => { setAddingDoc(false); setEditingDoc(null); }}
                         style={{ padding:'7px 16px', border:'1px solid var(--gray-3)', background:'var(--gray-2)', borderRadius:'6px', cursor:'pointer', fontSize:'12px', color:'var(--black)' }}>Anulează</button>
                       <button onClick={handleSaveDoc} disabled={saving}
-                        style={{ padding:'7px 16px', border:'none', background:'#ff7a3d', color:'#fff', borderRadius:'6px', cursor:'pointer', fontSize:'12px', fontWeight:600, opacity:saving?0.7:1 }}>
+                        style={{ padding:'7px 16px', border:'none', background: saving ? 'var(--gray-3)' : '#ff7a3d', color:'#fff', borderRadius:'6px', cursor: saving ? 'not-allowed' : 'pointer', fontSize:'12px', fontWeight:600, opacity:saving?0.7:1, display:'flex', alignItems:'center', gap:'6px' }}>
+                        {saving && <svg style={{ animation:'spin-loader 0.8s linear infinite', flexShrink:0 }} width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>}
                         {saving ? 'Se salvează...' : 'Salvează document'}
                       </button>
                     </div>
@@ -1303,7 +1304,8 @@ function SectionSoferi({ onBack }) {
                       <button onClick={() => { setAddingDoc(false); setEditingDoc(null); }}
                         style={{ padding:'7px 16px', border:'1px solid var(--gray-3)', background:'var(--gray-2)', borderRadius:'6px', cursor:'pointer', fontSize:'12px', color:'var(--black)' }}>Anulează</button>
                       <button onClick={handleSaveDoc} disabled={saving}
-                        style={{ padding:'7px 16px', border:'none', background:'#ff7a3d', color:'#fff', borderRadius:'6px', cursor:'pointer', fontSize:'12px', fontWeight:600, opacity:saving?0.7:1 }}>
+                        style={{ padding:'7px 16px', border:'none', background: saving ? 'var(--gray-3)' : '#ff7a3d', color:'#fff', borderRadius:'6px', cursor: saving ? 'not-allowed' : 'pointer', fontSize:'12px', fontWeight:600, opacity:saving?0.7:1, display:'flex', alignItems:'center', gap:'6px' }}>
+                        {saving && <svg style={{ animation:'spin-loader 0.8s linear infinite', flexShrink:0 }} width="13" height="13" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>}
                         {saving ? 'Se salvează...' : 'Salvează document'}
                       </button>
                     </div>
@@ -1549,7 +1551,8 @@ function ModalFooter({ onCancel, onSave, saving }) {
   return (
     <div style={{ display:'flex', gap:'10px', marginTop:'22px', justifyContent:'flex-end' }}>
       <button onClick={onCancel} style={{ padding:'9px 20px', border:'1px solid var(--gray-3)', background:'var(--gray-1)', borderRadius:'7px', cursor:'pointer', color:'var(--black)', fontSize:'13px', fontWeight:500 }}>Anulează</button>
-      <button onClick={onSave} disabled={saving} style={{ padding:'9px 20px', border:'none', background:'#ff7a3d', color:'#fff', borderRadius:'7px', cursor:'pointer', fontSize:'13px', fontWeight:600, opacity:saving?0.7:1 }}>
+      <button onClick={onSave} disabled={saving} style={{ padding:'9px 20px', border:'none', background: saving ? 'var(--gray-3)' : '#ff7a3d', color:'#fff', borderRadius:'7px', cursor: saving ? 'not-allowed' : 'pointer', fontSize:'13px', fontWeight:600, opacity:saving?0.7:1, display:'flex', alignItems:'center', gap:'7px' }}>
+        {saving && <svg style={{ animation:'spin-loader 0.8s linear infinite', flexShrink:0 }} width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>}
         {saving ? 'Se salvează...' : 'Salvează'}
       </button>
     </div>
