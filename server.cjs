@@ -607,20 +607,21 @@ app.put('/api/chat/groups/:id/read', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Editare mesaj DM (doar autorul)
+// Editare mesaj DM (doar autorul, max 5 minute)
 app.put('/api/chat/messages/:id', authMiddleware, async (req, res) => {
   try {
     const { message } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: 'Mesaj gol' });
+    const check = await pool.query('SELECT * FROM chat_messages WHERE id=$1 AND username=$2 AND organization_id=$3', [req.params.id, req.user.username, req.user.organization_id]);
+    if (!check.rows.length) return res.status(403).json({ error: 'Interzis' });
+    if (Date.now() - new Date(check.rows[0].created_at).getTime() > 5 * 60 * 1000)
+      return res.status(403).json({ error: 'Timpul de editare a expirat (5 minute)' });
     const result = await pool.query(
-      `UPDATE chat_messages SET message=$1, edited_at=NOW()
-       WHERE id=$2 AND username=$3 AND organization_id=$4 RETURNING *`,
-      [message.trim(), req.params.id, req.user.username, req.user.organization_id]
+      `UPDATE chat_messages SET message=$1, edited_at=NOW() WHERE id=$2 RETURNING *`,
+      [message.trim(), req.params.id]
     );
-    if (!result.rows.length) return res.status(403).json({ error: 'Interzis' });
     const msg = result.rows[0];
-    const orgId = req.user.organization_id;
-    io.to(`org_${orgId}`).emit('message_edited', msg);
+    io.to(`org_${req.user.organization_id}`).emit('message_edited', msg);
     res.json(msg);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -640,17 +641,19 @@ app.delete('/api/chat/messages/:id', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// Editare mesaj grup (doar autorul)
+// Editare mesaj grup (doar autorul, max 5 minute)
 app.put('/api/chat/groups/:gid/messages/:id', authMiddleware, async (req, res) => {
   try {
     const { message } = req.body;
     if (!message?.trim()) return res.status(400).json({ error: 'Mesaj gol' });
+    const check = await pool.query('SELECT * FROM chat_group_messages WHERE id=$1 AND username=$2 AND group_id=$3', [req.params.id, req.user.username, req.params.gid]);
+    if (!check.rows.length) return res.status(403).json({ error: 'Interzis' });
+    if (Date.now() - new Date(check.rows[0].created_at).getTime() > 5 * 60 * 1000)
+      return res.status(403).json({ error: 'Timpul de editare a expirat (5 minute)' });
     const result = await pool.query(
-      `UPDATE chat_group_messages SET message=$1, edited_at=NOW()
-       WHERE id=$2 AND username=$3 AND group_id=$4 RETURNING *`,
-      [message.trim(), req.params.id, req.user.username, req.params.gid]
+      `UPDATE chat_group_messages SET message=$1, edited_at=NOW() WHERE id=$2 RETURNING *`,
+      [message.trim(), req.params.id]
     );
-    if (!result.rows.length) return res.status(403).json({ error: 'Interzis' });
     const msg = result.rows[0];
     io.to(`org_${req.user.organization_id}`).emit('group_message_edited', msg);
     res.json(msg);
@@ -675,8 +678,18 @@ app.delete('/api/chat/groups/:gid/messages/:id', authMiddleware, async (req, res
 app.put('/api/chat/messages/:id/pin', authMiddleware, async (req, res) => {
   try {
     const { is_pinned } = req.body;
-    await pool.query('UPDATE chat_messages SET is_pinned=$1, pinned_by=$2 WHERE id=$3 AND organization_id=$4',
-      [is_pinned, is_pinned ? req.user.username : null, req.params.id, req.user.organization_id]);
+    const result = await pool.query(
+      'UPDATE chat_messages SET is_pinned=$1, pinned_by=$2 WHERE id=$3 AND organization_id=$4 RETURNING *',
+      [is_pinned, is_pinned ? req.user.username : null, req.params.id, req.user.organization_id]
+    );
+    if (result.rows.length && is_pinned) {
+      const msg = result.rows[0];
+      const preview = msg.message?.slice(0, 40) + (msg.message?.length > 40 ? '…' : '');
+      io.to(`org_${req.user.organization_id}`).emit('pin_notification', {
+        text: `${req.user.username} a fixat un mesaj: „${preview}"`,
+        context: 'dm', peer1: msg.username, peer2: msg.receiver_username,
+      });
+    }
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -685,8 +698,18 @@ app.put('/api/chat/messages/:id/pin', authMiddleware, async (req, res) => {
 app.put('/api/chat/groups/:gid/messages/:id/pin', authMiddleware, async (req, res) => {
   try {
     const { is_pinned } = req.body;
-    await pool.query('UPDATE chat_group_messages SET is_pinned=$1, pinned_by=$2 WHERE id=$3 AND group_id=$4',
-      [is_pinned, is_pinned ? req.user.username : null, req.params.id, req.params.gid]);
+    const result = await pool.query(
+      'UPDATE chat_group_messages SET is_pinned=$1, pinned_by=$2 WHERE id=$3 AND group_id=$4 RETURNING *',
+      [is_pinned, is_pinned ? req.user.username : null, req.params.id, req.params.gid]
+    );
+    if (result.rows.length && is_pinned) {
+      const msg = result.rows[0];
+      const preview = msg.message?.slice(0, 40) + (msg.message?.length > 40 ? '…' : '');
+      io.to(`org_${req.user.organization_id}`).emit('pin_notification', {
+        text: `${req.user.username} a fixat un mesaj: „${preview}"`,
+        context: 'group', groupId: Number(req.params.gid),
+      });
+    }
     res.json({ success: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });

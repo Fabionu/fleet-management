@@ -269,7 +269,10 @@ export default function ChatPanel({ user }) {
   const [searchQuery, setSearchQuery]       = useState('');
   const [searchIdx, setSearchIdx]           = useState(0);
   const [firstUnreadId, setFirstUnreadId]   = useState(null);
+  const [pinNotification, setPinNotification] = useState(null);
+  const pinNotifTimer                       = useRef(null);
   const searchInputRef                      = useRef(null);
+  const EDIT_LIMIT_MS = 5 * 60 * 1000;
 
   const mutedKey = `chat_muted_${user.username}`;
   const [muted, setMuted] = useState(() => {
@@ -472,10 +475,24 @@ export default function ChatPanel({ user }) {
     socket.on('group_member_added',   handleGroupMemberAdded);
     socket.on('group_member_removed', handleGroupMemberRemoved);
     socket.on('user_typing',          handleUserTyping);
+    const handlePinNotification = ({ text, context, peer1, peer2, groupId }) => {
+      const me = user.username;
+      const isRelevant =
+        (context === 'dm' && (peer1 === me || peer2 === me)) ||
+        (context === 'group');
+      if (!isRelevant) return;
+      if (context === 'group' && activeGroupRef.current?.id !== groupId) return;
+      if (context === 'dm' && peerRef.current?.username !== (peer1 === me ? peer2 : peer1)) return;
+      clearTimeout(pinNotifTimer.current);
+      setPinNotification(text);
+      pinNotifTimer.current = setTimeout(() => setPinNotification(null), 3500);
+    };
+
     socket.on('message_edited',       handleMsgEdited);
     socket.on('message_deleted',      handleMsgDeleted);
     socket.on('group_message_edited', handleGroupMsgEdited);
     socket.on('group_message_deleted',handleGroupMsgDeleted);
+    socket.on('pin_notification',     handlePinNotification);
 
     return () => {
       socket.off('new_private_message',  handleNewMessage);
@@ -494,6 +511,7 @@ export default function ChatPanel({ user }) {
       socket.off('message_deleted',      handleMsgDeleted);
       socket.off('group_message_edited', handleGroupMsgEdited);
       socket.off('group_message_deleted',handleGroupMsgDeleted);
+      socket.off('pin_notification',     handlePinNotification);
     };
   }, []);
 
@@ -1320,12 +1338,14 @@ export default function ChatPanel({ user }) {
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
                               </button>
                               {isMe && <>
+                                {Date.now() - new Date(msg.created_at).getTime() <= EDIT_LIMIT_MS && (
                                 <button onClick={() => startEdit(msg)} title="Editează"
                                   style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
                                   onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
                                   onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </button>
+                                )}
                                 <button onClick={() => deleteMsg(msg)} title="Șterge"
                                   style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
                                   onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
@@ -1381,6 +1401,12 @@ export default function ChatPanel({ user }) {
                 )}
                 <div ref={messagesEndRef}/>
               </div>
+              {pinNotification && (
+                <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 12, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 12px rgba(0,0,0,0.14)', fontSize: 12, color: 'var(--black)', whiteSpace: 'nowrap', maxWidth: '90%', overflow: 'hidden', textOverflow: 'ellipsis', animation: 'chatItemIn 0.2s ease', zIndex: 2 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{pinNotification}</span>
+                </div>
+              )}
               {showScrollBtn && (
                 <button onClick={scrollToBottom}
                   style={{ position: 'absolute', bottom: 70, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 20, padding: '5px 14px 5px 10px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', boxShadow: '0 2px 12px rgba(0,0,0,0.14)', color: 'var(--gray-4)', fontSize: 12, fontWeight: 500, transition: 'all 0.15s', whiteSpace: 'nowrap', animation: 'chatItemIn 0.18s ease' }}
@@ -1463,12 +1489,14 @@ export default function ChatPanel({ user }) {
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
                               </button>
                               {isMe && <>
+                                {Date.now() - new Date(msg.created_at).getTime() <= EDIT_LIMIT_MS && (
                                 <button onClick={() => startEdit(msg)} title="Editează"
                                   style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
                                   onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
                                   onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </button>
+                                )}
                                 <button onClick={() => deleteMsg(msg)} title="Șterge"
                                   style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
                                   onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
@@ -1533,6 +1561,12 @@ export default function ChatPanel({ user }) {
                 )}
                 <div ref={messagesEndRef}/>
               </div>
+              {pinNotification && (
+                <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 12, padding: '6px 12px', display: 'flex', alignItems: 'center', gap: 6, boxShadow: '0 2px 12px rgba(0,0,0,0.14)', fontSize: 12, color: 'var(--black)', whiteSpace: 'nowrap', maxWidth: '90%', overflow: 'hidden', textOverflow: 'ellipsis', animation: 'chatItemIn 0.2s ease', zIndex: 2 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{pinNotification}</span>
+                </div>
+              )}
               {showScrollBtn && (
                 <button onClick={scrollToBottom}
                   style={{ position: 'absolute', bottom: 70, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 20, padding: '5px 14px 5px 10px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', boxShadow: '0 2px 12px rgba(0,0,0,0.14)', color: 'var(--gray-4)', fontSize: 12, fontWeight: 500, transition: 'all 0.15s', whiteSpace: 'nowrap', animation: 'chatItemIn 0.18s ease' }}
