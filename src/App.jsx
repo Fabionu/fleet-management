@@ -502,7 +502,7 @@ function App() {
             >
               Curse
             </button>
-{user.role === 'admin' && (
+{(user.role === 'admin' || user.permissions?.accessAdmin) && (
               <button
                 onClick={() => changePage('admin')}
                 style={{
@@ -527,7 +527,7 @@ function App() {
         {/* Page Content */}
         {currentPage === 'tracking' && <Tracking user={user} viewMode={trackingView} />}
         {currentPage === 'curse' && <Curse user={user} />}
-{currentPage === 'admin' && <Admin user={user} />}
+{currentPage === 'admin' && (user.role === 'admin' || user.permissions?.accessAdmin) && <Admin user={user} />}
       </div>
       <ChatPanel user={user} />
     </div>

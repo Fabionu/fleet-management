@@ -27,6 +27,13 @@ const PERM_GROUPS = [
     ],
   },
   {
+    label: 'Administrare',
+    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>,
+    items: [
+      { key: 'accessAdmin', label: 'Acces panou admin', desc: 'Permite accesul la panoul de administrare (utilizatori, camioane, șoferi, jurnal)', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+    ],
+  },
+  {
     label: 'Curse',
     icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
     items: [
@@ -40,9 +47,9 @@ const PERM_GROUPS = [
 ];
 
 const DEFAULT_PERMISSIONS = {
-  admin:      { editVehicleInfo:true,  toggleAmazon:true,  addTrip:true,  editTrip:true,  deleteTrip:true,  clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:true  },
-  dispatcher: { editVehicleInfo:false, toggleAmazon:false, addTrip:true,  editTrip:true,  deleteTrip:false, clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:false },
-  contabil:   { editVehicleInfo:false, toggleAmazon:false, addTrip:false, editTrip:true,  deleteTrip:false, clearTruckData:false, deleteTruckRow:false, addNextTrip:false, markInvoiced:true  },
+  admin:      { editVehicleInfo:true,  toggleAmazon:true,  addTrip:true,  editTrip:true,  deleteTrip:true,  clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:true,  accessAdmin:true  },
+  dispatcher: { editVehicleInfo:false, toggleAmazon:false, addTrip:true,  editTrip:true,  deleteTrip:false, clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:false, accessAdmin:false },
+  contabil:   { editVehicleInfo:false, toggleAmazon:false, addTrip:false, editTrip:true,  deleteTrip:false, clearTruckData:false, deleteTruckRow:false, addNextTrip:false, markInvoiced:true,  accessAdmin:false },
 };
 
 const DOC_TYPES = DRIVER_DOC_TYPES;
