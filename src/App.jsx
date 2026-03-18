@@ -500,7 +500,7 @@ function App() {
                 marginBottom: '-2px'
               }}
             >
-              Curse
+              Registru
             </button>
 {(user.role === 'admin' || user.permissions?.accessAdmin) && (
               <button
