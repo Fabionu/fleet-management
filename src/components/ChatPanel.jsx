@@ -59,14 +59,38 @@ function GroupIcon({ size = 18, color = 'currentColor' }) {
   );
 }
 
-function renderMessageText(text, currentUser) {
-  if (!text || !text.includes('@')) return text;
-  const parts = text.split(/(@\w+)/g);
-  return parts.map((part, i) => {
+function formatText(text) {
+  const parts = [];
+  const regex = /(\*[^*]+\*|_[^_]+_)/g;
+  let lastIndex = 0;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) parts.push({ type: 'text', content: text.slice(lastIndex, match.index) });
+    const inner = match[0].slice(1, -1);
+    if (match[0].startsWith('*')) parts.push({ type: 'bold', content: inner });
+    else parts.push({ type: 'italic', content: inner });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) parts.push({ type: 'text', content: text.slice(lastIndex) });
+  return parts;
+}
+
+function renderTextSegment(text, currentUser, keyPrefix) {
+  if (!text) return null;
+  if (!text.includes('@')) {
+    const fmtParts = formatText(text);
+    return fmtParts.map((p, i) => {
+      if (p.type === 'bold') return <strong key={`${keyPrefix}-b${i}`}>{p.content}</strong>;
+      if (p.type === 'italic') return <em key={`${keyPrefix}-em${i}`}>{p.content}</em>;
+      return p.content;
+    });
+  }
+  const mentionParts = text.split(/(@\w+)/g);
+  return mentionParts.map((part, i) => {
     if (/^@\w+$/.test(part)) {
       const isMentionedMe = part.slice(1) === currentUser;
       return (
-        <span key={i} style={{
+        <span key={`${keyPrefix}-m${i}`} style={{
           color: '#ff7a3d', fontWeight: 600,
           background: isMentionedMe ? 'rgba(255,122,61,0.18)' : 'transparent',
           borderRadius: 3, padding: isMentionedMe ? '0 3px' : 0,
@@ -75,8 +99,18 @@ function renderMessageText(text, currentUser) {
         </span>
       );
     }
-    return part;
+    const fmtParts = formatText(part);
+    return fmtParts.map((p, j) => {
+      if (p.type === 'bold') return <strong key={`${keyPrefix}-b${i}-${j}`}>{p.content}</strong>;
+      if (p.type === 'italic') return <em key={`${keyPrefix}-em${i}-${j}`}>{p.content}</em>;
+      return p.content;
+    });
   });
+}
+
+function renderMessageText(text, currentUser) {
+  if (!text) return text;
+  return renderTextSegment(text, currentUser, 'msg');
 }
 
 function getSeenBy(msgIdx, allMsgs, readsForGroup, currentUser) {
@@ -120,9 +154,20 @@ function BackBtn({ onClick }) {
   );
 }
 
-function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, mentionQuery, mentionUsers, mentionHighlight, onMentionSelect }) {
+function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, mentionQuery, mentionUsers, mentionHighlight, onMentionSelect, replyTo, onCancelReply }) {
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
+      {replyTo && (
+        <div style={{ margin: '0 12px 6px', padding: '6px 10px', background: 'var(--gray-1)', borderLeft: '3px solid #ff7a3d', borderRadius: '0 6px 6px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#ff7a3d' }}>Răspuns la {replyTo.username}</div>
+            <div style={{ fontSize: 11, color: 'var(--gray-4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{replyTo.text}</div>
+          </div>
+          <button onClick={onCancelReply} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 2, display: 'flex', alignItems: 'center' }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      )}
       {mentionQuery !== null && mentionUsers.length > 0 && (
         <div className="chat-scroll" style={{ position: 'absolute', bottom: '100%', left: 12, right: 58, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: 10, overflow: 'hidden', boxShadow: '0 -4px 20px rgba(0,0,0,0.18)', maxHeight: 160, overflowY: 'auto', zIndex: 10 }}>
           {mentionUsers.map((u, i) => (
@@ -209,6 +254,12 @@ export default function ChatPanel({ user }) {
   const [mentionUsers, setMentionUsers]         = useState([]);
   const [mentionHighlight, setMentionHighlight] = useState(0);
   const [mentionAtIdx, setMentionAtIdx]         = useState(0);
+
+  const [typingUsers, setTypingUsers]   = useState({});
+  const typingTimers                    = useRef({});
+  const [replyTo, setReplyTo]           = useState(null);
+  const [pinnedMsg, setPinnedMsg]       = useState(null);
+  const [hoveredMsgId, setHoveredMsgId] = useState(null);
 
   const mutedKey = `chat_muted_${user.username}`;
   const [muted, setMuted] = useState(() => {
@@ -366,6 +417,16 @@ export default function ChatPanel({ user }) {
       if (activeGroupRef.current?.id === groupId) { setView('contacts'); setActiveGroup(null); }
     };
 
+    const handleUserTyping = ({ username: typingUsername, to, groupId }) => {
+      if (typingUsername === user.username) return;
+      const key = groupId ? `group_${groupId}` : `dm_${typingUsername}`;
+      setTypingUsers(prev => ({ ...prev, [key]: typingUsername }));
+      clearTimeout(typingTimers.current[key]);
+      typingTimers.current[key] = setTimeout(() => {
+        setTypingUsers(prev => { const n = { ...prev }; delete n[key]; return n; });
+      }, 3000);
+    };
+
     socket.on('new_private_message',  handleNewMessage);
     socket.on('new_group_message',    handleNewGroupMessage);
     socket.on('users_online',         handleUsersOnline);
@@ -377,6 +438,7 @@ export default function ChatPanel({ user }) {
     socket.on('group_updated',        handleGroupUpdated);
     socket.on('group_member_added',   handleGroupMemberAdded);
     socket.on('group_member_removed', handleGroupMemberRemoved);
+    socket.on('user_typing',          handleUserTyping);
 
     return () => {
       socket.off('new_private_message',  handleNewMessage);
@@ -390,6 +452,7 @@ export default function ChatPanel({ user }) {
       socket.off('group_updated',        handleGroupUpdated);
       socket.off('group_member_added',   handleGroupMemberAdded);
       socket.off('group_member_removed', handleGroupMemberRemoved);
+      socket.off('user_typing',          handleUserTyping);
     };
   }, []);
 
@@ -412,6 +475,19 @@ export default function ChatPanel({ user }) {
   useEffect(() => { openRef.current = open; }, [open]);
   useEffect(() => { peerRef.current = peer; }, [peer]);
   useEffect(() => { activeGroupRef.current = activeGroup; }, [activeGroup]);
+
+  // Update pinned message whenever the active message list changes
+  useEffect(() => {
+    if (view === 'chat' && peer) {
+      const msgs = conversations[peer.username] || [];
+      setPinnedMsg(msgs.find(m => m.is_pinned) || null);
+    } else if (view === 'group-chat' && activeGroup) {
+      const msgs = groupMessages[activeGroup.id] || [];
+      setPinnedMsg(msgs.find(m => m.is_pinned) || null);
+    } else {
+      setPinnedMsg(null);
+    }
+  }, [conversations, groupMessages, view, peer?.username, activeGroup?.id]);
 
   useEffect(() => {
     const pt = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
@@ -499,7 +575,7 @@ export default function ChatPanel({ user }) {
       setView('group-chat');
     } else {
       setView('contacts'); setPeer(null); setActiveGroup(null);
-      setInputVal(''); setPeerReadAt(null); setMentionQuery(null);
+      setInputVal(''); setPeerReadAt(null); setMentionQuery(null); setReplyTo(null); setPinnedMsg(null);
     }
   };
 
@@ -521,6 +597,15 @@ export default function ChatPanel({ user }) {
         setMentionHighlight(0); setMentionAtIdx(cursorPos - atMatch[0].length);
       } else { setMentionQuery(null); }
     } else { setMentionQuery(null); }
+    // Emit typing indicator
+    const socket = getSocket();
+    if (socket && val.trim()) {
+      if (view === 'group-chat' && activeGroup) {
+        socket.emit('typing', { groupId: activeGroup.id });
+      } else if (view === 'chat' && peer) {
+        socket.emit('typing', { to: peer.username });
+      }
+    }
   };
 
   const insertMention = (username) => {
@@ -542,11 +627,52 @@ export default function ChatPanel({ user }) {
     if (!msg) return;
     setInputVal(''); setMentionQuery(null);
     if (view === 'group-chat' && activeGroup) {
-      try { await axios.post(`/api/chat/groups/${activeGroup.id}/messages`, { message: msg }, { headers }); playSent(); } catch {}
+      try {
+        await axios.post(`/api/chat/groups/${activeGroup.id}/messages`, {
+          message: msg,
+          reply_to_id: replyTo?.id || null,
+          reply_to_text: replyTo?.text || null,
+          reply_to_username: replyTo?.username || null,
+        }, { headers });
+        playSent();
+      } catch {}
     } else if (view === 'chat' && peer) {
-      try { await axios.post('/api/chat/messages', { to: peer.username, message: msg }, { headers }); playSent(); } catch {}
+      try {
+        await axios.post('/api/chat/messages', {
+          to: peer.username,
+          message: msg,
+          reply_to_id: replyTo?.id || null,
+          reply_to_text: replyTo?.text || null,
+          reply_to_username: replyTo?.username || null,
+        }, { headers });
+        playSent();
+      } catch {}
     }
+    setReplyTo(null);
   };
+
+  const handlePin = async (msg) => {
+    const isPinned = !msg.is_pinned;
+    try {
+      if (view === 'group-chat' && activeGroup) {
+        await axios.put(`/api/chat/groups/${activeGroup.id}/messages/${msg.id}/pin`, { is_pinned: isPinned }, { headers });
+        setGroupMessages(prev => {
+          const gId = activeGroup.id;
+          const updated = (prev[gId] || []).map(m => m.id === msg.id ? { ...m, is_pinned: isPinned, pinned_by: isPinned ? user.username : null } : (isPinned ? { ...m, is_pinned: false, pinned_by: null } : m));
+          return { ...prev, [gId]: updated };
+        });
+      } else if (view === 'chat' && peer) {
+        await axios.put(`/api/chat/messages/${msg.id}/pin`, { is_pinned: isPinned }, { headers });
+        setConversations(prev => {
+          const peerUn = peer.username;
+          const updated = (prev[peerUn] || []).map(m => m.id === msg.id ? { ...m, is_pinned: isPinned, pinned_by: isPinned ? user.username : null } : (isPinned ? { ...m, is_pinned: false, pinned_by: null } : m));
+          return { ...prev, [peerUn]: updated };
+        });
+      }
+    } catch {}
+  };
+
+  const handleUnpin = (msg) => handlePin({ ...msg, is_pinned: true });
 
   const handleKeyDown = (e) => {
     if (mentionQuery !== null && mentionUsers.length > 0) {
@@ -710,39 +836,55 @@ export default function ChatPanel({ user }) {
 
           {/* CHAT / GROUP-CHAT HEADER */}
           {(view === 'chat' || view === 'group-chat') && (
-            <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--gray-1)', flexShrink: 0 }}>
-              <BackBtn onClick={goBack} />
-              {view === 'chat' ? (
-                <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: peer ? avatarColor(peer.username) : '#ff7a3d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 15 }}>
-                    {(peer?.first_name || peer?.username || '').charAt(0).toUpperCase()}
-                  </div>
-                  <div style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: isOnline(peer?.username) ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--gray-1)' }}/>
-                </div>
-              ) : (
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: activeGroup ? groupColor(activeGroup.name) : '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
-                  <GroupIcon size={17} color="white" />
-                </div>
-              )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--black)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {view === 'chat' ? dn(peer?.username) : activeGroup?.name}
-                </div>
+            <div style={{ flexShrink: 0 }}>
+              <div style={{ padding: '10px 14px', borderBottom: pinnedMsg ? 'none' : '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--gray-1)' }}>
+                <BackBtn onClick={goBack} />
                 {view === 'chat' ? (
-                  <div style={{ fontSize: 11, color: isOnline(peer?.username) ? '#22c55e' : 'var(--gray-4)' }}>
-                    {isOnline(peer?.username) ? 'online' : 'offline'}
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: peer ? avatarColor(peer.username) : '#ff7a3d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 15 }}>
+                      {(peer?.first_name || peer?.username || '').charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: isOnline(peer?.username) ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--gray-1)' }}/>
                   </div>
                 ) : (
-                  <div onClick={openGroupMembers}
-                    style={{ fontSize: 11, color: 'var(--gray-4)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }}
-                    onMouseEnter={e => e.currentTarget.style.color = '#ff7a3d'}
-                    onMouseLeave={e => e.currentTarget.style.color = 'var(--gray-4)'}>
-                    {activeGroup?.members?.length || 0} membri
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: activeGroup ? groupColor(activeGroup.name) : '#6366f1', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
+                    <GroupIcon size={17} color="white" />
                   </div>
                 )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--black)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {view === 'chat' ? dn(peer?.username) : activeGroup?.name}
+                  </div>
+                  {view === 'chat' ? (
+                    <div style={{ fontSize: 11, color: isOnline(peer?.username) ? '#22c55e' : 'var(--gray-4)' }}>
+                      {isOnline(peer?.username) ? 'online' : 'offline'}
+                    </div>
+                  ) : (
+                    <div onClick={openGroupMembers}
+                      style={{ fontSize: 11, color: 'var(--gray-4)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 3 }}
+                      onMouseEnter={e => e.currentTarget.style.color = '#ff7a3d'}
+                      onMouseLeave={e => e.currentTarget.style.color = 'var(--gray-4)'}>
+                      {activeGroup?.members?.length || 0} membri
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                  )}
+                </div>
+                <CloseBtn onClick={handleClose} />
               </div>
-              <CloseBtn onClick={handleClose} />
+              {pinnedMsg && (
+                <div style={{ padding: '6px 14px', borderBottom: '1px solid var(--gray-2)', background: 'var(--gray-1)', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="17" x2="12" y2="22"/>
+                    <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
+                  </svg>
+                  <div style={{ flex: 1, fontSize: 11, color: 'var(--gray-4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--black)' }}>{pinnedMsg.username}</span>: {pinnedMsg.message}
+                  </div>
+                  <button onClick={() => handleUnpin(pinnedMsg)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 2, fontSize: 11, display: 'flex', alignItems: 'center' }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -941,9 +1083,35 @@ export default function ChatPanel({ user }) {
                 {messages.map((msg, i) => {
                   const isMe = msg.username === user.username;
                   const nextSame = i < messages.length - 1 && messages[i + 1].username === msg.username;
+                  const isHovered = hoveredMsgId === msg.id;
                   return (
-                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4 }}>
+                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, position: 'relative' }}
+                      onMouseEnter={() => setHoveredMsgId(msg.id)}
+                      onMouseLeave={() => setHoveredMsgId(null)}>
+                      {isHovered && (
+                        <div style={{ position: 'absolute', top: 0, [isMe ? 'left' : 'right']: 0, display: 'flex', gap: 3, zIndex: 1 }}>
+                          <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })}
+                            title="Răspunde"
+                            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+                          </button>
+                          <button onClick={() => handlePin(msg)}
+                            title={msg.is_pinned ? 'Desprinde' : 'Prinde'}
+                            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 5px', color: msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)'; }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                          </button>
+                        </div>
+                      )}
                       <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
+                        {msg.reply_to_id && (
+                          <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
+                          </div>
+                        )}
                         {renderMessageText(msg.message, user.username)}
                       </div>
                       {!nextSame && (
@@ -955,6 +1123,16 @@ export default function ChatPanel({ user }) {
                     </div>
                   );
                 })}
+                {typingUsers[`dm_${peer?.username}`] && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', color: 'var(--gray-4)', fontSize: 12 }}>
+                    <div style={{ display: 'flex', gap: 3 }}>
+                      {[0, 1, 2].map(i => (
+                        <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--gray-4)', animation: `typingDot 1.2s ease-in-out ${i * 0.2}s infinite` }}/>
+                      ))}
+                    </div>
+                    <span>{typingUsers[`dm_${peer?.username}`]} scrie...</span>
+                  </div>
+                )}
                 <div ref={messagesEndRef}/>
               </div>
               <ChatInput inputRef={inputRef} value={inputVal} onChange={handleInputChange}
@@ -962,6 +1140,7 @@ export default function ChatPanel({ user }) {
                 placeholder={`Mesaj pentru ${dn(peer?.username)}...`}
                 mentionQuery={mentionQuery} mentionUsers={mentionUsers}
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
+                replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
               />
             </div>
           )}
@@ -991,12 +1170,38 @@ export default function ChatPanel({ user }) {
                   const nextSame = nextMsg && nextMsg.username === msg.username && nextMsg.message_type !== 'system';
                   const prevSame = prevMsg && prevMsg.username === msg.username && prevMsg.message_type !== 'system';
                   const seenBy  = getSeenBy(i, groupMsgs, memberReads[activeGroup?.id], user.username);
+                  const isHovered = hoveredMsgId === msg.id;
                   return (
-                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4 }}>
+                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, position: 'relative' }}
+                      onMouseEnter={() => setHoveredMsgId(msg.id)}
+                      onMouseLeave={() => setHoveredMsgId(null)}>
+                      {isHovered && (
+                        <div style={{ position: 'absolute', top: 0, [isMe ? 'left' : 'right']: 0, display: 'flex', gap: 3, zIndex: 1 }}>
+                          <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })}
+                            title="Răspunde"
+                            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+                          </button>
+                          <button onClick={() => handlePin(msg)}
+                            title={msg.is_pinned ? 'Desprinde' : 'Prinde'}
+                            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 5px', color: msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)'; }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                          </button>
+                        </div>
+                      )}
                       {!isMe && !prevSame && (
                         <div style={{ fontSize: 11, color: '#ff7a3d', marginBottom: 3, paddingLeft: 4, fontWeight: 600 }}>{dn(msg.username)}</div>
                       )}
                       <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
+                        {msg.reply_to_id && (
+                          <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
+                          </div>
+                        )}
                         {renderMessageText(msg.message, user.username)}
                       </div>
                       {!nextSame && (
@@ -1017,6 +1222,16 @@ export default function ChatPanel({ user }) {
                     </div>
                   );
                 })}
+                {typingUsers[`group_${activeGroup?.id}`] && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 0', color: 'var(--gray-4)', fontSize: 12 }}>
+                    <div style={{ display: 'flex', gap: 3 }}>
+                      {[0, 1, 2].map(i => (
+                        <div key={i} style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--gray-4)', animation: `typingDot 1.2s ease-in-out ${i * 0.2}s infinite` }}/>
+                      ))}
+                    </div>
+                    <span>{typingUsers[`group_${activeGroup?.id}`]} scrie...</span>
+                  </div>
+                )}
                 <div ref={messagesEndRef}/>
               </div>
               <ChatInput inputRef={inputRef} value={inputVal} onChange={handleInputChange}
@@ -1024,6 +1239,7 @@ export default function ChatPanel({ user }) {
                 placeholder={`Mesaj în ${activeGroup?.name}...`}
                 mentionQuery={mentionQuery} mentionUsers={mentionUsers}
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
+                replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
               />
             </div>
           )}

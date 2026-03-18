@@ -393,6 +393,24 @@ async function initDb() {
       )
     `);
 
+    // Migration: reply-to columns for DM messages
+    await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER`);
+    await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS reply_to_text TEXT`);
+    await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS reply_to_username TEXT`);
+
+    // Migration: reply-to columns for group messages
+    await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER`);
+    await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS reply_to_text TEXT`);
+    await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS reply_to_username TEXT`);
+
+    // Migration: pin columns for DM messages
+    await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE`);
+    await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS pinned_by TEXT`);
+
+    // Migration: pin columns for group messages
+    await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE`);
+    await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS pinned_by TEXT`);
+
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {
     client.release();

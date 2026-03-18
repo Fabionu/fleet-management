@@ -87,6 +87,16 @@ io.on('connection', async (socket) => {
     socket.leave(`group_${groupId}_org_${orgId}`);
   });
 
+  socket.on('typing', ({ to, groupId }) => {
+    const uname = socket.user?.username;
+    if (!uname) return;
+    if (groupId) {
+      socket.to(`group_${groupId}_org_${orgId}`).emit('user_typing', { username: uname, groupId });
+    } else if (to) {
+      io.to(`user_${to}_org_${orgId}`).emit('user_typing', { username: uname, to });
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log(`⚡ Socket: ${username} deconectat`);
     const orgMap = onlineUsers.get(orgId);
@@ -160,13 +170,13 @@ app.get('/api/chat/messages/:peer', authMiddleware, async (req, res) => {
 
 // Trimite mesaj privat
 app.post('/api/chat/messages', authMiddleware, async (req, res) => {
-  const { to, message } = req.body;
+  const { to, message, reply_to_id, reply_to_text, reply_to_username } = req.body;
   if (!to || !message?.trim()) return res.status(400).json({ error: 'Date lipsă' });
   try {
     const result = await pool.query(
-      `INSERT INTO chat_messages (organization_id, username, receiver_username, message)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [req.user.organization_id, req.user.username, to, message.trim()]
+      `INSERT INTO chat_messages (organization_id, username, receiver_username, message, reply_to_id, reply_to_text, reply_to_username)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [req.user.organization_id, req.user.username, to, message.trim(), reply_to_id || null, reply_to_text || null, reply_to_username || null]
     );
     const msg = result.rows[0];
     const orgId = req.user.organization_id;
@@ -533,7 +543,7 @@ app.get('/api/chat/groups/:id/messages', authMiddleware, async (req, res) => {
 
 // Trimite mesaj în grup
 app.post('/api/chat/groups/:id/messages', authMiddleware, async (req, res) => {
-  const { message } = req.body;
+  const { message, reply_to_id, reply_to_text, reply_to_username } = req.body;
   if (!message?.trim()) return res.status(400).json({ error: 'Mesajul este gol' });
   const orgId = req.user.organization_id;
   const groupId = parseInt(req.params.id);
@@ -546,8 +556,8 @@ app.post('/api/chat/groups/:id/messages', authMiddleware, async (req, res) => {
     if (memRes.rows.length === 0) return res.status(403).json({ error: 'Nu ești membru al acestui grup' });
 
     const result = await pool.query(
-      `INSERT INTO chat_group_messages (group_id, organization_id, username, message) VALUES ($1, $2, $3, $4) RETURNING *`,
-      [groupId, orgId, req.user.username, message.trim()]
+      `INSERT INTO chat_group_messages (group_id, organization_id, username, message, reply_to_id, reply_to_text, reply_to_username) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [groupId, orgId, req.user.username, message.trim(), reply_to_id || null, reply_to_text || null, reply_to_username || null]
     );
     const msg = result.rows[0];
     io.to(`group_${groupId}_org_${orgId}`).emit('new_group_message', msg);
@@ -595,6 +605,26 @@ app.put('/api/chat/groups/:id/read', authMiddleware, async (req, res) => {
     });
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Pin/unpin DM message
+app.put('/api/chat/messages/:id/pin', authMiddleware, async (req, res) => {
+  try {
+    const { is_pinned } = req.body;
+    await pool.query('UPDATE chat_messages SET is_pinned=$1, pinned_by=$2 WHERE id=$3 AND organization_id=$4',
+      [is_pinned, is_pinned ? req.user.username : null, req.params.id, req.user.organization_id]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Pin/unpin group message
+app.put('/api/chat/groups/:gid/messages/:id/pin', authMiddleware, async (req, res) => {
+  try {
+    const { is_pinned } = req.body;
+    await pool.query('UPDATE chat_group_messages SET is_pinned=$1, pinned_by=$2 WHERE id=$3 AND group_id=$4',
+      [is_pinned, is_pinned ? req.user.username : null, req.params.id, req.params.gid]);
+    res.json({ success: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── AUTH ────────────────────────────────────────────────────
