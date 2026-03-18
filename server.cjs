@@ -289,22 +289,41 @@ app.get('/api/chat/groups', authMiddleware, async (req, res) => {
     const orgId = req.user.organization_id;
     const result = await pool.query(
       `SELECT g.id, g.name, g.created_by, g.created_at,
-         array_agg(gm2.username ORDER BY gm2.username) AS members
+         array_agg(gm2.username ORDER BY gm2.username) AS members,
+         lm.username AS last_sender,
+         lm.message   AS last_message,
+         lm.message_type AS last_message_type,
+         lm.created_at AS last_message_at
        FROM chat_groups g
-       JOIN chat_group_members gm ON gm.group_id = g.id AND gm.username = $1
+       JOIN chat_group_members gm  ON gm.group_id  = g.id AND gm.username = $1
        JOIN chat_group_members gm2 ON gm2.group_id = g.id
+       LEFT JOIN LATERAL (
+         SELECT username, message, message_type, created_at
+         FROM chat_group_messages
+         WHERE group_id = g.id
+         ORDER BY created_at DESC
+         LIMIT 1
+       ) lm ON true
        WHERE g.organization_id = $2
-       GROUP BY g.id
-       ORDER BY g.created_at DESC`,
+       GROUP BY g.id, lm.username, lm.message, lm.message_type, lm.created_at
+       ORDER BY COALESCE(lm.created_at, g.created_at) DESC`,
       [me, orgId]
     );
-    // Include member read times for seen indicators
+    // Include member read times for seen indicators + last message
     for (const group of result.rows) {
       const readsRes = await pool.query(
         'SELECT username, last_read_at FROM chat_group_read WHERE group_id=$1 AND organization_id=$2',
         [group.id, orgId]
       );
       group.memberReads = readsRes.rows;
+      if (group.last_sender) {
+        group._lastMsg = {
+          sender:     group.last_sender,
+          message:    group.last_message,
+          message_type: group.last_message_type,
+          created_at: group.last_message_at,
+        };
+      }
     }
     res.json(result.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
