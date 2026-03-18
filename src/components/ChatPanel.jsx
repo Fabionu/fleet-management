@@ -262,6 +262,7 @@ export default function ChatPanel({ user }) {
   const [hoveredMsgId, setHoveredMsgId]     = useState(null);
   const [highlightedMsgId, setHighlightedMsgId] = useState(null);
   const highlightTimer                      = useRef(null);
+  const [showScrollBtn, setShowScrollBtn]   = useState(false);
 
   const mutedKey = `chat_muted_${user.username}`;
   const [muted, setMuted] = useState(() => {
@@ -540,7 +541,7 @@ export default function ChatPanel({ user }) {
   };
 
   const openConversation = async (u) => {
-    setSlideDir('right'); setPeer(u); setActiveGroup(null); setView('chat'); setPeerReadAt(null);
+    setSlideDir('right'); setPeer(u); setActiveGroup(null); setView('chat'); setPeerReadAt(null); setShowScrollBtn(false);
     const fetchMsgs = !conversations[u.username]
       ? axios.get(`/api/chat/messages/${u.username}`, { headers })
       : Promise.resolve(null);
@@ -556,7 +557,7 @@ export default function ChatPanel({ user }) {
   };
 
   const openGroupConversation = async (g) => {
-    setSlideDir('right'); setPeer(null); setActiveGroup(g); setView('group-chat');
+    setSlideDir('right'); setPeer(null); setActiveGroup(g); setView('group-chat'); setShowScrollBtn(false);
     if (!groupMessages[g.id]) {
       try {
         const res = await axios.get(`/api/chat/groups/${g.id}/messages`, { headers });
@@ -684,6 +685,16 @@ export default function ChatPanel({ user }) {
     clearTimeout(highlightTimer.current);
     setHighlightedMsgId(pinnedMsg.id);
     highlightTimer.current = setTimeout(() => setHighlightedMsgId(null), 1600);
+  };
+
+  const handleMsgsScroll = (e) => {
+    const el = e.currentTarget;
+    const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    setShowScrollBtn(distFromBottom > 80);
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const applyFormat = (marker) => {
@@ -1109,8 +1120,8 @@ export default function ChatPanel({ user }) {
 
           {/* DM CONVERSATION */}
           {view === 'chat' && (
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, animation: 'chatSlideFromRight 0.2s ease' }}>
-              <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, animation: 'chatSlideFromRight 0.2s ease', position: 'relative' }}>
+              <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }} onScroll={handleMsgsScroll}>
                 {messages.length === 0 && (
                   <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 13, marginTop: 70, lineHeight: 1.8 }}>
                     Niciun mesaj cu {dn(peer?.username)}.<br/><span style={{ fontSize: 20 }}>👋</span>
@@ -1173,6 +1184,16 @@ export default function ChatPanel({ user }) {
                 )}
                 <div ref={messagesEndRef}/>
               </div>
+              {showScrollBtn && (
+                <button onClick={scrollToBottom}
+                  style={{ position: 'absolute', bottom: 70, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 20, padding: '5px 14px 5px 10px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', boxShadow: '0 2px 12px rgba(0,0,0,0.14)', color: 'var(--gray-4)', fontSize: 12, fontWeight: 500, transition: 'all 0.15s', whiteSpace: 'nowrap', animation: 'chatItemIn 0.18s ease' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" style={{ transform: 'rotate(180deg)', transformOrigin: 'center' }}/></svg>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  Ultimul mesaj
+                </button>
+              )}
               <ChatInput inputRef={inputRef} value={inputVal} onChange={handleInputChange}
                 onKeyDown={handleKeyDown} onSend={sendMessage}
                 placeholder={`Mesaj pentru ${dn(peer?.username)}...`}
@@ -1185,8 +1206,8 @@ export default function ChatPanel({ user }) {
 
           {/* GROUP CONVERSATION */}
           {view === 'group-chat' && (
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, animation: 'chatSlideFromRight 0.2s ease' }}>
-              <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, animation: 'chatSlideFromRight 0.2s ease', position: 'relative' }}>
+              <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }} onScroll={handleMsgsScroll}>
                 {groupMsgs.length === 0 && (
                   <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 13, marginTop: 70, lineHeight: 1.8 }}>
                     Niciun mesaj în „{activeGroup?.name}".<br/><span style={{ fontSize: 20 }}>💬</span>
@@ -1274,6 +1295,16 @@ export default function ChatPanel({ user }) {
                 )}
                 <div ref={messagesEndRef}/>
               </div>
+              {showScrollBtn && (
+                <button onClick={scrollToBottom}
+                  style={{ position: 'absolute', bottom: 70, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 20, padding: '5px 14px 5px 10px', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', boxShadow: '0 2px 12px rgba(0,0,0,0.14)', color: 'var(--gray-4)', fontSize: 12, fontWeight: 500, transition: 'all 0.15s', whiteSpace: 'nowrap', animation: 'chatItemIn 0.18s ease' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" style={{ transform: 'rotate(180deg)', transformOrigin: 'center' }}/></svg>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  Ultimul mesaj
+                </button>
+              )}
               <ChatInput inputRef={inputRef} value={inputVal} onChange={handleInputChange}
                 onKeyDown={handleKeyDown} onSend={sendMessage}
                 placeholder={`Mesaj în ${activeGroup?.name}...`}
