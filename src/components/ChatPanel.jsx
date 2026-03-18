@@ -255,11 +255,13 @@ export default function ChatPanel({ user }) {
   const [mentionHighlight, setMentionHighlight] = useState(0);
   const [mentionAtIdx, setMentionAtIdx]         = useState(0);
 
-  const [typingUsers, setTypingUsers]   = useState({});
-  const typingTimers                    = useRef({});
-  const [replyTo, setReplyTo]           = useState(null);
-  const [pinnedMsg, setPinnedMsg]       = useState(null);
-  const [hoveredMsgId, setHoveredMsgId] = useState(null);
+  const [typingUsers, setTypingUsers]       = useState({});
+  const typingTimers                        = useRef({});
+  const [replyTo, setReplyTo]               = useState(null);
+  const [pinnedMsg, setPinnedMsg]           = useState(null);
+  const [hoveredMsgId, setHoveredMsgId]     = useState(null);
+  const [highlightedMsgId, setHighlightedMsgId] = useState(null);
+  const highlightTimer                      = useRef(null);
 
   const mutedKey = `chat_muted_${user.username}`;
   const [muted, setMuted] = useState(() => {
@@ -674,6 +676,16 @@ export default function ChatPanel({ user }) {
 
   const handleUnpin = (msg) => handlePin({ ...msg, is_pinned: true });
 
+  const scrollToPinned = () => {
+    if (!pinnedMsg) return;
+    const el = document.getElementById(`msg-${pinnedMsg.id}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    clearTimeout(highlightTimer.current);
+    setHighlightedMsgId(pinnedMsg.id);
+    highlightTimer.current = setTimeout(() => setHighlightedMsgId(null), 1600);
+  };
+
   const applyFormat = (marker) => {
     const el = inputRef.current;
     if (!el) return;
@@ -893,15 +905,18 @@ export default function ChatPanel({ user }) {
                 <CloseBtn onClick={handleClose} />
               </div>
               {pinnedMsg && (
-                <div style={{ padding: '6px 14px', borderBottom: '1px solid var(--gray-2)', background: 'var(--gray-1)', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <div onClick={scrollToPinned}
+                  style={{ padding: '6px 14px', borderBottom: '1px solid var(--gray-2)', background: 'var(--gray-1)', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0, cursor: 'pointer', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'var(--gray-1)'}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                     <line x1="12" y1="17" x2="12" y2="22"/>
                     <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/>
                   </svg>
                   <div style={{ flex: 1, fontSize: 11, color: 'var(--gray-4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     <span style={{ fontWeight: 600, color: 'var(--black)' }}>{pinnedMsg.username}</span>: {pinnedMsg.message}
                   </div>
-                  <button onClick={() => handleUnpin(pinnedMsg)} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 2, fontSize: 11, display: 'flex', alignItems: 'center' }}>
+                  <button onClick={e => { e.stopPropagation(); handleUnpin(pinnedMsg); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 2, fontSize: 11, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </button>
                 </div>
@@ -1106,7 +1121,7 @@ export default function ChatPanel({ user }) {
                   const nextSame = i < messages.length - 1 && messages[i + 1].username === msg.username;
                   const isHovered = hoveredMsgId === msg.id;
                   return (
-                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4 }}
+                    <div key={msg.id} id={`msg-${msg.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, borderRadius: 10, animation: highlightedMsgId === msg.id ? 'msgHighlight 1.6s ease forwards' : 'none', padding: '2px 4px', margin: highlightedMsgId === msg.id ? '0 -4px' : undefined }}
                       onMouseEnter={() => setHoveredMsgId(msg.id)}
                       onMouseLeave={() => setHoveredMsgId(null)}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse' }}>
@@ -1195,7 +1210,7 @@ export default function ChatPanel({ user }) {
                   const seenBy  = getSeenBy(i, groupMsgs, memberReads[activeGroup?.id], user.username);
                   const isHovered = hoveredMsgId === msg.id;
                   return (
-                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4 }}
+                    <div key={msg.id} id={`msg-${msg.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, borderRadius: 10, animation: highlightedMsgId === msg.id ? 'msgHighlight 1.6s ease forwards' : 'none', padding: '2px 4px', margin: highlightedMsgId === msg.id ? '0 -4px' : undefined }}
                       onMouseEnter={() => setHoveredMsgId(msg.id)}
                       onMouseLeave={() => setHoveredMsgId(null)}>
                       {!isMe && !prevSame && (
