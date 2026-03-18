@@ -411,6 +411,14 @@ async function initDb() {
     await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE`);
     await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS pinned_by TEXT`);
 
+    // Migration: soft-delete & edit for DM messages
+    await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE`);
+    await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMP`);
+
+    // Migration: soft-delete & edit for group messages
+    await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE`);
+    await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMP`);
+
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {
     client.release();

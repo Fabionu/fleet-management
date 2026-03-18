@@ -607,6 +607,70 @@ app.put('/api/chat/groups/:id/read', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Editare mesaj DM (doar autorul)
+app.put('/api/chat/messages/:id', authMiddleware, async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message?.trim()) return res.status(400).json({ error: 'Mesaj gol' });
+    const result = await pool.query(
+      `UPDATE chat_messages SET message=$1, edited_at=NOW()
+       WHERE id=$2 AND username=$3 AND organization_id=$4 RETURNING *`,
+      [message.trim(), req.params.id, req.user.username, req.user.organization_id]
+    );
+    if (!result.rows.length) return res.status(403).json({ error: 'Interzis' });
+    const msg = result.rows[0];
+    const orgId = req.user.organization_id;
+    io.to(`org_${orgId}`).emit('message_edited', msg);
+    res.json(msg);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Ștergere mesaj DM (soft-delete, doar autorul)
+app.delete('/api/chat/messages/:id', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE chat_messages SET is_deleted=TRUE WHERE id=$1 AND username=$2 AND organization_id=$3 RETURNING *`,
+      [req.params.id, req.user.username, req.user.organization_id]
+    );
+    if (!result.rows.length) return res.status(403).json({ error: 'Interzis' });
+    const msg = result.rows[0];
+    const orgId = req.user.organization_id;
+    io.to(`org_${orgId}`).emit('message_deleted', { id: msg.id, username: msg.username, receiver_username: msg.receiver_username });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Editare mesaj grup (doar autorul)
+app.put('/api/chat/groups/:gid/messages/:id', authMiddleware, async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message?.trim()) return res.status(400).json({ error: 'Mesaj gol' });
+    const result = await pool.query(
+      `UPDATE chat_group_messages SET message=$1, edited_at=NOW()
+       WHERE id=$2 AND username=$3 AND group_id=$4 RETURNING *`,
+      [message.trim(), req.params.id, req.user.username, req.params.gid]
+    );
+    if (!result.rows.length) return res.status(403).json({ error: 'Interzis' });
+    const msg = result.rows[0];
+    io.to(`org_${req.user.organization_id}`).emit('group_message_edited', msg);
+    res.json(msg);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Ștergere mesaj grup (soft-delete, doar autorul)
+app.delete('/api/chat/groups/:gid/messages/:id', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `UPDATE chat_group_messages SET is_deleted=TRUE WHERE id=$1 AND username=$2 AND group_id=$3 RETURNING *`,
+      [req.params.id, req.user.username, req.params.gid]
+    );
+    if (!result.rows.length) return res.status(403).json({ error: 'Interzis' });
+    const msg = result.rows[0];
+    io.to(`org_${req.user.organization_id}`).emit('group_message_deleted', { id: msg.id, group_id: msg.group_id });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Pin/unpin DM message
 app.put('/api/chat/messages/:id/pin', authMiddleware, async (req, res) => {
   try {
