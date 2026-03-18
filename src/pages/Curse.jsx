@@ -22,6 +22,8 @@ function Curse({ user }) {
   const [filterInvoiced, setFilterInvoiced] = useState('all');
   const [filterMonth, setFilterMonth] = useState('');
   const [filterCreatedBy, setFilterCreatedBy] = useState('');
+  const [filterTruck, setFilterTruck] = useState('');
+  const [sortBy, setSortBy] = useState('date_desc');
   const menuRef = useRef(null);
 
   const showToast = (message, type = 'success') => {
@@ -344,6 +346,24 @@ function Curse({ user }) {
 
   const uniqueCreatedBy = [...new Set(trips.map(t => t.created_by).filter(Boolean))].sort();
   const uniqueMonths = [...new Set(trips.map(t => parseDateToMonthKey(t.load_date)).filter(Boolean))].sort().reverse();
+  const uniqueTrucks = [...new Set(trips.map(t => t.truck_number).filter(Boolean))].sort();
+
+  const hasActiveFilters = searchText.trim() || filterInvoiced !== 'all' || filterMonth || filterCreatedBy || filterTruck;
+
+  const resetFilters = () => {
+    setSearchText('');
+    setFilterInvoiced('all');
+    setFilterMonth('');
+    setFilterCreatedBy('');
+    setFilterTruck('');
+  };
+
+  const parseLoadDate = (dateStr) => {
+    if (!dateStr) return 0;
+    const parts = dateStr.split('.');
+    if (parts.length === 3) return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
+    return new Date(dateStr).getTime() || 0;
+  };
 
   const filteredTrips = trips.filter(trip => {
     if (searchText.trim()) {
@@ -356,7 +376,17 @@ function Curse({ user }) {
     if (filterInvoiced === 'not_invoiced' && trip.invoiced) return false;
     if (filterMonth && parseDateToMonthKey(trip.load_date) !== filterMonth) return false;
     if (filterCreatedBy && trip.created_by !== filterCreatedBy) return false;
+    if (filterTruck && trip.truck_number !== filterTruck) return false;
     return true;
+  }).sort((a, b) => {
+    switch (sortBy) {
+      case 'date_asc':  return parseLoadDate(a.load_date) - parseLoadDate(b.load_date);
+      case 'date_desc': return parseLoadDate(b.load_date) - parseLoadDate(a.load_date);
+      case 'price_desc': return (b.price || 0) - (a.price || 0);
+      case 'price_asc':  return (a.price || 0) - (b.price || 0);
+      case 'km_desc': return ((b.km_empty + b.km_loaded) || 0) - ((a.km_empty + a.km_loaded) || 0);
+      default: return 0;
+    }
   });
 
   // Calculate totals (on filtered trips)
@@ -451,7 +481,7 @@ function Curse({ user }) {
       {/* Filters */}
       <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
         {/* Search */}
-        <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+        <div style={{ position: 'relative', width: '280px', flexShrink: 0 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
             style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-4)', pointerEvents: 'none' }}>
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -500,8 +530,52 @@ function Curse({ user }) {
           ))}
         </select>
 
+        {/* Truck filter */}
+        <select
+          value={filterTruck}
+          onChange={e => setFilterTruck(e.target.value)}
+          style={{ padding: '9px 12px', border: `1px solid ${filterTruck ? '#ff7a3d' : 'var(--gray-2)'}`, borderRadius: '8px', fontSize: '13px', background: 'var(--bg-page)', color: filterTruck ? '#ff7a3d' : 'var(--black)', outline: 'none', cursor: 'pointer', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", fontWeight: filterTruck ? 600 : 400 }}
+        >
+          <option value="">Toate camioanele</option>
+          {uniqueTrucks.map(t => (
+            <option key={t} value={t}>{t}</option>
+          ))}
+        </select>
+
+        {/* Sort */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gray-4)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value)}
+            style={{ padding: '9px 12px', border: '1px solid var(--gray-2)', borderRadius: '8px', fontSize: '13px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', cursor: 'pointer', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}
+          >
+            <option value="date_desc">Dată (recent)</option>
+            <option value="date_asc">Dată (vechi)</option>
+            <option value="price_desc">Preț (mare → mic)</option>
+            <option value="price_asc">Preț (mic → mare)</option>
+            <option value="km_desc">KM (mare → mic)</option>
+          </select>
+        </div>
+
+        {/* Reset filters */}
+        {hasActiveFilters && (
+          <button
+            onClick={resetFilters}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '9px 12px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '8px', fontSize: '13px', color: 'var(--gray-4)', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", transition: 'all 0.15s' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--red)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.background = 'var(--red-light)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--gray-3)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.background = 'transparent'; }}
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Resetează
+          </button>
+        )}
+
         {/* Counter */}
-        <span style={{ fontSize: '13px', color: 'var(--gray-4)', whiteSpace: 'nowrap', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>
+        <span style={{ fontSize: '13px', color: 'var(--gray-4)', whiteSpace: 'nowrap', marginLeft: 'auto', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}>
           {filteredTrips.length} / {trips.length} curse
         </span>
       </div>
