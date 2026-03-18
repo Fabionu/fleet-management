@@ -52,7 +52,7 @@ function EditCurseModal({ trip, trucks, onClose, onSave }) {
   const [extraStops, setExtraStops] = useState(() => parseExtraStops(trip.extra_stops));
 
   const addExtraStop = () => {
-    setExtraStops(prev => [...prev, { type: 'load', firm: '', street: '', location: '', date: '', time: '' }]);
+    setExtraStops(prev => [...prev, { type: 'load', firm: '', street: '', location: '', date: '', time: '', lat: '', lng: '' }]);
   };
   const updateExtraStop = (index, field, value) => {
     setExtraStops(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
@@ -321,12 +321,20 @@ function EditCurseModal({ trip, trucks, onClose, onSave }) {
                     placeholder="Țară, cod poștal, oraș (ex: DE 40599 Düsseldorf)" style={inputStyle}
                     onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                   <input type="date" value={stop.date} onChange={(e) => updateExtraStop(idx, 'date', e.target.value)}
                     style={{ ...inputStyle, colorScheme: 'light' }}
                     onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
                   <input type="text" value={stop.time} onChange={(e) => updateExtraStopTime(idx, e.target.value)}
                     placeholder="HH:MM" maxLength={5} style={inputStyle}
+                    onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <input type="text" value={stop.lat || ''} onChange={(e) => updateExtraStop(idx, 'lat', e.target.value)}
+                    placeholder="Latitudine (48.1234)" style={inputStyle}
+                    onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                  <input type="text" value={stop.lng || ''} onChange={(e) => updateExtraStop(idx, 'lng', e.target.value)}
+                    placeholder="Longitudine (11.5678)" style={inputStyle}
                     onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
                 </div>
               </div>
