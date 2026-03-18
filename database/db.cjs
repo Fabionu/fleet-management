@@ -373,6 +373,20 @@ async function initDb() {
     // Migration: add load_eta column to trucks if not exists
     await client.query(`ALTER TABLE trucks ADD COLUMN IF NOT EXISTS load_eta TEXT`);
 
+    // Truck Documents table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS truck_documents (
+        id SERIAL PRIMARY KEY,
+        truck_id INTEGER NOT NULL REFERENCES trucks(id) ON DELETE CASCADE,
+        doc_type TEXT NOT NULL,
+        file_name TEXT,
+        file_data TEXT,
+        file_type TEXT,
+        expiry_date TEXT,
+        organization_id INTEGER REFERENCES organizations(id)
+      )
+    `);
+
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {
     client.release();

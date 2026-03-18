@@ -801,10 +801,12 @@ export default function ChatPanel({ user }) {
                           {showMuteBtn && (
                             <button onClick={e => { e.stopPropagation(); toggleMuteDm(u.username); }}
                               title={isMutedDm ? 'Activează notificări' : 'Silențios'}
-                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px', color: isMutedDm ? 'var(--gray-4)' : 'var(--gray-3)', display: 'flex', alignItems: 'center', borderRadius: 4 }}>
+                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 5px', color: isMutedDm ? 'var(--gray-4)' : 'var(--gray-3)', display: 'flex', alignItems: 'center', borderRadius: 5, transition: 'background 0.12s, color 0.12s' }}
+                              onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = isMutedDm ? 'var(--black)' : 'var(--gray-4)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = isMutedDm ? 'var(--gray-4)' : 'var(--gray-3)'; }}>
                               {isMutedDm
-                                ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                                : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                                ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                               }
                             </button>
                           )}
@@ -880,10 +882,12 @@ export default function ChatPanel({ user }) {
                           {showMuteGrp && (
                             <button onClick={e => { e.stopPropagation(); toggleMuteGroup(g.id); }}
                               title={isMutedGrp ? 'Activează notificări' : 'Silențios'}
-                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px', color: isMutedGrp ? 'var(--gray-4)' : 'var(--gray-3)', display: 'flex', alignItems: 'center', borderRadius: 4 }}>
+                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 5px', color: isMutedGrp ? 'var(--gray-4)' : 'var(--gray-3)', display: 'flex', alignItems: 'center', borderRadius: 5, transition: 'background 0.12s, color 0.12s' }}
+                              onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = isMutedGrp ? 'var(--black)' : 'var(--gray-4)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = isMutedGrp ? 'var(--gray-4)' : 'var(--gray-3)'; }}>
                               {isMutedGrp
-                                ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                                : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                                ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                                : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                               }
                             </button>
                           )}

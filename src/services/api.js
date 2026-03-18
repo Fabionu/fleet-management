@@ -64,6 +64,15 @@ export const api = {
   updateTrailer: (id, trailer) => apiClient.put(`/trailers/${id}`, trailer),
   deleteTrailer: (id) => apiClient.delete(`/trailers/${id}`),
 
+  // Truck Documents
+  getTruckDocuments: (truckId) => apiClient.get(`/truck-documents/${truckId}`),
+  createTruckDocument: (doc) => apiClient.post('/truck-documents', doc),
+  updateTruckDocument: (id, doc) => apiClient.put(`/truck-documents/${id}`, doc),
+  deleteTruckDocument: (id) => apiClient.delete(`/truck-documents/${id}`),
+
+  // Alerts
+  getDocumentAlerts: () => apiClient.get('/alerts/documents'),
+
   // Logs
   getLogs: () => apiClient.get('/logs'),
 };

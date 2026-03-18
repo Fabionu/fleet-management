@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../services/api';
-import { DRIVER_DOC_TYPES } from '../constants/docTypes';
+import { DRIVER_DOC_TYPES, TRUCK_DOC_TYPES } from '../constants/docTypes';
 
 // ── Constante ──────────────────────────────────────────────
 const PERM_LABELS = {
@@ -529,12 +529,46 @@ function SectionCamioane({ onBack }) {
   const [toast, setToast] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // ── Stare documente camion ──
+  const [docsModal, setDocsModal]   = useState(null);
+  const [docs, setDocs]             = useState([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [addingDoc, setAddingDoc]   = useState(false);
+  const [editingDoc, setEditingDoc] = useState(null);
+  const [docForm, setDocForm]       = useState({ doc_type:'itp', file_name:'', file_data:'', file_type:'', expiry_date:'' });
+  const docFileRef                  = useRef(null);
+  const [truckDocs, setTruckDocs]   = useState({}); // { truckId: [docs] }
+
   const load = useCallback(async () => {
     setLoading(true);
-    try { const res = await api.getTrucks(); setTrucks(res.data); } catch {}
+    try {
+      const res = await api.getTrucks();
+      const list = res.data;
+      setTrucks(list);
+      // Încarcă documentele pentru toate camioanele (în paralel)
+      const entries = await Promise.all(
+        list.map(async t => {
+          try { const r = await api.getTruckDocuments(t.id); return [t.id, r.data]; }
+          catch { return [t.id, []]; }
+        })
+      );
+      setTruckDocs(Object.fromEntries(entries));
+    } catch {}
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
+
+  const loadDocs = async (id) => {
+    setDocsLoading(true);
+    try { const res = await api.getTruckDocuments(id); setDocs(res.data); } catch {}
+    setDocsLoading(false);
+  };
+
+  const openDocs = (truck) => {
+    setDocsModal(truck); setDocs([]); setAddingDoc(false); setEditingDoc(null);
+    setDocForm({ doc_type:'itp', file_name:'', file_data:'', file_type:'', expiry_date:'' });
+    loadDocs(truck.id);
+  };
 
   const openAdd = () => {
     setForm({ number:'', trailer:'', fuel_card:'', fuel_card_expiry:'', phone:'', drivers:'', vehicle_type:'' });
@@ -587,7 +621,48 @@ function SectionCamioane({ onBack }) {
     setConfirm(null);
   };
 
+  const handleFile = (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setDocForm(f => ({ ...f, file_name:file.name, file_data:ev.target.result, file_type:file.type }));
+    reader.readAsDataURL(file);
+  };
+
+  const handleSaveDoc = async () => {
+    setSaving(true);
+    try {
+      if (editingDoc) {
+        await api.updateTruckDocument(editingDoc.id, docForm);
+        setToast('Document actualizat');
+      } else {
+        await api.createTruckDocument({ ...docForm, truck_id:docsModal.id });
+        setToast('Document adăugat');
+      }
+      setAddingDoc(false); setEditingDoc(null);
+      setDocForm({ doc_type:'itp', file_name:'', file_data:'', file_type:'', expiry_date:'' });
+      await loadDocs(docsModal.id);
+      // Reîncarcă badge-urile din tabel
+      try { const r = await api.getTruckDocuments(docsModal.id); setTruckDocs(prev => ({ ...prev, [docsModal.id]: r.data })); } catch {}
+    } catch { setToast('Eroare'); }
+    setSaving(false);
+  };
+
+  const handleDeleteDoc = async (id) => {
+    try {
+      await api.deleteTruckDocument(id);
+      setToast('Document șters');
+      await loadDocs(docsModal.id);
+      try { const r = await api.getTruckDocuments(docsModal.id); setTruckDocs(prev => ({ ...prev, [docsModal.id]: r.data })); } catch {}
+    } catch { setToast('Eroare'); }
+  };
+
+  const isExpired      = (d) => d && new Date(d) < new Date();
+  const isExpiringSoon = (d) => { if (!d) return false; const diff = (new Date(d) - new Date()) / (1000*60*60*24); return diff >= 0 && diff <= 30; };
+  const docStatusColor = (d) => isExpired(d) ? '#ef4444' : isExpiringSoon(d) ? '#f59e0b' : '#22c55e';
+  const docStatusLabel = (d) => isExpired(d) ? 'Expirat' : isExpiringSoon(d) ? 'Expiră curând' : d ? 'Valid' : '';
+
   const statusColor = { liber:'#22c55e', incarcare:'#f59e0b', descarcare:'#3b82f6', tranzit:'#8b5cf6', booked:'#ff7a3d', weekend:'#ec4899' };
+  const TRUCK_DOC_SHORT = { itp:'ITP', rca:'RCA', casco:'CASCO', cemt:'CEMT', tahograf:'Taho', licenta:'Lic.' };
 
   return (
     <div>
@@ -599,7 +674,7 @@ function SectionCamioane({ onBack }) {
       />
 
       {loading ? <Loader /> : (
-        <Table headers={['Nr. camion','Tip','Status','Șoferi','Remorcă','Card carburant','Expirare','Telefon','Acțiuni']}>
+        <Table headers={['Nr. camion','Tip','Status','Șoferi','Remorcă','Card carburant','Expirare',...TRUCK_DOC_TYPES.map(t=>TRUCK_DOC_SHORT[t.key]||t.label),'Acțiuni']}>
           {trucks.map((t, i) => (
             <tr key={t.id} style={{ borderBottom: i<trucks.length-1 ? '1px solid var(--gray-2)' : 'none' }}>
               <td style={tdStyle}><span style={{ fontWeight:700, color:'var(--black)' }}>{t.number}</span></td>
@@ -609,13 +684,49 @@ function SectionCamioane({ onBack }) {
               <td style={{ ...tdStyle, color:'var(--gray-4)' }}>{t.trailer||'—'}</td>
               <td style={{ ...tdStyle, color:'var(--gray-4)' }}>{t.fuel_card||'—'}</td>
               <td style={{ ...tdStyle, color:'var(--gray-4)' }}>{t.fuel_card_expiry||'—'}</td>
-              <td style={{ ...tdStyle, color:'var(--gray-4)' }}>{t.phone||'—'}</td>
-              <td style={tdStyle}><Actions onEdit={() => openEdit(t)} onDelete={() => setConfirm({ msg:`Ștergi camionul "${t.number}"? Se vor pierde toate datele!`, id:t.id })} /></td>
+              {TRUCK_DOC_TYPES.map(dt => {
+                const tDocs = truckDocs[t.id] || [];
+                const doc   = tDocs.find(x => x.doc_type === dt.key);
+                const exp   = doc?.expiry_date;
+                const expired = exp && new Date(exp) < new Date();
+                const soon    = exp && !expired && (new Date(exp)-new Date())/(1000*60*60*24)<=30;
+                const color   = !doc ? 'var(--gray-4)' : expired ? 'var(--red)' : soon ? '#d97706' : '#16a34a';
+                const border  = !doc ? 'var(--gray-3)' : expired ? 'var(--red)' : soon ? '#f59e0b' : '#16a34a';
+                const title   = !doc ? 'Lipsă' : exp ? `Expiră: ${exp.split('-').reverse().join('.')}` : doc ? 'Fără dată' : '';
+                return (
+                  <td key={dt.key} style={{ padding:'10px 8px', textAlign:'center' }}>
+                    <span title={title} style={{ display:'inline-block', width:8, height:8, borderRadius:'50%', background:color, border:`1px solid ${border}`, cursor:'default' }} />
+                  </td>
+                );
+              })}
+              <td style={tdStyle}>
+                <div style={{ display:'flex', gap:'5px' }}>
+                  <button onClick={() => openDocs(t)}
+                    style={{ ...iconBtnBase, color:'var(--black)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background='var(--gray-2)'; e.currentTarget.style.borderColor='var(--gray-4)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; }}>
+                    <SvgEdit /> Documente
+                  </button>
+                  <button onClick={() => openEdit(t)}
+                    style={{ ...iconBtnBase, color:'var(--black)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background='var(--gray-2)'; e.currentTarget.style.borderColor='var(--gray-4)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; }}>
+                    <SvgEdit /> Editează
+                  </button>
+                  <button onClick={() => setConfirm({ msg:`Ștergi camionul "${t.number}"? Se vor pierde toate datele!`, id:t.id })}
+                    style={{ ...iconBtnBase, color:'var(--red)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background='var(--red-light)'; e.currentTarget.style.borderColor='var(--red)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; }}>
+                    <SvgTrash /> Șterge
+                  </button>
+                </div>
+              </td>
             </tr>
           ))}
         </Table>
       )}
 
+      {/* Modal add/edit camion */}
       {modal && (
         <Modal title={modal.mode==='add' ? 'Adaugă camion' : `Editează: ${modal.truck.number}`} onClose={() => setModal(null)} width={460}>
           <div style={{ display:'grid', gap:'12px' }}>
@@ -632,7 +743,6 @@ function SectionCamioane({ onBack }) {
                   style={{ ...inputStyle, background: disabled ? 'var(--gray-2)' : 'var(--gray-1)', color: disabled ? 'var(--gray-4)' : 'var(--black)' }} />
               </Field>
             ))}
-            {/* Vehicle type selector */}
             <Field label="Tip vehicul">
               <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', marginTop:'2px' }}>
                 {VEHICLE_TYPES.map(vt => {
@@ -659,6 +769,124 @@ function SectionCamioane({ onBack }) {
           </div>
           <ModalFooter onCancel={() => setModal(null)} onSave={handleSave} saving={saving} />
         </Modal>
+      )}
+
+      {/* Modal documente camion */}
+      {docsModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:8000, display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(2px)' }}>
+          <div style={{ background:'var(--bg-page)', border:'1px solid var(--gray-2)', borderRadius:'14px', padding:'28px', width:600, maxWidth:'95vw', maxHeight:'85vh', overflowY:'auto', boxShadow:'0 8px 32px rgba(0,0,0,0.2)' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px' }}>
+              <div style={{ display:'flex', alignItems:'center', gap:'10px' }}>
+                <div style={{ width:36, height:36, borderRadius:'8px', background:'#ff7a3d18', display:'flex', alignItems:'center', justifyContent:'center', color:'#ff7a3d' }}>
+                  <IconTruck />
+                </div>
+                <div>
+                  <div style={{ fontWeight:700, color:'var(--black)', fontSize:'15px' }}>{docsModal.number}</div>
+                  <div style={{ fontSize:'12px', color:'var(--gray-4)' }}>Documente camion</div>
+                </div>
+              </div>
+              <button onClick={() => { setDocsModal(null); setAddingDoc(false); }}
+                style={{ background:'transparent', border:'none', cursor:'pointer', color:'var(--gray-4)', fontSize:'22px', lineHeight:1 }}>×</button>
+            </div>
+
+            {docsLoading ? <Loader /> : (
+              <>
+                {docs.length === 0 && !addingDoc && <EmptyState msg="Niciun document adăugat" />}
+                <div style={{ display:'grid', gap:'8px', marginBottom:'12px' }}>
+                  {docs.map(doc => (
+                    <div key={doc.id} style={{ padding:'12px 14px', background:'var(--gray-1)', borderRadius:'9px', border:'1px solid var(--gray-2)', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+                      <div style={{ display:'flex', gap:'10px', alignItems:'center' }}>
+                        <div style={{ width:36, height:36, borderRadius:'8px', background: doc.expiry_date ? docStatusColor(doc.expiry_date)+'18' : 'var(--gray-2)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:'18px' }}>
+                          📄
+                        </div>
+                        <div>
+                          <div style={{ fontWeight:600, color:'var(--black)', fontSize:'13px' }}>{TRUCK_DOC_TYPES.find(t => t.key === doc.doc_type)?.label || doc.doc_type}</div>
+                          <div style={{ fontSize:'11px', color:'var(--gray-4)', marginTop:'2px' }}>
+                            {doc.file_name || 'Fără fișier'}
+                            {doc.expiry_date && (
+                              <span style={{ marginLeft:8, color: docStatusColor(doc.expiry_date), fontWeight:600 }}>
+                                · {doc.expiry_date} · {docStatusLabel(doc.expiry_date)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display:'flex', gap:'5px' }}>
+                        {doc.file_data && (
+                          <a href={doc.file_data} download={doc.file_name}
+                            style={{ padding:'5px 9px', background:'var(--gray-2)', border:'1px solid var(--gray-3)', borderRadius:'5px', cursor:'pointer', fontSize:'12px', color:'var(--black)', textDecoration:'none' }}>↓</a>
+                        )}
+                        <button
+                          onClick={() => {
+                            setDocForm({ doc_type:doc.doc_type, file_name:doc.file_name||'', file_data:doc.file_data||'', file_type:doc.file_type||'', expiry_date:doc.expiry_date||'' });
+                            setEditingDoc(doc); setAddingDoc(true);
+                          }}
+                          style={{ ...iconBtnBase, color:'var(--black)' }}
+                          onMouseEnter={e => { e.currentTarget.style.background='var(--gray-2)'; e.currentTarget.style.borderColor='var(--gray-4)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; }}
+                        >
+                          <SvgEdit /> Editează
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDoc(doc.id)}
+                          style={{ ...iconBtnBase, color:'var(--red)' }}
+                          onMouseEnter={e => { e.currentTarget.style.background='var(--red-light)'; e.currentTarget.style.borderColor='var(--red)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; }}
+                        >
+                          <SvgTrash /> Șterge
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {addingDoc ? (
+                  <div style={{ padding:'16px', background:'var(--gray-1)', borderRadius:'10px', border:'1px solid var(--gray-2)' }}>
+                    <div style={{ fontWeight:600, color:'var(--black)', fontSize:'14px', marginBottom:'12px' }}>
+                      {editingDoc ? 'Editează document' : 'Document nou'}
+                    </div>
+                    <div style={{ display:'grid', gap:'10px' }}>
+                      <Field label="Tip document">
+                        <select value={docForm.doc_type} onChange={e=>setDocForm(f=>({...f,doc_type:e.target.value}))} style={inputStyle}>
+                          {TRUCK_DOC_TYPES.map(t => <option key={t.key} value={t.key}>{t.label}</option>)}
+                        </select>
+                      </Field>
+                      <Field label="Data expirare">
+                        <input type="date" value={docForm.expiry_date} onChange={e=>setDocForm(f=>({...f,expiry_date:e.target.value}))} style={inputStyle} />
+                      </Field>
+                      <Field label="Fișier (PDF)">
+                        <input ref={docFileRef} type="file" accept=".pdf" onChange={handleFile} style={{ display:'none' }} />
+                        <button type="button" onClick={() => docFileRef.current?.click()}
+                          style={{ display:'flex', alignItems:'center', gap:'7px', padding:'8px 12px', border:'1px solid var(--gray-3)', borderRadius:'7px', background:'transparent', color:'var(--black)', cursor:'pointer', fontSize:'12px', fontWeight:500, transition:'all 0.15s', width:'100%' }}
+                          onMouseEnter={e => { e.currentTarget.style.background='var(--gray-2)'; e.currentTarget.style.borderColor='var(--gray-4)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                          {docForm.file_name ? docForm.file_name : 'Selectează fișier PDF'}
+                        </button>
+                      </Field>
+                    </div>
+                    <div style={{ display:'flex', gap:'8px', marginTop:'14px' }}>
+                      <button onClick={() => { setAddingDoc(false); setEditingDoc(null); }}
+                        style={{ padding:'7px 16px', border:'1px solid var(--gray-3)', background:'var(--gray-2)', borderRadius:'6px', cursor:'pointer', fontSize:'12px', color:'var(--black)' }}>Anulează</button>
+                      <button onClick={handleSaveDoc} disabled={saving}
+                        style={{ padding:'7px 16px', border:'none', background:'#ff7a3d', color:'#fff', borderRadius:'6px', cursor:'pointer', fontSize:'12px', fontWeight:600, opacity:saving?0.7:1 }}>
+                        {saving ? 'Se salvează...' : 'Salvează document'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button onClick={() => { setDocForm({ doc_type:'itp', file_name:'', file_data:'', file_type:'', expiry_date:'' }); setEditingDoc(null); setAddingDoc(true); }}
+                    style={{ width:'100%', padding:'10px', background:'transparent', border:'2px dashed var(--gray-3)', borderRadius:'8px', cursor:'pointer', fontSize:'13px', color:'var(--gray-4)', transition:'border-color 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor='#ff7a3d'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor='var(--gray-3)'}
+                  >
+                    + Adaugă document
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

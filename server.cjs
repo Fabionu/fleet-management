@@ -585,7 +585,9 @@ app.post('/api/login', async (req, res) => {
       username: user.username,
       role: user.role,
       permissions,
-      organization_name: org ? org.name : 'Fleet Management'
+      organization_name: org ? org.name : 'Fleet Management',
+      first_name: user.first_name || '',
+      last_name: user.last_name || '',
     });
   } catch (err) {
     console.error('❌ POST /api/login error:', err.message);
@@ -1193,6 +1195,116 @@ app.delete('/api/driver-documents/:id', authMiddleware, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('❌ DELETE /api/driver-documents/:id error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── TRUCK DOCUMENTS ─────────────────────────────────────────
+app.get('/api/truck-documents/:truckId', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM truck_documents WHERE truck_id = $1 ORDER BY doc_type`,
+      [req.params.truckId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('❌ GET /api/truck-documents error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/truck-documents', authMiddleware, async (req, res) => {
+  try {
+    const { truck_id, doc_type, file_name, file_data, file_type, expiry_date } = req.body;
+    const result = await pool.query(
+      `INSERT INTO truck_documents (truck_id, doc_type, file_name, file_data, file_type, expiry_date, organization_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [truck_id, doc_type, file_name, file_data, file_type, expiry_date || null, req.user.organization_id]
+    );
+    res.json({ id: result.rows[0].id });
+  } catch (err) {
+    console.error('❌ POST /api/truck-documents error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/truck-documents/:id', authMiddleware, async (req, res) => {
+  try {
+    const { doc_type, file_name, file_data, file_type, expiry_date } = req.body;
+    await pool.query(
+      `UPDATE truck_documents SET doc_type=$1, file_name=$2, file_data=$3, file_type=$4, expiry_date=$5 WHERE id=$6`,
+      [doc_type, file_name, file_data, file_type, expiry_date || null, req.params.id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ PUT /api/truck-documents/:id error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/truck-documents/:id', authMiddleware, async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM truck_documents WHERE id=$1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('❌ DELETE /api/truck-documents/:id error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── ALERTE DOCUMENTE ─────────────────────────────────────────
+app.get('/api/alerts/documents', authMiddleware, async (req, res) => {
+  try {
+    const orgId = req.user.organization_id;
+    const result = await pool.query(
+      `SELECT 'driver' AS type,
+              TRIM(CONCAT(COALESCE(d.first_name,''), ' ', COALESCE(d.last_name,''), ' (', d.name, ')')) AS entity_name,
+              dd.doc_type, dd.expiry_date, d.id AS entity_id
+       FROM driver_documents dd
+       JOIN drivers d ON d.id = dd.driver_id
+       WHERE d.organization_id = $1
+         AND dd.expiry_date IS NOT NULL AND dd.expiry_date != ''
+         AND dd.expiry_date::date <= CURRENT_DATE + INTERVAL '30 days'
+
+       UNION ALL
+
+       SELECT 'truck' AS type, t.number AS entity_name,
+              td.doc_type, td.expiry_date, t.id AS entity_id
+       FROM truck_documents td
+       JOIN trucks t ON t.id = td.truck_id
+       WHERE td.organization_id = $1
+         AND td.expiry_date IS NOT NULL AND td.expiry_date != ''
+         AND td.expiry_date::date <= CURRENT_DATE + INTERVAL '30 days'
+
+       UNION ALL
+
+       SELECT 'trailer' AS type, tr.number AS entity_name,
+              'ITP' AS doc_type, tr.itp_expiry AS expiry_date, tr.id AS entity_id
+       FROM trailers tr
+       WHERE tr.organization_id = $1
+         AND tr.itp_expiry IS NOT NULL AND tr.itp_expiry != ''
+         AND tr.itp_expiry::date <= CURRENT_DATE + INTERVAL '30 days'
+
+       UNION ALL
+
+       SELECT 'trailer' AS type, tr.number AS entity_name,
+              'RCA' AS doc_type, tr.rca_expiry AS expiry_date, tr.id AS entity_id
+       FROM trailers tr
+       WHERE tr.organization_id = $1
+         AND tr.rca_expiry IS NOT NULL AND tr.rca_expiry != ''
+         AND tr.rca_expiry::date <= CURRENT_DATE + INTERVAL '30 days'
+
+       ORDER BY expiry_date ASC`,
+      [orgId]
+    );
+    const now = new Date();
+    const alerts = result.rows.map(r => ({
+      ...r,
+      days_left: Math.ceil((new Date(r.expiry_date) - now) / (1000 * 60 * 60 * 24)),
+    }));
+    res.json(alerts);
+  } catch (err) {
+    console.error('❌ GET /api/alerts/documents error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
