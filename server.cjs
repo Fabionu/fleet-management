@@ -194,6 +194,32 @@ app.put('/api/chat/read/:peer', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Marchează TOATE mesajele (DM + grupuri) ca citite pentru userul curent
+app.put('/api/chat/read-all', authMiddleware, async (req, res) => {
+  try {
+    const me = req.user.username;
+    const orgId = req.user.organization_id;
+    const now = new Date();
+    // DM — inserează/actualizează un read-record pentru fiecare peer care i-a trimis mesaje
+    await pool.query(
+      `INSERT INTO chat_conv_read (username, peer_username, organization_id, last_read_at)
+       SELECT $1, cm.username, $2, $3
+       FROM (SELECT DISTINCT username FROM chat_messages WHERE receiver_username = $1 AND organization_id = $2) cm
+       ON CONFLICT (username, peer_username, organization_id) DO UPDATE SET last_read_at = $3`,
+      [me, orgId, now]
+    );
+    // Grupuri — inserează/actualizează pentru fiecare grup din care face parte
+    await pool.query(
+      `INSERT INTO chat_group_read (username, group_id, organization_id, last_read_at)
+       SELECT $1, gm.group_id, $2, $3
+       FROM chat_group_members gm WHERE gm.username = $1 AND gm.organization_id = $2
+       ON CONFLICT (username, group_id) DO UPDATE SET last_read_at = $3`,
+      [me, orgId, now]
+    );
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Când a citit peer-ul ultima oară conversația cu mine (pentru read receipts)
 app.get('/api/chat/peer-read/:peer', authMiddleware, async (req, res) => {
   try {

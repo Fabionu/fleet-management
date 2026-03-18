@@ -666,7 +666,26 @@ export default function ChatPanel({ user }) {
                   <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--black)' }}>Mesaje</span>
                   <span style={{ fontSize: 12, color: 'var(--gray-4)' }}>· {onlineUsers.filter(u => u !== user.username).length} online</span>
                 </div>
-                <CloseBtn onClick={handleClose} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {totalUnread > 0 && (
+                    <button
+                      title="Marchează tot ca citit"
+                      onClick={() => {
+                        axios.put('/api/chat/read-all', {}, { headers }).catch(() => {});
+                        setUnreadCounts({});
+                        setGroupUnread({});
+                      }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '3px 5px', borderRadius: 6, display: 'flex', alignItems: 'center', color: 'var(--gray-4)', transition: 'background 0.15s, color 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--green)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--gray-4)'; }}
+                    >
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/>
+                      </svg>
+                    </button>
+                  )}
+                  <CloseBtn onClick={handleClose} />
+                </div>
               </div>
               <div style={{ padding: '8px 12px', background: 'var(--bg-page)', borderBottom: '1px solid var(--gray-2)' }}>
                 <div style={{ position: 'relative' }}>
