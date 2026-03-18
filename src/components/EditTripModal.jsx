@@ -56,6 +56,8 @@ function EditTripModal({ truck, onClose, onSave }) {
     </svg>
   );
 
+  const [saving, setSaving] = useState(false);
+
   const CheckIcon = () => (
     <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
       <path d="M2.5 6.5L5.5 9.5L10.5 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -102,6 +104,7 @@ function EditTripModal({ truck, onClose, onSave }) {
       observations: formData.observations
     };
 
+    setSaving(true);
     onSave(data);
     onClose();
   };
@@ -487,23 +490,27 @@ function EditTripModal({ truck, onClose, onSave }) {
             </button>
             <button
               type="submit"
+              disabled={saving}
               style={{
                 flex: 1,
                 padding: '13px',
-                background: '#ff7a3d',
+                background: saving ? 'var(--gray-3)' : '#ff7a3d',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '14px',
                 fontWeight: 600,
                 color: 'white',
-                cursor: 'pointer',
+                cursor: saving ? 'not-allowed' : 'pointer',
+                opacity: saving ? 0.7 : 1,
                 transition: 'all 0.2s',
-                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
+                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#ff8c52'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#ff7a3d'}
+              onMouseEnter={(e) => { if (!saving) e.currentTarget.style.background = '#ff8c52'; }}
+              onMouseLeave={(e) => { if (!saving) e.currentTarget.style.background = '#ff7a3d'; }}
             >
-              Salvează
+              {saving && <svg style={{ animation: 'spin 0.8s linear infinite', flexShrink: 0 }} width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>}
+              {saving ? 'Se salvează...' : 'Salvează'}
             </button>
           </div>
         </form>

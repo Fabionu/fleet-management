@@ -76,14 +76,17 @@ function AddCurseModal({ trucks, onClose, onSave }) {
     }
   };
 
+  const [saving, setSaving] = useState(false);
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!formData.pdf_file) {
       alert('Comanda de transport (PDF) este obligatorie!');
       return;
     }
-    
+
+    setSaving(true);
     onSave({ ...formData, extraStops });
   };
 
@@ -408,11 +411,12 @@ function AddCurseModal({ trucks, onClose, onSave }) {
               onMouseLeave={(e) => e.currentTarget.style.background = 'var(--gray-1)'}>
               Anulează
             </button>
-            <button type="submit" disabled={isSaveDisabled}
-              style={{ flex: 1, padding: '10px', background: isSaveDisabled ? 'var(--gray-3)' : '#ff7a3d', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: 'white', cursor: isSaveDisabled ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: isSaveDisabled ? 0.5 : 1, fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
-              onMouseEnter={(e) => { if (!isSaveDisabled) e.currentTarget.style.background = '#ff8c52'; }}
-              onMouseLeave={(e) => { if (!isSaveDisabled) e.currentTarget.style.background = '#ff7a3d'; }}>
-              Salvează Cursă
+            <button type="submit" disabled={isSaveDisabled || saving}
+              style={{ flex: 1, padding: '10px', background: (isSaveDisabled || saving) ? 'var(--gray-3)' : '#ff7a3d', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: 'white', cursor: (isSaveDisabled || saving) ? 'not-allowed' : 'pointer', transition: 'all 0.2s', opacity: (isSaveDisabled || saving) ? 0.7 : 1, fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+              onMouseEnter={(e) => { if (!isSaveDisabled && !saving) e.currentTarget.style.background = '#ff8c52'; }}
+              onMouseLeave={(e) => { if (!isSaveDisabled && !saving) e.currentTarget.style.background = '#ff7a3d'; }}>
+              {saving && <svg style={{ animation: 'spin 0.8s linear infinite', flexShrink: 0 }} width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>}
+              {saving ? 'Se salvează...' : 'Salvează Cursă'}
             </button>
           </div>
         </form>
