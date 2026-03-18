@@ -41,7 +41,8 @@
       "Bash(node --version)",
       "Bash(where python)",
       "Bash(where py)",
-      "Bash(npx vite build --mode development)"
+      "Bash(npx vite build --mode development)",
+      "Bash(curl -s http://localhost:5173 -o /dev/null -w \"%{http_code}\")"
     ]
   }
 }
