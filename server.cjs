@@ -134,7 +134,7 @@ function requirePermission(perm) {
 app.get('/api/chat/users', authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT username, role FROM users WHERE organization_id = $1 AND username != $2 ORDER BY username`,
+      `SELECT username, role, first_name, last_name FROM users WHERE organization_id = $1 AND username != $2 ORDER BY username`,
       [req.user.organization_id, req.user.username]
     );
     res.json(result.rows);
@@ -269,6 +269,7 @@ app.get('/api/chat/groups/unread', authMiddleware, async (req, res) => {
        WHERE gm.organization_id = $2
          AND gm.username != $1
          AND (gr.last_read_at IS NULL OR gm.created_at > gr.last_read_at)
+         AND (gm.message_type = 'text' OR gm.message_type IS NULL)
          AND gm.group_id IN (
            SELECT group_id FROM chat_group_members WHERE username = $1 AND organization_id = $2
          )
@@ -885,7 +886,7 @@ app.get('/api/users', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
     const result = await pool.query(
-      'SELECT id, username, role, permissions FROM users WHERE organization_id = $1',
+      'SELECT id, username, role, permissions, first_name, last_name FROM users WHERE organization_id = $1',
       [req.user.organization_id]
     );
     res.json(result.rows.map(u => ({
@@ -901,12 +902,12 @@ app.get('/api/users', authMiddleware, async (req, res) => {
 app.post('/api/users', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
-    const { username, password, role, permissions } = req.body;
+    const { username, password, role, permissions, first_name, last_name } = req.body;
     const hash = bcrypt.hashSync(password, 10);
     const perms = JSON.stringify(permissions || {});
     await pool.query(
-      'INSERT INTO users (username, password, role, permissions, organization_id) VALUES ($1,$2,$3,$4,$5)',
-      [username, hash, role, perms, req.user.organization_id]
+      'INSERT INTO users (username, password, role, permissions, organization_id, first_name, last_name) VALUES ($1,$2,$3,$4,$5,$6,$7)',
+      [username, hash, role, perms, req.user.organization_id, first_name || null, last_name || null]
     );
     await addLog(req.user.organization_id, req.user.username, 'Adăugat utilizator', 'user', null, `${username} (${role})`);
     res.json({ success: true });
@@ -918,17 +919,17 @@ app.post('/api/users', authMiddleware, async (req, res) => {
 app.put('/api/users/:id', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
-    const { password, role, permissions } = req.body;
+    const { password, role, permissions, first_name, last_name } = req.body;
     if (password) {
       const hash = bcrypt.hashSync(password, 10);
       await pool.query(
-        'UPDATE users SET password=$1, role=$2, permissions=$3 WHERE id=$4',
-        [hash, role, JSON.stringify(permissions || {}), req.params.id]
+        'UPDATE users SET password=$1, role=$2, permissions=$3, first_name=$5, last_name=$6 WHERE id=$4',
+        [hash, role, JSON.stringify(permissions || {}), req.params.id, first_name || null, last_name || null]
       );
     } else {
       await pool.query(
-        'UPDATE users SET role=$1, permissions=$2 WHERE id=$3',
-        [role, JSON.stringify(permissions || {}), req.params.id]
+        'UPDATE users SET role=$1, permissions=$2, first_name=$4, last_name=$5 WHERE id=$3',
+        [role, JSON.stringify(permissions || {}), req.params.id, first_name || null, last_name || null]
       );
     }
     await addLog(req.user.organization_id, req.user.username, 'Editat utilizator', 'user', req.params.id, `rol: ${role}`);

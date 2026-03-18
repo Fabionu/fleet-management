@@ -272,6 +272,10 @@ async function initDb() {
     // Migration: add email column to users
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS email TEXT`);
 
+    // Migration: add first_name and last_name to users
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS first_name TEXT`);
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS last_name TEXT`);
+
     // Migration: add trailers table (for existing DBs)
     await client.query(`
       CREATE TABLE IF NOT EXISTS trailers (

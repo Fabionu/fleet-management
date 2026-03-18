@@ -383,7 +383,7 @@ function SectionUtilizatori({ onBack }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
-  const [form, setForm] = useState({ username:'', password:'', role:'dispatcher', permissions:{} });
+  const [form, setForm] = useState({ username:'', password:'', role:'dispatcher', permissions:{}, first_name:'', last_name:'' });
   const [confirm, setConfirm] = useState(null);
   const [toast, setToast] = useState('');
   const [saving, setSaving] = useState(false);
@@ -396,11 +396,11 @@ function SectionUtilizatori({ onBack }) {
   useEffect(() => { load(); }, [load]);
 
   const openAdd = () => {
-    setForm({ username:'', password:'', role:'dispatcher', permissions:{ ...DEFAULT_PERMISSIONS.dispatcher } });
+    setForm({ username:'', password:'', role:'dispatcher', permissions:{ ...DEFAULT_PERMISSIONS.dispatcher }, first_name:'', last_name:'' });
     setModal({ mode:'add' });
   };
   const openEdit = (u) => {
-    setForm({ username:u.username, password:'', role:u.role, permissions:{ ...u.permissions } });
+    setForm({ username:u.username, password:'', role:u.role, permissions:{ ...u.permissions }, first_name:u.first_name||'', last_name:u.last_name||'' });
     setModal({ mode:'edit', user:u });
   };
   const handleRoleChange = (role) => setForm(f => ({ ...f, role, permissions:{ ...DEFAULT_PERMISSIONS[role] } }));
@@ -411,10 +411,10 @@ function SectionUtilizatori({ onBack }) {
     try {
       if (modal.mode === 'add') {
         if (!form.password.trim()) { setSaving(false); return; }
-        await api.createUser({ username:form.username, password:form.password, role:form.role, permissions:form.permissions });
+        await api.createUser({ username:form.username, password:form.password, role:form.role, permissions:form.permissions, first_name:form.first_name, last_name:form.last_name });
         setToast('Utilizator adăugat');
       } else {
-        await api.updateUser(modal.user.id, { password:form.password||undefined, role:form.role, permissions:form.permissions });
+        await api.updateUser(modal.user.id, { password:form.password||undefined, role:form.role, permissions:form.permissions, first_name:form.first_name, last_name:form.last_name });
         setToast('Utilizator actualizat');
       }
       setModal(null); load();
@@ -449,8 +449,13 @@ function SectionUtilizatori({ onBack }) {
             <tr key={u.id} style={{ borderBottom: i < users.length-1 ? '1px solid var(--gray-2)' : 'none' }}>
               <td style={tdStyle}>
                 <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                  <Avatar name={u.username} color={roleColor[u.role]} />
-                  <span style={{ fontWeight:600, color:'var(--black)' }}>{u.username}</span>
+                  <Avatar name={u.first_name || u.username} color={roleColor[u.role]} />
+                  <div>
+                    {(u.first_name || u.last_name) && (
+                      <div style={{ fontWeight:600, color:'var(--black)', fontSize:'13px' }}>{[u.first_name, u.last_name].filter(Boolean).join(' ')}</div>
+                    )}
+                    <div style={{ fontSize: (u.first_name || u.last_name) ? '11px' : '13px', color: (u.first_name || u.last_name) ? 'var(--gray-4)' : 'var(--black)', fontWeight: (u.first_name || u.last_name) ? 400 : 600 }}>{u.username}</div>
+                  </div>
                 </div>
               </td>
               <td style={tdStyle}>
@@ -471,6 +476,14 @@ function SectionUtilizatori({ onBack }) {
       {modal && (
         <Modal title={modal.mode==='add' ? 'Adaugă utilizator' : `Editează: ${modal.user.username}`} onClose={() => setModal(null)} width={480}>
           <div style={{ display:'grid', gap:'14px' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'10px' }}>
+              <Field label="Prenume">
+                <input value={form.first_name} onChange={e=>setForm(f=>({...f,first_name:e.target.value}))} style={inputStyle} placeholder="ex: Ion" />
+              </Field>
+              <Field label="Nume">
+                <input value={form.last_name} onChange={e=>setForm(f=>({...f,last_name:e.target.value}))} style={inputStyle} placeholder="ex: Popescu" />
+              </Field>
+            </div>
             {modal.mode === 'add' && (
               <Field label="Username *">
                 <input value={form.username} onChange={e=>setForm(f=>({...f,username:e.target.value}))} style={inputStyle} />

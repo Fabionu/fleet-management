@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { getSocket } from '../services/socket';
 import { playReceived, playSent } from '../services/sounds';
 import axios from 'axios';
@@ -210,6 +210,12 @@ export default function ChatPanel({ user }) {
   const [mentionHighlight, setMentionHighlight] = useState(0);
   const [mentionAtIdx, setMentionAtIdx]         = useState(0);
 
+  const mutedKey = `chat_muted_${user.username}`;
+  const [muted, setMuted] = useState(() => {
+    try { return JSON.parse(localStorage.getItem(mutedKey)) || { dm: [], group: [] }; } catch { return { dm: [], group: [] }; }
+  });
+  const mutedRef = useRef(muted);
+
   const openRef         = useRef(false);
   const peerRef         = useRef(null);
   const activeGroupRef  = useRef(null);
@@ -221,6 +227,17 @@ export default function ChatPanel({ user }) {
   const token   = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
   const headers = { Authorization: `Bearer ${token}` };
   const isAdmin = user.role === 'admin';
+
+  const displayNames = useMemo(() => {
+    const map = {};
+    orgUsers.forEach(u => {
+      const full = [u.first_name, u.last_name].filter(Boolean).join(' ');
+      map[u.username] = full || u.username;
+    });
+    return map;
+  }, [orgUsers]);
+
+  const dn = (username) => displayNames[username] || username;
 
   // ── Load initial data + socket listeners ──────────────────
   useEffect(() => {
@@ -270,9 +287,10 @@ export default function ChatPanel({ user }) {
       }));
       if (!isMine) {
         const chatOpen = openRef.current && peerRef.current?.username === peerOfMsg;
+        const isMuted  = mutedRef.current.dm.includes(peerOfMsg);
         if (chatOpen) {
           axios.put(`/api/chat/read/${peerOfMsg}`, {}, { headers }).catch(() => {});
-        } else {
+        } else if (!isMuted) {
           playReceived();
           setUnreadCounts(prev => ({ ...prev, [peerOfMsg]: (prev[peerOfMsg] || 0) + 1 }));
         }
@@ -288,7 +306,8 @@ export default function ChatPanel({ user }) {
           : g
       ));
       const isActive = openRef.current && activeGroupRef.current?.id === gId;
-      if (!isActive && msg.username !== user.username && msg.message_type !== 'system') {
+      const isMuted  = mutedRef.current.group.includes(gId);
+      if (!isActive && msg.username !== user.username && msg.message_type !== 'system' && !isMuted) {
         playReceived();
         setGroupUnread(prev => ({ ...prev, [gId]: (prev[gId] || 0) + 1 }));
       }
@@ -399,11 +418,11 @@ export default function ChatPanel({ user }) {
   }, [unreadCounts, groupUnread]);
 
   useEffect(() => {
-    if (view === 'chat' && peer) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (view === 'chat' && peer) messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
   }, [conversations]);
 
   useEffect(() => {
-    if (view === 'group-chat' && activeGroup) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (view === 'group-chat' && activeGroup) messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
   }, [groupMessages]);
 
   useEffect(() => {
@@ -413,6 +432,26 @@ export default function ChatPanel({ user }) {
     if (view === 'contacts') requestAnimationFrame(() => searchRef.current?.focus());
     if (view === 'create-group') requestAnimationFrame(() => newGroupNameRef.current?.focus());
   }, [view, peer?.username, activeGroup?.id]);
+
+  // ── Mute helpers ──────────────────────────────────────────
+  const toggleMuteDm = (username) => {
+    setMuted(prev => {
+      const already = prev.dm.includes(username);
+      const next = { ...prev, dm: already ? prev.dm.filter(u => u !== username) : [...prev.dm, username] };
+      mutedRef.current = next;
+      localStorage.setItem(mutedKey, JSON.stringify(next));
+      return next;
+    });
+  };
+  const toggleMuteGroup = (gId) => {
+    setMuted(prev => {
+      const already = prev.group.includes(gId);
+      const next = { ...prev, group: already ? prev.group.filter(id => id !== gId) : [...prev.group, gId] };
+      mutedRef.current = next;
+      localStorage.setItem(mutedKey, JSON.stringify(next));
+      return next;
+    });
+  };
 
   // ── Actions ────────────────────────────────────────────────
   const handleClose = () => {
@@ -577,7 +616,14 @@ export default function ChatPanel({ user }) {
     if (al > bl) return -1; if (bl > al) return 1;
     return a.username.localeCompare(b.username);
   });
-  const filteredUsers  = search.trim() ? sortedUsers.filter(u => u.username.toLowerCase().includes(search.trim().toLowerCase())) : sortedUsers;
+  const filteredUsers  = search.trim()
+    ? sortedUsers.filter(u => {
+        const q = search.trim().toLowerCase();
+        return u.username.toLowerCase().includes(q) ||
+          (u.first_name || '').toLowerCase().includes(q) ||
+          (u.last_name || '').toLowerCase().includes(q);
+      })
+    : sortedUsers;
   const filteredGroups = search.trim() ? groups.filter(g => g.name.toLowerCase().includes(search.trim().toLowerCase())) : groups;
   const messages  = (peer && conversations[peer.username]) || [];
   const groupMsgs = (activeGroup && groupMessages[activeGroup.id]) || [];
@@ -648,7 +694,7 @@ export default function ChatPanel({ user }) {
               {view === 'chat' ? (
                 <div style={{ position: 'relative', flexShrink: 0 }}>
                   <div style={{ width: 34, height: 34, borderRadius: '50%', background: peer ? avatarColor(peer.username) : '#ff7a3d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 15 }}>
-                    {peer?.username.charAt(0).toUpperCase()}
+                    {(peer?.first_name || peer?.username || '').charAt(0).toUpperCase()}
                   </div>
                   <div style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: isOnline(peer?.username) ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--gray-1)' }}/>
                 </div>
@@ -659,7 +705,7 @@ export default function ChatPanel({ user }) {
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--black)', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {view === 'chat' ? peer?.username : activeGroup?.name}
+                  {view === 'chat' ? dn(peer?.username) : activeGroup?.name}
                 </div>
                 {view === 'chat' ? (
                   <div style={{ fontSize: 11, color: isOnline(peer?.username) ? '#22c55e' : 'var(--gray-4)' }}>
@@ -675,6 +721,27 @@ export default function ChatPanel({ user }) {
                   </div>
                 )}
               </div>
+              {/* Mute toggle */}
+              {view === 'chat' && peer && (
+                <button onClick={() => toggleMuteDm(peer.username)}
+                  title={muted.dm.includes(peer.username) ? 'Activează notificări' : 'Silențios'}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 5, color: muted.dm.includes(peer.username) ? 'var(--gray-3)' : 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, flexShrink: 0 }}>
+                  {muted.dm.includes(peer.username)
+                    ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  }
+                </button>
+              )}
+              {view === 'group-chat' && activeGroup && (
+                <button onClick={() => toggleMuteGroup(activeGroup.id)}
+                  title={muted.group.includes(activeGroup.id) ? 'Activează notificări' : 'Silențios'}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 5, color: muted.group.includes(activeGroup.id) ? 'var(--gray-3)' : 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, flexShrink: 0 }}>
+                  {muted.group.includes(activeGroup.id)
+                    ? <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    : <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                  }
+                </button>
+              )}
               <CloseBtn onClick={handleClose} />
             </div>
           )}
@@ -737,14 +804,20 @@ export default function ChatPanel({ user }) {
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <div style={{ position: 'relative', flexShrink: 0 }}>
                       <div style={{ width: 42, height: 42, borderRadius: '50%', background: avatarColor(u.username), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 17 }}>
-                        {u.username.charAt(0).toUpperCase()}
+                        {(u.first_name || u.username).charAt(0).toUpperCase()}
                       </div>
                       <div style={{ position: 'absolute', bottom: 1, right: 1, width: 11, height: 11, borderRadius: '50%', background: online ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--bg-page)', transition: 'background 0.3s' }}/>
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
-                        <span style={{ fontSize: 14, fontWeight: unread > 0 ? 700 : 500, color: 'var(--black)' }}>{u.username}</span>
-                        {last && <span style={{ fontSize: 11, color: 'var(--gray-4)', flexShrink: 0 }}>{formatTime(last.created_at)}</span>}
+                        <div style={{ minWidth: 0 }}>
+                          <span style={{ fontSize: 14, fontWeight: unread > 0 ? 700 : 500, color: 'var(--black)' }}>{dn(u.username)}</span>
+                          {dn(u.username) !== u.username && <span style={{ fontSize: 11, color: 'var(--gray-4)', marginLeft: 5 }}>@{u.username}</span>}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                          {muted.dm.includes(u.username) && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--gray-3)" strokeWidth="2" title="Silențios"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>}
+                          {last && <span style={{ fontSize: 11, color: 'var(--gray-4)' }}>{formatTime(last.created_at)}</span>}
+                        </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
                         <span style={{ fontSize: 12, color: unread > 0 ? 'var(--black)' : 'var(--gray-4)', fontWeight: unread > 0 ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
@@ -809,13 +882,16 @@ export default function ChatPanel({ user }) {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 3 }}>
                         <span style={{ fontSize: 14, fontWeight: unread > 0 ? 700 : 500, color: 'var(--black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name}</span>
-                        {lastMsg && <span style={{ fontSize: 11, color: 'var(--gray-4)', flexShrink: 0 }}>{formatTime(lastMsg.created_at)}</span>}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                          {muted.group.includes(g.id) && <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--gray-3)" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>}
+                          {lastMsg && <span style={{ fontSize: 11, color: 'var(--gray-4)' }}>{formatTime(lastMsg.created_at)}</span>}
+                        </div>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
                         <span style={{ fontSize: 12, color: unread > 0 ? 'var(--black)' : 'var(--gray-4)', fontWeight: unread > 0 ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                           {lastMsg
                             ? (lastMsg.sender === 'SYSTEM' ? lastMsg.message
-                              : lastMsg.sender === user.username ? `Tu: ${lastMsg.message}` : `${lastMsg.sender}: ${lastMsg.message}`)
+                              : lastMsg.sender === user.username ? `Tu: ${lastMsg.message}` : `${dn(lastMsg.sender)}: ${lastMsg.message}`)
                             : <em style={{ fontStyle: 'italic', opacity: 0.7 }}>{g.members?.length || 0} membri</em>}
                         </span>
                         {unread > 0 && (
@@ -837,7 +913,7 @@ export default function ChatPanel({ user }) {
               <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {messages.length === 0 && (
                   <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 13, marginTop: 70, lineHeight: 1.8 }}>
-                    Niciun mesaj cu {peer?.username}.<br/><span style={{ fontSize: 20 }}>👋</span>
+                    Niciun mesaj cu {dn(peer?.username)}.<br/><span style={{ fontSize: 20 }}>👋</span>
                   </div>
                 )}
                 {messages.map((msg, i) => {
@@ -861,7 +937,7 @@ export default function ChatPanel({ user }) {
               </div>
               <ChatInput inputRef={inputRef} value={inputVal} onChange={handleInputChange}
                 onKeyDown={handleKeyDown} onSend={sendMessage}
-                placeholder={`Mesaj pentru ${peer?.username}...`}
+                placeholder={`Mesaj pentru ${dn(peer?.username)}...`}
                 mentionQuery={mentionQuery} mentionUsers={mentionUsers}
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
               />
@@ -896,7 +972,7 @@ export default function ChatPanel({ user }) {
                   return (
                     <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4 }}>
                       {!isMe && !prevSame && (
-                        <div style={{ fontSize: 11, color: '#ff7a3d', marginBottom: 3, paddingLeft: 4, fontWeight: 600 }}>{msg.username}</div>
+                        <div style={{ fontSize: 11, color: '#ff7a3d', marginBottom: 3, paddingLeft: 4, fontWeight: 600 }}>{dn(msg.username)}</div>
                       )}
                       <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
                         {renderMessageText(msg.message, user.username)}
@@ -947,7 +1023,7 @@ export default function ChatPanel({ user }) {
               </div>
               <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto' }}>
                 {orgUsers.map(u => (
-                  <Checkbox key={u.username} checked={newGroupMembers.includes(u.username)} onChange={() => toggleCreateMember(u.username)} label={u.username} />
+                  <Checkbox key={u.username} checked={newGroupMembers.includes(u.username)} onChange={() => toggleCreateMember(u.username)} label={dn(u.username) !== u.username ? `${dn(u.username)} (@${u.username})` : u.username} />
                 ))}
               </div>
               <div style={{ padding: '10px 14px', borderTop: '1px solid var(--gray-2)', display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -981,7 +1057,7 @@ export default function ChatPanel({ user }) {
               <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto' }}>
                 {isAdmin ? (
                   orgUsers.map(u => (
-                    <Checkbox key={u.username} checked={editGroupMembers.includes(u.username)} onChange={() => toggleEditMember(u.username)} label={u.username} />
+                    <Checkbox key={u.username} checked={editGroupMembers.includes(u.username)} onChange={() => toggleEditMember(u.username)} label={dn(u.username) !== u.username ? `${dn(u.username)} (@${u.username})` : u.username} />
                   ))
                 ) : (
                   (activeGroup?.members || []).map(uname => (
@@ -992,7 +1068,7 @@ export default function ChatPanel({ user }) {
                         </div>
                         <div style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: isOnline(uname) ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--bg-page)' }}/>
                       </div>
-                      <span style={{ fontSize: 14, color: 'var(--black)', flex: 1 }}>{uname}</span>
+                      <span style={{ fontSize: 14, color: 'var(--black)', flex: 1 }}>{dn(uname)}{dn(uname) !== uname ? <span style={{ fontSize: 11, color: 'var(--gray-4)', marginLeft: 5 }}>@{uname}</span> : null}</span>
                       {isOnline(uname) && <span style={{ fontSize: 11, color: '#22c55e' }}>online</span>}
                     </div>
                   ))
