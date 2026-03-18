@@ -674,7 +674,28 @@ export default function ChatPanel({ user }) {
 
   const handleUnpin = (msg) => handlePin({ ...msg, is_pinned: true });
 
+  const applyFormat = (marker) => {
+    const el = inputRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end   = el.selectionEnd;
+    const val   = inputVal;
+    const selected = val.slice(start, end);
+    const newVal = val.slice(0, start) + marker + selected + marker + val.slice(end);
+    setInputVal(newVal);
+    requestAnimationFrame(() => {
+      el.focus();
+      if (selected.length > 0) {
+        el.setSelectionRange(start + marker.length, end + marker.length);
+      } else {
+        el.setSelectionRange(start + marker.length, start + marker.length);
+      }
+    });
+  };
+
   const handleKeyDown = (e) => {
+    if (e.ctrlKey && e.key === 'b') { e.preventDefault(); applyFormat('*'); return; }
+    if (e.ctrlKey && e.key === 'i') { e.preventDefault(); applyFormat('_'); return; }
     if (mentionQuery !== null && mentionUsers.length > 0) {
       if (e.key === 'ArrowDown') { e.preventDefault(); setMentionHighlight(h => Math.min(h + 1, mentionUsers.length - 1)); return; }
       if (e.key === 'ArrowUp')   { e.preventDefault(); setMentionHighlight(h => Math.max(h - 1, 0)); return; }
@@ -1085,34 +1106,36 @@ export default function ChatPanel({ user }) {
                   const nextSame = i < messages.length - 1 && messages[i + 1].username === msg.username;
                   const isHovered = hoveredMsgId === msg.id;
                   return (
-                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, position: 'relative' }}
+                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4 }}
                       onMouseEnter={() => setHoveredMsgId(msg.id)}
                       onMouseLeave={() => setHoveredMsgId(null)}>
-                      {isHovered && (
-                        <div style={{ position: 'absolute', top: 0, [isMe ? 'left' : 'right']: 0, display: 'flex', gap: 3, zIndex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse' }}>
+                        {/* Butoane acțiuni — apar la hover lângă bubble */}
+                        <div style={{ display: 'flex', gap: 2, opacity: isHovered ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered ? 'auto' : 'none' }}>
                           <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })}
                             title="Răspunde"
-                            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+                            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
                           </button>
                           <button onClick={() => handlePin(msg)}
                             title={msg.is_pinned ? 'Desprinde' : 'Prinde'}
-                            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 5px', color: msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)'; }}>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                            style={{ background: 'var(--surface)', border: `1px solid ${msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'}`, borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)'; e.currentTarget.style.borderColor = msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'; }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
                           </button>
                         </div>
-                      )}
-                      <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
-                        {msg.reply_to_id && (
-                          <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
-                          </div>
-                        )}
-                        {renderMessageText(msg.message, user.username)}
+                        {/* Bubble */}
+                        <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
+                          {msg.reply_to_id && (
+                            <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
+                            </div>
+                          )}
+                          {renderMessageText(msg.message, user.username)}
+                        </div>
                       </div>
                       {!nextSame && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, paddingLeft: isMe ? 0 : 4, paddingRight: isMe ? 4 : 0, flexDirection: isMe ? 'row-reverse' : 'row' }}>
@@ -1172,37 +1195,39 @@ export default function ChatPanel({ user }) {
                   const seenBy  = getSeenBy(i, groupMsgs, memberReads[activeGroup?.id], user.username);
                   const isHovered = hoveredMsgId === msg.id;
                   return (
-                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, position: 'relative' }}
+                    <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4 }}
                       onMouseEnter={() => setHoveredMsgId(msg.id)}
                       onMouseLeave={() => setHoveredMsgId(null)}>
-                      {isHovered && (
-                        <div style={{ position: 'absolute', top: 0, [isMe ? 'left' : 'right']: 0, display: 'flex', gap: 3, zIndex: 1 }}>
+                      {!isMe && !prevSame && (
+                        <div style={{ fontSize: 11, color: '#ff7a3d', marginBottom: 3, paddingLeft: 4, fontWeight: 600 }}>{dn(msg.username)}</div>
+                      )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse' }}>
+                        {/* Butoane acțiuni — apar la hover lângă bubble */}
+                        <div style={{ display: 'flex', gap: 2, opacity: isHovered ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered ? 'auto' : 'none' }}>
                           <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })}
                             title="Răspunde"
-                            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+                            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
                           </button>
                           <button onClick={() => handlePin(msg)}
                             title={msg.is_pinned ? 'Desprinde' : 'Prinde'}
-                            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 5px', color: msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
-                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; }}
-                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)'; }}>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
+                            style={{ background: 'var(--surface)', border: `1px solid ${msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'}`, borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
+                            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)'; e.currentTarget.style.borderColor = msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'; }}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
                           </button>
                         </div>
-                      )}
-                      {!isMe && !prevSame && (
-                        <div style={{ fontSize: 11, color: '#ff7a3d', marginBottom: 3, paddingLeft: 4, fontWeight: 600 }}>{dn(msg.username)}</div>
-                      )}
-                      <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
-                        {msg.reply_to_id && (
-                          <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
-                          </div>
-                        )}
-                        {renderMessageText(msg.message, user.username)}
+                        {/* Bubble */}
+                        <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
+                          {msg.reply_to_id && (
+                            <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.85 }}>
+                              <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
+                            </div>
+                          )}
+                          {renderMessageText(msg.message, user.username)}
+                        </div>
                       </div>
                       {!nextSame && (
                         <div style={{ marginTop: 2, paddingLeft: isMe ? 0 : 4, paddingRight: isMe ? 4 : 0 }}>
