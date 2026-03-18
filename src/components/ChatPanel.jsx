@@ -899,7 +899,7 @@ export default function ChatPanel({ user }) {
                           {lastMsg
                             ? (lastMsg.sender === 'SYSTEM' ? lastMsg.message
                               : lastMsg.sender === user.username ? `Tu: ${lastMsg.message}` : `${dn(lastMsg.sender)}: ${lastMsg.message}`)
-                            : <em style={{ fontStyle: 'italic', opacity: 0.7 }}>{g.members?.length || 0} membri</em>}
+                            : <em style={{ fontStyle: 'italic', opacity: 0.55 }}>Niciun mesaj încă</em>}
                         </span>
                         {unread > 0 && (
                           <div style={{ background: '#ff7a3d', color: 'white', borderRadius: 10, minWidth: 18, height: 18, fontSize: 11, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 5px', flexShrink: 0 }}>
