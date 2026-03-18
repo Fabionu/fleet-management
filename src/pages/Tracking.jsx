@@ -1660,7 +1660,7 @@ const handleDeleteTrip = async (truck) => {
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gray-4)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '8px' }}>Opriri suplimentare</div>
             {stopsPopover.stops.map((s, i) => {
               const stopKey = `stop-${stopsPopover.key}-${i}`;
-              const hasCoords = s.lat && s.lng;
+              const hasCoords = !!s.coords?.trim();
               return (
                 <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingBottom: i < stopsPopover.stops.length - 1 ? '8px' : 0, marginBottom: i < stopsPopover.stops.length - 1 ? '8px' : 0, borderBottom: i < stopsPopover.stops.length - 1 ? '1px solid var(--gray-2)' : 'none' }}>
                   {s.firm && <div style={{ fontSize: '13px', color: 'var(--black)', fontWeight: 500 }}>{s.firm}</div>}
@@ -1668,10 +1668,10 @@ const handleDeleteTrip = async (truck) => {
                   {s.location && <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>{s.location}</div>}
                   {s.date && <div style={{ fontSize: '11px', color: 'var(--gray-4)' }}>{s.date}{s.time ? ` · ${s.time}` : ''}</div>}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
-                    {s.lat && s.lng && <span style={{ fontSize: '11px', color: 'var(--gray-4)', fontFamily: 'monospace' }}>{s.lat}, {s.lng}</span>}
+                    {s.coords && <span style={{ fontSize: '11px', color: 'var(--gray-4)', fontFamily: 'monospace' }}>{s.coords}</span>}
                     <button
                       type="button"
-                      onClick={() => handleCopyCoords(stopKey, s.lat, s.lng)}
+                      onClick={() => { if (!hasCoords) return; navigator.clipboard.writeText(s.coords).then(() => { setCopiedKey(stopKey); setTimeout(() => setCopiedKey(null), 2000); }); }}
                       title={hasCoords ? 'Copiază coordonate' : 'Fără coordonate'}
                       style={{ background: 'none', border: 'none', cursor: hasCoords ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === stopKey ? '#22c55e' : 'var(--gray-4)', opacity: hasCoords ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>
                       {copiedKey === stopKey ? <CheckIcon /> : <CopyIcon />}
