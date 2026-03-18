@@ -15,6 +15,30 @@ const PERM_LABELS = {
   markInvoiced:     'Marcare facturată',
 };
 
+const PERM_GROUPS = [
+  {
+    label: 'Vehicule',
+    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
+    items: [
+      { key: 'editVehicleInfo', label: 'Editare info vehicul',   desc: 'Modifică firmă, locație, dată și coordonate pe camion', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> },
+      { key: 'toggleAmazon',    label: 'Toggle Amazon',          desc: 'Activează / dezactivează contul Amazon pe un camion',    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> },
+      { key: 'clearTruckData',  label: 'Golire date camion',     desc: 'Resetează statusul și toate datele active ale unui camion', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg> },
+      { key: 'deleteTruckRow',  label: 'Ștergere rând camion',   desc: 'Elimină definitiv un camion din lista de tracking',       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> },
+    ],
+  },
+  {
+    label: 'Curse',
+    icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+    items: [
+      { key: 'addTrip',     label: 'Adăugare cursă',          desc: 'Creează o cursă nouă în registrul de curse',               icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
+      { key: 'editTrip',    label: 'Editare cursă',           desc: 'Modifică detaliile unei curse existente din registru',      icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> },
+      { key: 'deleteTrip',  label: 'Ștergere cursă',          desc: 'Șterge definitiv o cursă din registru',                    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> },
+      { key: 'addNextTrip', label: 'Cursă următoare',         desc: 'Setează o cursă viitoare pe un camion din tracking',        icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="13 17 18 12 13 7"/><polyline points="6 17 11 12 6 7"/></svg> },
+      { key: 'markInvoiced',label: 'Marcare facturată',       desc: 'Marchează o cursă ca facturată în registrul de evidență',   icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> },
+    ],
+  },
+];
+
 const DEFAULT_PERMISSIONS = {
   admin:      { editVehicleInfo:true,  toggleAmazon:true,  addTrip:true,  editTrip:true,  deleteTrip:true,  clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:true  },
   dispatcher: { editVehicleInfo:false, toggleAmazon:false, addTrip:true,  editTrip:true,  deleteTrip:false, clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:false },
@@ -500,14 +524,33 @@ function SectionUtilizatori({ onBack }) {
               </select>
             </Field>
             <div>
-              <div style={{ fontSize:'12px', color:'var(--gray-4)', fontWeight:500, marginBottom:'10px' }}>Permisiuni</div>
-              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'8px' }}>
-                {Object.entries(PERM_LABELS).map(([key, label]) => (
-                  <label key={key} style={{ display:'flex', alignItems:'center', gap:'7px', cursor:'pointer', fontSize:'13px', color:'var(--black)' }}>
-                    <input type="checkbox" checked={!!form.permissions[key]}
-                      onChange={e=>setForm(f=>({...f, permissions:{...f.permissions,[key]:e.target.checked}}))} />
-                    {label}
-                  </label>
+              <div style={{ fontSize:'12px', color:'var(--gray-4)', fontWeight:500, marginBottom:'12px' }}>Permisiuni</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
+                {PERM_GROUPS.map(group => (
+                  <div key={group.label}>
+                    {/* Header grup */}
+                    <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'8px', color:'var(--gray-4)' }}>
+                      {group.icon}
+                      <span style={{ fontSize:'11px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em' }}>{group.label}</span>
+                    </div>
+                    {/* Permisiuni */}
+                    <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
+                      {group.items.map(({ key, label, desc, icon }) => (
+                        <label key={key} style={{ display:'flex', alignItems:'flex-start', gap:'10px', cursor:'pointer', padding:'9px 11px', borderRadius:'8px', border:'1px solid var(--border)', background: form.permissions[key] ? 'var(--gray-1)' : 'var(--surface)', transition:'background 0.15s, border-color 0.15s', borderColor: form.permissions[key] ? 'var(--gray-3)' : 'var(--border)' }}>
+                          <input type="checkbox" checked={!!form.permissions[key]}
+                            onChange={e=>setForm(f=>({...f, permissions:{...f.permissions,[key]:e.target.checked}}))}
+                            style={{ marginTop:'2px', flexShrink:0, accentColor:'#ff7a3d', cursor:'pointer' }} />
+                          <div style={{ color: form.permissions[key] ? 'var(--gray-4)' : 'var(--gray-3)', marginTop:'1px', flexShrink:0, transition:'color 0.15s' }}>
+                            {icon}
+                          </div>
+                          <div>
+                            <div style={{ fontSize:'13px', fontWeight:500, color:'var(--black)', lineHeight:1.3 }}>{label}</div>
+                            <div style={{ fontSize:'11px', color:'var(--gray-4)', marginTop:'3px', lineHeight:1.4 }}>{desc}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
