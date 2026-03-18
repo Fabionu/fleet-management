@@ -171,6 +171,7 @@ function Curse({ user }) {
         unload_date: trip.unload_date || '',
         unload_lat: unloadCoords.lat,
         unload_lng: unloadCoords.lng,
+        extra_stops: trip.extra_stops || '[]',
         next_trip: JSON.stringify(nextTrips)
       };
     } else {
@@ -190,6 +191,7 @@ function Curse({ user }) {
         unload_date: unloadParsed.date,
         unload_time: unloadParsed.time,
         unload_lat: unloadCoords.lat, unload_lng: unloadCoords.lng,
+        extra_stops: trip.extra_stops || '[]',
         observations: ''
       };
       nextTrips.push(newNextTrip);

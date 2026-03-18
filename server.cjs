@@ -782,8 +782,8 @@ app.put('/api/trucks/:id', authMiddleware, async (req, res) => {
         drivers=$27, phone=$28, trailer=$29, fuel_card=$30, fuel_card_expiry=$31,
         amazon_account=$32, vignettes=$33, next_trip=$34,
         file_name=$35, file_data=$36, file_type=$37, vehicle_type=$38,
-        driver_1=$39, driver_2=$40
-      WHERE id=$41
+        driver_1=$39, driver_2=$40, extra_stops=$41
+      WHERE id=$42
     `, [
       t.number, t.status, t.client, t.order_number,
       t.load_firm ?? null, t.load_street ?? null, t.load_location, t.load_date, t.load_eta ?? null, t.load_lat, t.load_lng,
@@ -795,6 +795,7 @@ app.put('/api/trucks/:id', authMiddleware, async (req, res) => {
       t.amazon_account, t.vignettes, t.next_trip,
       t.file_name, t.file_data, t.file_type, t.vehicle_type || null,
       t.driver_1 || null, t.driver_2 || null,
+      t.extra_stops ?? '[]',
       req.params.id
     ]);
     emitToOrg(req.user.organization_id, 'trucks_updated');

@@ -28,7 +28,7 @@ function AddCurseModal({ trucks, onClose, onSave }) {
   const [extraStops, setExtraStops] = useState([]);
 
   const addExtraStop = () => {
-    setExtraStops(prev => [...prev, { type: 'load', firm: '', location: '', date: '', time: '' }]);
+    setExtraStops(prev => [...prev, { type: 'load', firm: '', street: '', location: '', date: '', time: '' }]);
   };
   const updateExtraStop = (index, field, value) => {
     setExtraStops(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
@@ -270,26 +270,46 @@ function AddCurseModal({ trucks, onClose, onSave }) {
               </button>
             </div>
             {extraStops.map((stop, idx) => (
-              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 1.5fr 130px 80px 32px', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
-                <select value={stop.type} onChange={(e) => updateExtraStop(idx, 'type', e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}
-                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}>
-                  <option value="load">Încărcare</option>
-                  <option value="unload">Descărcare</option>
-                </select>
-                <input type="text" value={stop.firm} onChange={(e) => updateExtraStop(idx, 'firm', e.target.value)} placeholder="Firmă" style={inputStyle}
-                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
-                <input type="text" required value={stop.location} onChange={(e) => updateExtraStop(idx, 'location', e.target.value)} placeholder="Locație *" style={inputStyle}
-                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
-                <input type="date" value={stop.date} onChange={(e) => updateExtraStop(idx, 'date', e.target.value)} style={{ ...inputStyle, colorScheme: 'light' }}
-                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
-                <input type="text" value={stop.time} onChange={(e) => updateExtraStopTime(idx, e.target.value)} placeholder="HH:MM" maxLength={5} style={inputStyle}
-                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
-                <button type="button" onClick={() => removeExtraStop(idx)}
-                  style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', cursor: 'pointer', color: 'var(--red)', fontSize: '16px', fontWeight: 700 }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
-                  ×
-                </button>
+              <div key={idx} style={{ border: '1px solid var(--gray-2)', borderRadius: '10px', padding: '12px', marginBottom: '10px', background: 'var(--gray-1)' }}>
+                {/* Header oprire */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <select value={stop.type} onChange={(e) => updateExtraStop(idx, 'type', e.target.value)}
+                    style={{ padding: '5px 10px', border: '1px solid var(--gray-3)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, background: stop.type === 'load' ? 'rgba(255,122,61,0.08)' : 'rgba(37,99,235,0.08)', color: stop.type === 'load' ? '#ff7a3d' : 'var(--blue)', cursor: 'pointer', outline: 'none' }}
+                    onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}>
+                    <option value="load">Încărcare</option>
+                    <option value="unload">Descărcare</option>
+                  </select>
+                  <button type="button" onClick={() => removeExtraStop(idx)}
+                    style={{ padding: '4px 8px', display: 'flex', alignItems: 'center', gap: '4px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', cursor: 'pointer', color: 'var(--red)', fontSize: '12px', fontWeight: 500, fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
+                    Elimină
+                  </button>
+                </div>
+                {/* Câmpuri */}
+                <div style={{ marginBottom: '8px' }}>
+                  <input type="text" value={stop.firm} onChange={(e) => updateExtraStop(idx, 'firm', e.target.value)}
+                    placeholder="Nume firmă (ex: METRO AG)" style={inputStyle}
+                    onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                </div>
+                <div style={{ marginBottom: '8px' }}>
+                  <input type="text" value={stop.street} onChange={(e) => updateExtraStop(idx, 'street', e.target.value)}
+                    placeholder="Stradă / Zonă industrială" style={inputStyle}
+                    onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                </div>
+                <div style={{ marginBottom: '8px' }}>
+                  <input type="text" required value={stop.location} onChange={(e) => updateExtraStop(idx, 'location', e.target.value)}
+                    placeholder="Țară, cod poștal, oraș (ex: DE 40599 Düsseldorf)" style={inputStyle}
+                    onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <input type="date" value={stop.date} onChange={(e) => updateExtraStop(idx, 'date', e.target.value)}
+                    style={{ ...inputStyle, colorScheme: 'light' }}
+                    onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                  <input type="text" value={stop.time} onChange={(e) => updateExtraStopTime(idx, e.target.value)}
+                    placeholder="HH:MM" maxLength={5} style={inputStyle}
+                    onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                </div>
               </div>
             ))}
           </div>
