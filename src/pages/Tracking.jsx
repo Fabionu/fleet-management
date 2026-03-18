@@ -1593,31 +1593,40 @@ const handleDeleteTrip = async (truck) => {
                 if (!nextTrips || nextTrips.length === 0) return [];
                 
                 return nextTrips.map((trip, idx) => (
-    <tr key={`${truck.id}-next-${idx}`} style={{ background: 'var(--gray-1)' }}>
-      <td style={{ padding: '4px 4px 4px 12px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', whiteSpace: 'nowrap', borderTop: '1px dashed var(--gray-3)' }}>
-        ↳ Cursă #{idx + 1}
+    <tr key={`${truck.id}-next-${idx}`} style={{ background: 'var(--gray-1)' }} onMouseEnter={() => setRowHoverId(truck.id)} onMouseLeave={() => setRowHoverId(null)}>
+      <td style={{ padding: '5px 4px 5px 12px', width: '185px', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--gray-3)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--gray-4)', letterSpacing: '0.04em' }}>Cursă #{idx + 1}</span>
+        </div>
       </td>
-      <td style={{ padding: '4px 12px 4px 4px', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
-        <div style={{ display: 'flex', alignItems: 'stretch', borderRadius: '8px', border: '1px solid var(--gray-2)', background: 'var(--surface)', overflow: 'hidden', minHeight: '38px' }}>
-          <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontSize: '12px', color: 'var(--gray-4)', fontWeight: 500 }}>{trip.client || '—'}</div>
-            <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginTop: '2px' }}>{trip.order_number || '—'}</div>
+      <td style={{ padding: '5px 12px 5px 4px', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
+        <div style={{ display: 'flex', alignItems: 'stretch' }}>
+          {/* Repaus — gol, aliniat cu coloana */}
+          <div style={{ width: '155px', flexShrink: 0, padding: '0 10px' }} />
+          {/* Client */}
+          <div style={{ width: '190px', flexShrink: 0, padding: '5px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--black)' }}>{trip.client || '—'}</div>
+            {trip.order_number && <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginTop: '1px' }}>{trip.order_number}</div>}
           </div>
-          <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {/* Încărcare */}
+          <div style={{ flex: 1, padding: '5px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>{trip.load_location || '—'}</div>
-            <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginTop: '2px' }}>{trip.load_date} {trip.load_time}</div>
+            {(trip.load_date || trip.load_time) && <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginTop: '1px' }}>{trip.load_date}{trip.load_time ? ` · ${trip.load_time}` : ''}</div>}
           </div>
-          <div style={{ padding: '5px 14px', flex: 1, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          {/* Descărcare */}
+          <div style={{ flex: 1, padding: '5px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>{trip.unload_location || '—'}</div>
-            <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginTop: '2px' }}>{trip.unload_date} {trip.unload_time}</div>
+            {(trip.unload_date || trip.unload_time) && <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginTop: '1px' }}>{trip.unload_date}{trip.unload_time ? ` · ${trip.unload_time}` : ''}</div>}
           </div>
-          <div style={{ padding: '5px 14px', display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
-            <button onClick={() => { setEditNextTrip({ truck: truck, tripIndex: idx, tripData: trip }); }} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', fontSize: '12px', fontWeight: 500, color: 'var(--gray-4)', cursor: 'pointer', transition: 'all 0.2s', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = '#ff7a3d'; e.currentTarget.style.color = '#ff7a3d'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          {/* Butoane */}
+          <div style={{ flex: 1, padding: '5px 14px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <button onClick={() => setEditNextTrip({ truck, tripIndex: idx, tripData: trip })} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', fontSize: '11px', fontWeight: 500, color: 'var(--gray-4)', cursor: 'pointer', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.background='var(--gray-2)'; e.currentTarget.style.borderColor='var(--gray-4)'; e.currentTarget.style.color='var(--black)'; }} onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; e.currentTarget.style.color='var(--gray-4)'; }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               Editare
             </button>
-            <button onClick={() => { setDeleteConfirm({ ...truck, deleteType: 'nextTrip', tripIndex: idx }); }} style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px', background: 'transparent', border: '1px solid var(--red)', borderRadius: '6px', fontSize: '12px', fontWeight: 500, color: 'var(--red)', cursor: 'pointer', transition: 'all 0.2s', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }} onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--red-light)'; }} onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            <button onClick={() => setDeleteConfirm({ ...truck, deleteType: 'nextTrip', tripIndex: idx })} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', fontSize: '11px', fontWeight: 500, color: 'var(--red)', cursor: 'pointer', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.background='var(--red-light)'; e.currentTarget.style.borderColor='var(--red)'; }} onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; }}>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               Șterge
             </button>
           </div>
