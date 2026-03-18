@@ -952,22 +952,38 @@ const handleDeleteTrip = async (truck) => {
                     try { _nt = typeof truck.next_trip === 'string' ? JSON.parse(truck.next_trip) : (truck.next_trip || []); } catch(e) { _nt = []; }
                     if (!_nt || !_nt.length) return [];
                     return _nt.map((trip, i) => (
-                      <tr key={`${truck.id}-next-${i}`} style={{ background: 'var(--gray-1)', borderBottom: '1px dashed var(--gray-3)' }}>
-                        <td style={{ padding: '4px 12px 4px 0', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', whiteSpace: 'nowrap', borderTop: '1px dashed var(--gray-3)', borderLeft: `6px solid ${statusColor}` }}>↳ Cursă #{i + 1}</td>
-                        <td style={{ padding: '4px 16px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}></td>
-                        <td style={{ padding: '4px 16px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
-                          <div style={{ fontWeight: 500 }}>{trip.client || '—'}</div>
-                          <div style={{ fontSize: '11px' }}>{trip.order_number}</div>
+                      <tr key={`${truck.id}-next-${i}`} style={{ background: 'var(--gray-1)' }}>
+                        <td style={{ padding: '6px 10px 6px 0', verticalAlign: 'middle', whiteSpace: 'nowrap', borderTop: '1px dashed var(--gray-3)', borderLeft: `6px solid ${statusColor}`, opacity: 0.6 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px', paddingLeft: '10px' }}>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--gray-4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--gray-4)', letterSpacing: '0.04em' }}>#{i + 1}</span>
+                          </div>
                         </td>
-                        <td style={{ padding: '4px 16px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
+                        <td style={{ padding: '6px 14px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}></td>
+                        <td style={{ padding: '6px 14px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
+                          <div style={{ fontWeight: 500, color: 'var(--black)' }}>{trip.client || '—'}</div>
+                          {trip.order_number && <div style={{ fontSize: '11px', marginTop: '1px' }}>{trip.order_number}</div>}
+                        </td>
+                        <td style={{ padding: '6px 14px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
                           <div>{trip.load_location || '—'}</div>
-                          <div style={{ fontSize: '11px' }}>{trip.load_date}{trip.load_time ? ` · ${trip.load_time}` : ''}</div>
+                          {(trip.load_date || trip.load_time) && <div style={{ fontSize: '11px', marginTop: '1px' }}>{trip.load_date}{trip.load_time ? ` · ${trip.load_time}` : ''}</div>}
                         </td>
-                        <td style={{ padding: '4px 16px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
+                        <td style={{ padding: '6px 14px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
                           <div>{trip.unload_location || '—'}</div>
-                          <div style={{ fontSize: '11px' }}>{trip.unload_date}{trip.unload_time ? ` · ${trip.unload_time}` : ''}</div>
+                          {(trip.unload_date || trip.unload_time) && <div style={{ fontSize: '11px', marginTop: '1px' }}>{trip.unload_date}{trip.unload_time ? ` · ${trip.unload_time}` : ''}</div>}
                         </td>
-                        <td style={{ borderTop: '1px dashed var(--gray-3)' }}></td>
+                        <td style={{ padding: '6px 14px', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                            <button onClick={() => setEditNextTrip({ truck, tripIndex: i, tripData: trip })} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', fontSize: '11px', fontWeight: 500, color: 'var(--gray-4)', cursor: 'pointer', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.background='var(--gray-2)'; e.currentTarget.style.borderColor='var(--gray-4)'; e.currentTarget.style.color='var(--black)'; }} onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; e.currentTarget.style.color='var(--gray-4)'; }}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                              Editare
+                            </button>
+                            <button onClick={() => setDeleteConfirm({ ...truck, deleteType: 'nextTrip', tripIndex: i })} style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', fontSize: '11px', fontWeight: 500, color: 'var(--red)', cursor: 'pointer', transition: 'all 0.15s' }} onMouseEnter={e => { e.currentTarget.style.background='var(--red-light)'; e.currentTarget.style.borderColor='var(--red)'; }} onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; }}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                              Șterge
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ));
                   })()
