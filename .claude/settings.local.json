@@ -38,7 +38,10 @@
       "Bash(python3 -:*)",
       "Bash(python3 /tmp/fix_chatpanel.py)",
       "Bash(/c/Python314/python.exe --version)",
-      "Bash(node --version)"
+      "Bash(node --version)",
+      "Bash(where python)",
+      "Bash(where py)",
+      "Bash(npx vite build --mode development)"
     ]
   }
 }

@@ -363,6 +363,9 @@ async function initDb() {
       )
     `);
 
+    // Migrate: add message_type column to chat_group_messages
+    await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS message_type TEXT DEFAULT 'text'`);
+
     // Migration: add load_eta column to trucks if not exists
     await client.query(`ALTER TABLE trucks ADD COLUMN IF NOT EXISTS load_eta TEXT`);
 

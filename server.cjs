@@ -297,6 +297,14 @@ app.get('/api/chat/groups', authMiddleware, async (req, res) => {
        ORDER BY g.created_at DESC`,
       [me, orgId]
     );
+    // Include member read times for seen indicators
+    for (const group of result.rows) {
+      const readsRes = await pool.query(
+        'SELECT username, last_read_at FROM chat_group_read WHERE group_id=$1 AND organization_id=$2',
+        [group.id, orgId]
+      );
+      group.memberReads = readsRes.rows;
+    }
     res.json(result.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
@@ -428,6 +436,26 @@ app.put('/api/chat/groups/:id/members', authMiddleware, async (req, res) => {
       io.to(`user_${m}_org_${orgId}`).emit('group_updated', { id: groupId, members: newMembers });
     });
 
+    // System messages for member changes
+    for (const m of toAdd) {
+      try {
+        const msgRes = await pool.query(
+          `INSERT INTO chat_group_messages (group_id, organization_id, username, message, message_type) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+          [groupId, orgId, 'SYSTEM', `${m} a fost adaugat in grup`, 'system']
+        );
+        io.to(`group_${groupId}_org_${orgId}`).emit('new_group_message', msgRes.rows[0]);
+      } catch {}
+    }
+    for (const m of toRemove) {
+      try {
+        const msgRes = await pool.query(
+          `INSERT INTO chat_group_messages (group_id, organization_id, username, message, message_type) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+          [groupId, orgId, 'SYSTEM', `${m} a fost eliminat din grup`, 'system']
+        );
+        io.to(`group_${groupId}_org_${orgId}`).emit('new_group_message', msgRes.rows[0]);
+      } catch {}
+    }
+
     res.json({ members: newMembers });
   } catch (e) {
     await client.query('ROLLBACK');
@@ -482,15 +510,43 @@ app.post('/api/chat/groups/:id/messages', authMiddleware, async (req, res) => {
 });
 
 // Marchează grupul ca citit de userul curent
+// Redenumire grup
+app.put('/api/chat/groups/:id/name', authMiddleware, async (req, res) => {
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Interzis' });
+  const { name } = req.body;
+  if (!name?.trim()) return res.status(400).json({ error: 'Nume invalid' });
+  const orgId = req.user.organization_id;
+  const id = parseInt(req.params.id);
+  try {
+    const existing = await pool.query('SELECT name FROM chat_groups WHERE id=$1 AND organization_id=$2', [id, orgId]);
+    if (!existing.rows.length) return res.status(404).json({ error: 'Grup negasit' });
+    const newName = name.trim();
+    await pool.query('UPDATE chat_groups SET name=$1 WHERE id=$2 AND organization_id=$3', [newName, id, orgId]);
+    const msgRes = await pool.query(
+      `INSERT INTO chat_group_messages (group_id, organization_id, username, message, message_type) VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+      [id, orgId, 'SYSTEM', `${req.user.username} a redenumit grupul in "${newName}"`, 'system']
+    );
+    io.to(`group_${id}_org_${orgId}`).emit('group_renamed', { id, name: newName });
+    io.to(`group_${id}_org_${orgId}`).emit('new_group_message', msgRes.rows[0]);
+    res.json({ name: newName });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.put('/api/chat/groups/:id/read', authMiddleware, async (req, res) => {
   try {
     const groupId = parseInt(req.params.id);
+    const now = new Date().toISOString();
     await pool.query(
       `INSERT INTO chat_group_read (username, group_id, organization_id, last_read_at)
        VALUES ($1, $2, $3, NOW())
        ON CONFLICT (username, group_id) DO UPDATE SET last_read_at = NOW()`,
       [req.user.username, groupId, req.user.organization_id]
     );
+    io.to(`group_${groupId}_org_${req.user.organization_id}`).emit('group_read_update', {
+      groupId,
+      username: req.user.username,
+      lastReadAt: now
+    });
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });

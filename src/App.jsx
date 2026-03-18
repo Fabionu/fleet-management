@@ -112,13 +112,9 @@ function App() {
 
   const handleLogout = () => {
     disconnectSocket();
-    setSocketConnected(false);
     localStorage.clear();
     sessionStorage.clear();
-    setIsAuthenticated(false);
-    setUser(null);
-    setCurrentPage('tracking');
-    localStorage.setItem('currentPage', 'tracking');
+    window.location.reload();
   };
 
   // Actualizează starea socketConnected dacă socket-ul era deja conectat la mount
