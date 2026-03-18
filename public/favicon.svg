@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background rotunjit -->
+  <rect width="64" height="64" rx="14" fill="#ff7a3d"/>
+  <!-- Camion — corp principal -->
+  <rect x="8" y="26" width="30" height="18" rx="2" fill="white"/>
+  <!-- Cabina -->
+  <path d="M38 32 L38 44 L56 44 L56 36 L50 28 L38 28 Z" fill="white"/>
+  <!-- Geam cabina -->
+  <path d="M40 30 L40 35 L52 35 L52 32 L48 28 Z" fill="#ff7a3d"/>
+  <!-- Roata stanga -->
+  <circle cx="18" cy="44" r="5" fill="#ff7a3d"/>
+  <circle cx="18" cy="44" r="2.5" fill="white"/>
+  <!-- Roata dreapta -->
+  <circle cx="46" cy="44" r="5" fill="#ff7a3d"/>
+  <circle cx="46" cy="44" r="2.5" fill="white"/>
+  <!-- Bara fata -->
+  <rect x="53" y="38" width="4" height="6" rx="1" fill="#ff7a3d"/>
+</svg>
