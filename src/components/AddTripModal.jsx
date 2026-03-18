@@ -498,7 +498,7 @@ function AddTripModal({ truck, onClose, onSave }) {
               onMouseEnter={(e) => { if (!saving) e.currentTarget.style.background = '#ff8c52'; }}
               onMouseLeave={(e) => { if (!saving) e.currentTarget.style.background = '#ff7a3d'; }}
             >
-              {saving && <svg style={{ animation: 'spin 0.8s linear infinite', flexShrink: 0 }} width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>}
+              {saving && <svg style={{ animation: 'spin-loader 0.8s linear infinite', flexShrink: 0 }} width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>}
               {saving ? 'Se salvează...' : 'Salvează'}
             </button>
           </div>
