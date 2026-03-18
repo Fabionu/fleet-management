@@ -852,10 +852,10 @@ app.post('/api/trips', authMiddleware, requirePermission('addTrip'), async (req,
         invoiced, file_name, file_data, file_type, load_coords, unload_coords,
         cmr_file_name, cmr_file_data, cmr_file_type,
         invoice_file_name, invoice_file_data, invoice_file_type,
-        created_by, organization_id
+        created_by, organization_id, extra_stops
       ) VALUES (
         $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,
-        $17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30
+        $17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31
       ) RETURNING id
     `, [
       t.client, t.order_number, t.load_date, t.unload_date,
@@ -867,7 +867,8 @@ app.post('/api/trips', authMiddleware, requirePermission('addTrip'), async (req,
       t.load_coords, t.unload_coords,
       null, null, null, null, null, null,
       req.user.username,
-      req.user.organization_id
+      req.user.organization_id,
+      t.extra_stops ?? '[]'
     ]);
     await addLog(req.user.organization_id, req.user.username, 'Adăugat cursă', 'trip', result.rows[0].id, `${t.client || ''} / ${t.truck_number || ''}`);
     emitToOrg(req.user.organization_id, 'trips_updated');
@@ -891,8 +892,9 @@ app.put('/api/trips/:id', authMiddleware, requirePermission('editTrip'), async (
         file_name=$18, file_data=$19, file_type=$20,
         load_coords=$21, unload_coords=$22,
         cmr_file_name=$23, cmr_file_data=$24, cmr_file_type=$25,
-        invoice_file_name=$26, invoice_file_data=$27, invoice_file_type=$28
-      WHERE id=$29
+        invoice_file_name=$26, invoice_file_data=$27, invoice_file_type=$28,
+        extra_stops=$29
+      WHERE id=$30
     `, [
       t.client, t.order_number, t.load_date, t.unload_date,
       t.load_firm ?? null, t.load_street ?? null, t.load_location ?? null,
@@ -904,6 +906,7 @@ app.put('/api/trips/:id', authMiddleware, requirePermission('editTrip'), async (
       t.load_coords ?? null, t.unload_coords ?? null,
       t.cmr_file_name ?? null, t.cmr_file_data ?? null, t.cmr_file_type ?? null,
       t.invoice_file_name ?? null, t.invoice_file_data ?? null, t.invoice_file_type ?? null,
+      t.extra_stops ?? '[]',
       req.params.id
     ]);
     emitToOrg(req.user.organization_id, 'trips_updated');

@@ -373,6 +373,9 @@ async function initDb() {
     // Migration: add load_eta column to trucks if not exists
     await client.query(`ALTER TABLE trucks ADD COLUMN IF NOT EXISTS load_eta TEXT`);
 
+    // Migration: add extra_stops column to trips (multiple load/unload stops)
+    await client.query(`ALTER TABLE trips ADD COLUMN IF NOT EXISTS extra_stops TEXT DEFAULT '[]'`);
+
     // Truck Documents table
     await client.query(`
       CREATE TABLE IF NOT EXISTS truck_documents (

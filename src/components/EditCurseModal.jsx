@@ -42,6 +42,31 @@ function EditCurseModal({ trip, trucks, onClose, onSave }) {
 
   const [pdfFileName, setPdfFileName] = useState(trip.file_name || '');
 
+  const parseExtraStops = (raw) => {
+    if (!raw) return [];
+    try {
+      const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  };
+  const [extraStops, setExtraStops] = useState(() => parseExtraStops(trip.extra_stops));
+
+  const addExtraStop = () => {
+    setExtraStops(prev => [...prev, { type: 'load', firm: '', location: '', date: '', time: '' }]);
+  };
+  const updateExtraStop = (index, field, value) => {
+    setExtraStops(prev => prev.map((s, i) => i === index ? { ...s, [field]: value } : s));
+  };
+  const updateExtraStopTime = (index, value) => {
+    const digits = value.replace(/\D/g, '');
+    let formatted = digits.slice(0, 2);
+    if (digits.length >= 3) formatted += ':' + digits.slice(2, 4);
+    updateExtraStop(index, 'time', formatted);
+  };
+  const removeExtraStop = (index) => {
+    setExtraStops(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -77,7 +102,7 @@ function EditCurseModal({ trip, trucks, onClose, onSave }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave(formData, trip.id);
+    onSave({ ...formData, extraStops }, trip.id);
   };
 
   const inputStyle = {
@@ -245,6 +270,44 @@ function EditCurseModal({ trip, trucks, onClose, onSave }) {
                 onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
                 onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
             </div>
+          </div>
+
+          {/* Opriri Suplimentare */}
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--gray-4)', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+                Opriri Suplimentare {extraStops.length > 0 && <span style={{ color: '#ff7a3d' }}>({extraStops.length})</span>}
+              </div>
+              <button type="button" onClick={addExtraStop}
+                style={{ padding: '4px 10px', background: 'transparent', border: '1px solid #ff7a3d', borderRadius: '6px', fontSize: '12px', fontWeight: 600, color: '#ff7a3d', cursor: 'pointer', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,122,61,0.08)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}>
+                + Adaugă Oprire
+              </button>
+            </div>
+            {extraStops.map((stop, idx) => (
+              <div key={idx} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 1.5fr 130px 80px 32px', gap: '8px', marginBottom: '8px', alignItems: 'center' }}>
+                <select value={stop.type} onChange={(e) => updateExtraStop(idx, 'type', e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}>
+                  <option value="load">Încărcare</option>
+                  <option value="unload">Descărcare</option>
+                </select>
+                <input type="text" value={stop.firm} onChange={(e) => updateExtraStop(idx, 'firm', e.target.value)} placeholder="Firmă" style={inputStyle}
+                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                <input type="text" required value={stop.location} onChange={(e) => updateExtraStop(idx, 'location', e.target.value)} placeholder="Locație *" style={inputStyle}
+                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                <input type="date" value={stop.date} onChange={(e) => updateExtraStop(idx, 'date', e.target.value)} style={{ ...inputStyle, colorScheme: 'light' }}
+                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                <input type="text" value={stop.time} onChange={(e) => updateExtraStopTime(idx, e.target.value)} placeholder="HH:MM" maxLength={5} style={inputStyle}
+                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                <button type="button" onClick={() => removeExtraStop(idx)}
+                  style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: '6px', cursor: 'pointer', color: 'var(--red)', fontSize: '16px', fontWeight: 700 }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
 
           {/* Km Gol | Km Plin | Preț | Camion | Șoferi */}

@@ -573,6 +573,10 @@ function Curse({ user }) {
                 const isLockedForUser = isInvoiced && user.role === 'dispatcher';
                 const cellColor = isInvoiced ? 'var(--gray-4)' : 'var(--black)';
 
+                const extraStops = (() => { try { return JSON.parse(trip.extra_stops || '[]'); } catch { return []; } })();
+                const extraLoadCount = extraStops.filter(s => s.type === 'load').length;
+                const extraUnloadCount = extraStops.filter(s => s.type === 'unload').length;
+
                 return (
                   <tr
                     key={trip.id}
@@ -876,16 +880,26 @@ function Curse({ user }) {
                       </div>
                     </td>
                     <td style={{ padding: '16px', width: '185px', verticalAlign: 'middle' }}>
-                      <div style={{ fontSize: '14px', color: cellColor, marginBottom: '4px' }}>
-                        {trip.load_location}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '14px', color: cellColor }}>{trip.load_location}</span>
+                        {extraLoadCount > 0 && (
+                          <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(255,122,61,0.12)', color: '#ff7a3d', padding: '1px 6px', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+                            +{extraLoadCount}
+                          </span>
+                        )}
                       </div>
                       <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>
                         {trip.load_date}
                       </div>
                     </td>
                     <td style={{ padding: '16px', width: '185px', verticalAlign: 'middle' }}>
-                      <div style={{ fontSize: '14px', color: cellColor, marginBottom: '4px' }}>
-                        {trip.unload_location}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '14px', color: cellColor }}>{trip.unload_location}</span>
+                        {extraUnloadCount > 0 && (
+                          <span style={{ fontSize: '10px', fontWeight: 700, background: 'rgba(255,122,61,0.12)', color: '#ff7a3d', padding: '1px 6px', borderRadius: '4px', whiteSpace: 'nowrap' }}>
+                            +{extraUnloadCount}
+                          </span>
+                        )}
                       </div>
                       <div style={{ fontSize: '12px', color: 'var(--gray-4)' }}>
                         {trip.unload_date}
@@ -1018,7 +1032,8 @@ function Curse({ user }) {
                 file_data,
                 file_type,
                 load_coords: data.load_coords,
-                unload_coords: data.unload_coords
+                unload_coords: data.unload_coords,
+                extra_stops: JSON.stringify(data.extraStops || [])
               });
 
               await loadTrips();
@@ -1082,6 +1097,7 @@ function Curse({ user }) {
                 file_type,
                 load_coords: data.load_coords,
                 unload_coords: data.unload_coords,
+                extra_stops: JSON.stringify(data.extraStops || []),
                 cmr_file_name: editTrip.cmr_file_name,
                 cmr_file_data: editTrip.cmr_file_data,
                 cmr_file_type: editTrip.cmr_file_type,
