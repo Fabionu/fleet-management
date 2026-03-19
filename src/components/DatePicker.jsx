@@ -234,12 +234,12 @@ export function DatePicker({ value, onChange, placeholder, required, compact = f
 
           {/* Header navigare lună */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <button onClick={prevMonth}
+            <button type="button" onClick={prevMonth}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: '3px 7px', borderRadius: 6, fontSize: 17, lineHeight: 1, fontFamily: 'inherit' }}>‹</button>
             <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--black)' }}>
               {MONTHS_RO[viewMonth]} {viewYear}
             </span>
-            <button onClick={nextMonth}
+            <button type="button" onClick={nextMonth}
               style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: '3px 7px', borderRadius: 6, fontSize: 17, lineHeight: 1, fontFamily: 'inherit' }}>›</button>
           </div>
 
@@ -257,7 +257,7 @@ export function DatePicker({ value, onChange, placeholder, required, compact = f
               const isSelected = str === value;
               const isToday    = str === todayStr;
               return (
-                <button key={i} onClick={() => handleDay(date)}
+                <button key={i} type="button" onClick={() => handleDay(date)}
                   style={{
                     padding: '5px 0', textAlign: 'center', fontSize: 12, lineHeight: 1,
                     fontFamily: 'inherit', fontWeight: isToday ? 700 : 400,
@@ -278,7 +278,7 @@ export function DatePicker({ value, onChange, placeholder, required, compact = f
 
           {/* Footer Azi */}
           <div style={{ marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--gray-2)', display: 'flex', justifyContent: 'center' }}>
-            <button onClick={handleToday}
+            <button type="button" onClick={handleToday}
               style={{ background: 'none', border: 'none', fontSize: 12, color: '#ff7a3d', cursor: 'pointer', fontWeight: 600, fontFamily: 'inherit', padding: '2px 10px' }}>
               Azi
             </button>
