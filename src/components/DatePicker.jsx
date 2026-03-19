@@ -62,19 +62,28 @@ export function DatePicker({ value, onChange, placeholder, required, compact = f
 
   const todayStr = new Date().toISOString().split('T')[0];
 
-  // ── Tastare manuală (ZZ.LL.AAAA) ─────────────────────────────────────────
+  // ── Tastare manuală cu auto-formatare DD.MM.YYYY ─────────────────────────
   const handleInputChange = (e) => {
-    let text = e.target.value;
-    setInputText(text);
-    // Parsare când e completă: ZZ.LL.AAAA sau Z.L.AAAA
-    const match = text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-    if (match) {
-      const [, d, m, y] = match;
-      onChange(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
-    } else if (!text) {
+    const raw    = e.target.value;
+    const digits = raw.replace(/\D/g, '').slice(0, 8); // doar cifre, max 8
+
+    // Reconstruiește cu puncte automat
+    let formatted = digits;
+    if (digits.length > 4) {
+      formatted = digits.slice(0, 2) + '.' + digits.slice(2, 4) + '.' + digits.slice(4);
+    } else if (digits.length > 2) {
+      formatted = digits.slice(0, 2) + '.' + digits.slice(2);
+    }
+
+    setInputText(formatted);
+
+    // Parsează și trimite valoarea YYYY-MM-DD doar când data e completă (8 cifre)
+    if (digits.length === 8) {
+      const d = digits.slice(0, 2), m = digits.slice(2, 4), y = digits.slice(4, 8);
+      onChange(`${y}-${m}-${d}`);
+    } else if (!digits.length) {
       onChange('');
     }
-    // Dacă e parțial, nu actualizăm value (așteptăm să termine)
   };
 
   // ── Deschide calendarul ───────────────────────────────────────────────────
