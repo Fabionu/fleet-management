@@ -1,25 +1,37 @@
 import { useState, useEffect, useRef } from 'react';
 
-// ── Constante ─────────────────────────────────────────────────────────────────
 const MONTHS_RO = ['Ianuarie','Februarie','Martie','Aprilie','Mai','Iunie','Iulie','August','Septembrie','Octombrie','Noiembrie','Decembrie'];
 const DOW_RO    = ['Lu','Ma','Mi','Jo','Vi','Sâ','Du'];
 
 // ── DatePicker ─────────────────────────────────────────────────────────────────
-// value/onChange folosesc formatul YYYY-MM-DD (compatibil cu HTML date inputs)
-// Popover-ul e redat cu position:fixed → funcționează corect în interiorul modalelor
-// compact=true → dimensiuni mici pentru bara de filtre (Dashboard)
-// compact=false (default) → full-width pentru câmpuri din modale
+// Design: input text cu iconița calendar în dreapta
+//   - input permite introducere manuală în format ZZ.LL.AAAA
+//   - click pe iconița calendar → deschide popover custom
+//   - value/onChange → format intern YYYY-MM-DD (compatibil cu logica existentă)
+//   - compact=true → stiluri mici pentru bara de filtre (Dashboard)
 export function DatePicker({ value, onChange, placeholder, required, compact = false }) {
   const [open, setOpen]           = useState(false);
   const [hovered, setHovered]     = useState(false);
+  const [focused, setFocused]     = useState(false);
+  const [inputText, setInputText] = useState('');
   const [viewYear, setViewYear]   = useState(null);
   const [viewMonth, setViewMonth] = useState(null);
-  const [popPos, setPopPos]       = useState({ top: 0, left: 0 });
+  const [popPos, setPopPos]       = useState({ top: 0, left: 0, openUp: false });
 
   const wrapRef    = useRef(null);
-  const triggerRef = useRef(null);
+  const containerRef = useRef(null); // containerul vizibil (input + icon)
 
-  // Închide la click în afară
+  // ── Sincronizare inputText ← value (YYYY-MM-DD → ZZ.LL.AAAA) ──────────────
+  useEffect(() => {
+    if (value) {
+      const [y, m, d] = value.split('-');
+      setInputText(`${d}.${m}.${y}`);
+    } else {
+      setInputText('');
+    }
+  }, [value]);
+
+  // ── Închide la click în afară ──────────────────────────────────────────────
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
@@ -29,16 +41,15 @@ export function DatePicker({ value, onChange, placeholder, required, compact = f
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  // Recalculează poziția la scroll/resize cât timp e deschis
+  // ── Poziție popover (recalculat la scroll/resize) ─────────────────────────
   useEffect(() => {
     if (!open) return;
     const update = () => {
-      const rect = triggerRef.current?.getBoundingClientRect();
-      if (rect) {
-        const spaceBelow = window.innerHeight - rect.bottom;
-        const openUp     = spaceBelow < 280;
-        setPopPos({ top: openUp ? rect.top - 6 : rect.bottom + 6, left: rect.left, openUp });
-      }
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUp     = spaceBelow < 290;
+      setPopPos({ top: rect.bottom + 4, left: rect.left, openUp, triggerTop: rect.top - 4 });
     };
     update();
     window.addEventListener('scroll', update, true);
@@ -51,17 +62,42 @@ export function DatePicker({ value, onChange, placeholder, required, compact = f
 
   const todayStr = new Date().toISOString().split('T')[0];
 
-  const formatDisplay = (s) => {
-    if (!s) return null;
-    const [y, m, d] = s.split('-');
-    return `${d}.${m}.${y}`;
+  // ── Tastare manuală (ZZ.LL.AAAA) ─────────────────────────────────────────
+  const handleInputChange = (e) => {
+    let text = e.target.value;
+    setInputText(text);
+    // Parsare când e completă: ZZ.LL.AAAA sau Z.L.AAAA
+    const match = text.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (match) {
+      const [, d, m, y] = match;
+      onChange(`${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`);
+    } else if (!text) {
+      onChange('');
+    }
+    // Dacă e parțial, nu actualizăm value (așteptăm să termine)
   };
 
+  // ── Deschide calendarul ───────────────────────────────────────────────────
+  const handleCalendarOpen = (e) => {
+    e.stopPropagation();
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUp     = spaceBelow < 290;
+      setPopPos({ top: rect.bottom + 4, left: rect.left, openUp, triggerTop: rect.top - 4 });
+    }
+    const d = value ? new Date(value + 'T00:00:00') : new Date();
+    setViewYear(d.getFullYear());
+    setViewMonth(d.getMonth());
+    setOpen(o => !o);
+  };
+
+  // ── Calendar helpers ──────────────────────────────────────────────────────
   const getDays = () => {
     if (viewYear === null) return [];
     const firstDow = new Date(viewYear, viewMonth, 1).getDay();
     const lastDate = new Date(viewYear, viewMonth + 1, 0).getDate();
-    const startOff = (firstDow + 6) % 7; // Luni = 0
+    const startOff = (firstDow + 6) % 7;
     const days = [];
     for (let i = startOff - 1; i >= 0; i--)
       days.push({ date: new Date(viewYear, viewMonth, -i),    cur: false });
@@ -82,19 +118,6 @@ export function DatePicker({ value, onChange, placeholder, required, compact = f
     else setViewMonth(m => m + 1);
   };
 
-  const handleOpen = () => {
-    const rect = triggerRef.current?.getBoundingClientRect();
-    if (rect) {
-      const spaceBelow = window.innerHeight - rect.bottom;
-      const openUp     = spaceBelow < 280;
-      setPopPos({ top: openUp ? rect.top - 6 : rect.bottom + 6, left: rect.left, openUp });
-    }
-    const d = value ? new Date(value + 'T00:00:00') : new Date();
-    setViewYear(d.getFullYear());
-    setViewMonth(d.getMonth());
-    setOpen(o => !o);
-  };
-
   const handleDay = (date) => {
     onChange(date.toISOString().split('T')[0]);
     setOpen(false);
@@ -109,58 +132,88 @@ export function DatePicker({ value, onChange, placeholder, required, compact = f
   };
 
   const days     = getDays();
-  const isActive = open || hovered;
+  const isActive = open || hovered || focused;
+
+  // ── Stiluri ───────────────────────────────────────────────────────────────
+  const padding   = compact ? '7px 0px 7px 10px' : '10px 0px 10px 12px';
+  const fontSize  = compact ? 13 : 14;
+  const bg        = compact ? 'var(--surface)' : 'var(--bg-page)';
+  const borderClr = isActive ? '#ff7a3d' : compact ? 'var(--gray-2)' : 'var(--gray-3)';
 
   return (
-    <div ref={wrapRef} style={{ position: 'relative', display: compact ? 'inline-block' : 'block', width: compact ? 'auto' : '100%' }}>
+    <div ref={wrapRef} style={{ position: 'relative', display: compact ? 'inline-flex' : 'block', width: compact ? 'auto' : '100%' }}>
 
-      {/* ── Trigger ── */}
-      <div ref={triggerRef} onClick={handleOpen}
+      {/* ── Input + iconița calendar ── */}
+      <div ref={containerRef}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: compact ? '7px 10px' : '10px 12px',
-          border: `1px solid ${isActive ? '#ff7a3d' : compact ? 'var(--gray-2)' : 'var(--gray-3)'}`,
-          borderRadius: 8,
-          fontSize: compact ? 13 : 14,
-          background: compact ? 'var(--surface)' : 'var(--bg-page)',
-          color: value ? 'var(--black)' : 'var(--gray-4)',
-          cursor: 'pointer', userSelect: 'none',
-          width: compact ? 'auto' : '100%',
-          minWidth: compact ? 120 : undefined,
-          boxSizing: 'border-box',
-          justifyContent: 'space-between',
+          display: 'flex', alignItems: 'center',
+          border: `1px solid ${borderClr}`,
+          borderRadius: 8, background: bg,
           transition: 'border-color 0.15s',
-          fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+          width: compact ? 'auto' : '100%',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
         }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-            stroke={isActive ? '#ff7a3d' : 'currentColor'}
-            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-            style={{ flexShrink: 0, transition: 'stroke 0.15s' }}>
-            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-            <line x1="16" y1="2" x2="16" y2="6"/>
-            <line x1="8" y1="2" x2="8" y2="6"/>
-            <line x1="3" y1="10" x2="21" y2="10"/>
-          </svg>
-          <span style={{ fontSize: compact ? 13 : 14 }}>
-            {value ? formatDisplay(value) : (placeholder || 'Selectează data')}
-          </span>
-        </div>
-        {value && (
-          <span onClick={e => { e.stopPropagation(); onChange(''); }}
-            style={{ fontSize: 17, lineHeight: 1, color: 'var(--gray-4)', fontWeight: 300, flexShrink: 0 }}>×</span>
+
+        {/* Input text */}
+        <input
+          type="text"
+          value={inputText}
+          onChange={handleInputChange}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          placeholder={placeholder || 'ZZ.LL.AAAA'}
+          required={required}
+          style={{
+            flex: 1,
+            border: 'none', outline: 'none',
+            padding,
+            fontSize,
+            background: 'transparent',
+            color: 'var(--black)',
+            fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+            minWidth: compact ? 95 : 0,
+            width: compact ? 'auto' : '100%',
+          }}
+        />
+
+        {/* Separator */}
+        {!compact && value && (
+          <span onClick={() => onChange('')}
+            style={{ fontSize: 17, lineHeight: 1, color: 'var(--gray-4)', fontWeight: 300, cursor: 'pointer', paddingRight: 4, flexShrink: 0 }}>×</span>
         )}
+
+        {/* Buton calendar */}
+        <button
+          type="button"
+          onClick={handleCalendarOpen}
+          title="Deschide calendarul"
+          style={{
+            border: 'none', background: 'transparent', cursor: 'pointer',
+            padding: compact ? '0 8px 0 4px' : '0 10px 0 6px',
+            display: 'flex', alignItems: 'center',
+            color: isActive ? '#ff7a3d' : 'var(--gray-4)',
+            transition: 'color 0.15s',
+            flexShrink: 0,
+            height: '100%',
+          }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <path d="M16 2v4M8 2v4M3 10h18"/>
+          </svg>
+        </button>
       </div>
 
-      {/* ── Popover (position: fixed → nu e cioplit de overflow modal) ── */}
+      {/* ── Popover calendar (position:fixed → nu e cioplit de modal) ── */}
       {open && viewYear !== null && (
         <div style={{
           position: 'fixed',
-          top:  popPos.openUp ? undefined  : popPos.top,
-          bottom: popPos.openUp ? window.innerHeight - popPos.top : undefined,
-          left: popPos.left,
+          top:    popPos.openUp ? undefined  : popPos.top,
+          bottom: popPos.openUp ? `${window.innerHeight - popPos.triggerTop}px` : undefined,
+          left:   popPos.left,
           zIndex: 9999,
           background: 'var(--surface)',
           border: '1px solid var(--gray-2)',
