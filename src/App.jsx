@@ -503,6 +503,29 @@ function App() {
             >
               Registru
             </button>
+            <button
+              onClick={() => changePage('chat')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                borderBottom: `2px solid ${currentPage === 'chat' ? '#ff7a3d' : 'transparent'}`,
+                padding: '12px 20px',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: currentPage === 'chat' ? '#ff7a3d' : 'var(--gray-4)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                marginBottom: '-2px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '7px',
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              Mesaje
+            </button>
 {(user.role === 'admin' || user.permissions?.viewReports) && (
               <button
                 onClick={() => changePage('rapoarte')}
@@ -548,9 +571,9 @@ function App() {
         {currentPage === 'tracking' && <Tracking user={user} viewMode={trackingView} />}
         {currentPage === 'curse' && <Curse user={user} />}
         {currentPage === 'rapoarte' && (user.role === 'admin' || user.permissions?.viewReports) && <Dashboard user={user} />}
-{currentPage === 'admin' && (user.role === 'admin' || user.permissions?.accessAdmin) && <Admin user={user} />}
+        {currentPage === 'admin' && (user.role === 'admin' || user.permissions?.accessAdmin) && <Admin user={user} />}
+        <ChatPanel user={user} currentPage={currentPage} />
       </div>
-      <ChatPanel user={user} />
     </div>
   );
 }
