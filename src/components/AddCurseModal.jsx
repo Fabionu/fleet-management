@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DatePicker } from './DatePicker';
 
 function AddCurseModal({ trucks, onClose, onSave }) {
   const [formData, setFormData] = useState({
@@ -195,11 +196,12 @@ function AddCurseModal({ trucks, onClose, onSave }) {
                   onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-                <input type="date" required value={formData.load_date}
-                  onChange={(e) => handleChange('load_date', e.target.value)}
-                  style={{ ...inputStyle, colorScheme: 'light' }}
-                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                <DatePicker
+                  value={formData.load_date}
+                  onChange={(v) => handleChange('load_date', v)}
+                  placeholder="Selectează data"
+                  required
+                />
                 <input type="text" required value={formData.load_time}
                   onChange={(e) => handleTimeChange('load_time', e.target.value)}
                   placeholder="HH:MM" maxLength={5} style={inputStyle}
@@ -240,11 +242,12 @@ function AddCurseModal({ trucks, onClose, onSave }) {
                   onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-                <input type="date" required value={formData.unload_date}
-                  onChange={(e) => handleChange('unload_date', e.target.value)}
-                  style={{ ...inputStyle, colorScheme: 'light' }}
-                  onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
-                  onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                <DatePicker
+                  value={formData.unload_date}
+                  onChange={(v) => handleChange('unload_date', v)}
+                  placeholder="Selectează data"
+                  required
+                />
                 <input type="text" required value={formData.unload_time}
                   onChange={(e) => handleTimeChange('unload_time', e.target.value)}
                   placeholder="HH:MM" maxLength={5} style={inputStyle}
@@ -306,9 +309,11 @@ function AddCurseModal({ trucks, onClose, onSave }) {
                     onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-                  <input type="date" value={stop.date} onChange={(e) => updateExtraStop(idx, 'date', e.target.value)}
-                    style={{ ...inputStyle, colorScheme: 'light' }}
-                    onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />
+                  <DatePicker
+                    value={stop.date}
+                    onChange={(v) => updateExtraStop(idx, 'date', v)}
+                    placeholder="Selectează data"
+                  />
                   <input type="text" value={stop.time} onChange={(e) => updateExtraStopTime(idx, e.target.value)}
                     placeholder="HH:MM" maxLength={5} style={inputStyle}
                     onFocus={(e) => e.target.style.borderColor = '#ff7a3d'} onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'} />

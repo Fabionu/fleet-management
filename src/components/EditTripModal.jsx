@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { DatePicker } from './DatePicker';
 
 function EditTripModal({ truck, onClose, onSave }) {
   // Parse date and time from truck data
@@ -268,13 +269,10 @@ function EditTripModal({ truck, onClose, onSave }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                 <div>
                   <label style={labelStyle}>Dată</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={formData.load_date}
-                    onChange={(e) => setFormData({ ...formData, load_date: e.target.value })}
-                    style={{ ...inputStyle, colorScheme: 'light' }}
-                    onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+                    onChange={(v) => setFormData({ ...formData, load_date: v })}
+                    placeholder="Selectează data"
                   />
                 </div>
                 <div>
@@ -383,13 +381,10 @@ function EditTripModal({ truck, onClose, onSave }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
                 <div>
                   <label style={labelStyle}>Dată</label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={formData.unload_date}
-                    onChange={(e) => setFormData({ ...formData, unload_date: e.target.value })}
-                    style={{ ...inputStyle, colorScheme: 'light' }}
-                    onFocus={(e) => e.target.style.borderColor = '#ff7a3d'}
-                    onBlur={(e) => e.target.style.borderColor = 'var(--gray-3)'}
+                    onChange={(v) => setFormData({ ...formData, unload_date: v })}
+                    placeholder="Selectează data"
                   />
                 </div>
                 <div>
