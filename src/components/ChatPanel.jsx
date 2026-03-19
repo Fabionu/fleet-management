@@ -244,6 +244,9 @@ export default function ChatPanel({ user }) {
   const [editGroupMembers, setEditGroupMembers] = useState([]);
   const [editGroupName, setEditGroupName]       = useState('');
   const [groupSaving, setGroupSaving]           = useState(false);
+  const [memberMenuOpen, setMemberMenuOpen]     = useState(null); // username cu meniu ⋮ deschis
+  const [addMemberSel, setAddMemberSel]         = useState([]);   // useri selectați la adăugare
+  const [groupRenaming, setGroupRenaming]       = useState(false);
 
   const [inputVal, setInputVal]           = useState('');
   const [search, setSearch]               = useState('');
@@ -660,7 +663,9 @@ export default function ChatPanel({ user }) {
 
   const goBack = () => {
     setSlideDir('left');
-    if (view === 'group-members') {
+    if (view === 'group-add-members') {
+      setView('group-members');
+    } else if (view === 'group-members') {
       setView('group-chat');
     } else {
       setView('contacts'); setPeer(null); setActiveGroup(null);
@@ -912,6 +917,45 @@ export default function ChatPanel({ user }) {
     } catch (e) { alert(e.response?.data?.error || 'Eroare la ștergere'); }
   };
 
+  const removeMember = async (uname) => {
+    if (!activeGroup) return;
+    const newMembers = (activeGroup.members || []).filter(m => m !== uname);
+    try {
+      const res = await axios.put(`/api/chat/groups/${activeGroup.id}/members`, { members: newMembers }, { headers });
+      setActiveGroup(prev => prev ? { ...prev, members: res.data.members } : prev);
+    } catch (e) { alert(e.response?.data?.error || 'Eroare'); }
+    setMemberMenuOpen(null);
+  };
+
+  const openAddMembers = () => {
+    setAddMemberSel([]);
+    setSlideDir('right');
+    setView('group-add-members');
+  };
+
+  const submitAddMembers = async () => {
+    if (!activeGroup || addMemberSel.length === 0) return;
+    const newMembers = [...new Set([...(activeGroup.members || []), ...addMemberSel])];
+    setGroupSaving(true);
+    try {
+      const res = await axios.put(`/api/chat/groups/${activeGroup.id}/members`, { members: newMembers }, { headers });
+      setActiveGroup(prev => prev ? { ...prev, members: res.data.members } : prev);
+      setSlideDir('left');
+      setView('group-members');
+    } catch (e) { alert(e.response?.data?.error || 'Eroare'); }
+    finally { setGroupSaving(false); }
+  };
+
+  const submitRenameGroup = async () => {
+    const trimmed = editGroupName.trim();
+    setGroupRenaming(false);
+    if (!activeGroup || !trimmed || trimmed === activeGroup.name) return;
+    try {
+      await axios.put(`/api/chat/groups/${activeGroup.id}/name`, { name: trimmed }, { headers });
+      setActiveGroup(prev => prev ? { ...prev, name: trimmed } : prev);
+    } catch (e) { alert(e.response?.data?.error || 'Eroare redenumire'); }
+  };
+
   const toggleDm   = () => { const n = !dmCollapsed;   setDmCollapsed(n);   localStorage.setItem('chat_dm_collapsed', n); };
   const toggleGrps = () => { const n = !grpsCollapsed; setGrpsCollapsed(n); localStorage.setItem('chat_grps_collapsed', n); };
 
@@ -1125,11 +1169,56 @@ export default function ChatPanel({ user }) {
             <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--gray-1)', flexShrink: 0 }}>
               <BackBtn onClick={goBack} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {isAdmin ? 'Editare grup' : `Membri — ${activeGroup?.name}`}
+                {groupRenaming ? (
+                  <input
+                    autoFocus
+                    type="text"
+                    value={editGroupName}
+                    onChange={e => setEditGroupName(e.target.value)}
+                    onBlur={submitRenameGroup}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { e.preventDefault(); submitRenameGroup(); }
+                      if (e.key === 'Escape') { setGroupRenaming(false); setEditGroupName(activeGroup?.name || ''); }
+                    }}
+                    maxLength={60}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '3px 8px', border: '1px solid #ff7a3d', borderRadius: 6, fontSize: 14, fontWeight: 600, background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit' }}
+                  />
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {activeGroup?.name}
+                    </div>
+                    {isAdmin && (
+                      <button
+                        onClick={() => { setEditGroupName(activeGroup?.name || ''); setGroupRenaming(true); }}
+                        title="Redenumește grupul"
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '2px 4px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 4, flexShrink: 0 }}
+                        onMouseEnter={e => e.currentTarget.style.color = 'var(--black)'}
+                        onMouseLeave={e => e.currentTarget.style.color = 'var(--gray-4)'}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )}
+                <div style={{ fontSize: 11, color: 'var(--gray-4)', marginTop: 1 }}>
+                  {activeGroup?.members?.length || 0} membri
                 </div>
+              </div>
+              <CloseBtn onClick={handleClose} />
+            </div>
+          )}
+
+          {/* GROUP ADD MEMBERS HEADER */}
+          {view === 'group-add-members' && (
+            <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', gap: 10, background: 'var(--gray-1)', flexShrink: 0 }}>
+              <BackBtn onClick={goBack} />
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--black)' }}>Adaugă membri</div>
                 <div style={{ fontSize: 11, color: 'var(--gray-4)' }}>
-                  {isAdmin ? 'Redenumire, adaugă / elimină membri' : `${activeGroup?.members?.length || 0} membri`}
+                  {addMemberSel.length === 0 ? 'Selectează utilizatori' : `${addMemberSel.length} selectați`}
                 </div>
               </div>
               <CloseBtn onClick={handleClose} />
@@ -1621,38 +1710,69 @@ export default function ChatPanel({ user }) {
             </div>
           )}
 
-          {/* GROUP MEMBERS (admin: edit / non-admin: view) */}
+          {/* GROUP MEMBERS — view mode, ⋮ menu per member for admin */}
           {view === 'group-members' && (
-            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, animation: 'chatSlideFromRight 0.2s ease' }}>
-              {isAdmin && (
-                <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--gray-2)', flexShrink: 0 }}>
-                  <input type="text" value={editGroupName} onChange={e => setEditGroupName(e.target.value)}
-                    placeholder="Numele grupului..." maxLength={60}
-                    style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', border: '1px solid var(--gray-3)', borderRadius: 8, fontSize: 14, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.2s' }}
-                    onFocus={e => e.target.style.borderColor = '#ff7a3d'}
-                    onBlur={e => e.target.style.borderColor = 'var(--gray-3)'}
-                  />
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, animation: 'chatSlideFromRight 0.2s ease', position: 'relative' }}>
+              {/* Backdrop to close open ⋮ menus */}
+              {memberMenuOpen && (
+                <div onClick={() => setMemberMenuOpen(null)}
+                  style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
               )}
               <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto' }}>
-                {isAdmin ? (
-                  orgUsers.map(u => (
-                    <Checkbox key={u.username} checked={editGroupMembers.includes(u.username)} onChange={() => toggleEditMember(u.username)} label={dn(u.username) !== u.username ? `${dn(u.username)} (@${u.username})` : u.username} />
-                  ))
-                ) : (
-                  (activeGroup?.members || []).map(uname => (
-                    <div key={uname} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px' }}>
-                      <div style={{ position: 'relative', flexShrink: 0 }}>
-                        <div style={{ width: 38, height: 38, borderRadius: '50%', background: avatarColor(uname), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 16 }}>
-                          {uname.charAt(0).toUpperCase()}
-                        </div>
-                        <div style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: isOnline(uname) ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--bg-page)' }}/>
+                {(activeGroup?.members || []).map(uname => (
+                  <div key={uname}
+                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 14px', transition: 'background 0.12s', position: 'relative' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    {/* Avatar */}
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      <div style={{ width: 38, height: 38, borderRadius: '50%', background: avatarColor(uname), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 16 }}>
+                        {uname.charAt(0).toUpperCase()}
                       </div>
-                      <span style={{ fontSize: 14, color: 'var(--black)', flex: 1 }}>{dn(uname)}{dn(uname) !== uname ? <span style={{ fontSize: 11, color: 'var(--gray-4)', marginLeft: 5 }}>@{uname}</span> : null}</span>
-                      {isOnline(uname) && <span style={{ fontSize: 11, color: '#22c55e' }}>online</span>}
+                      <div style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: '50%', background: isOnline(uname) ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--bg-page)' }}/>
                     </div>
-                  ))
-                )}
+                    {/* Name + status */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {dn(uname)}{dn(uname) !== uname ? <span style={{ fontSize: 11, color: 'var(--gray-4)', marginLeft: 5 }}>@{uname}</span> : null}
+                      </div>
+                      <div style={{ fontSize: 11, color: isOnline(uname) ? '#22c55e' : 'var(--gray-4)' }}>
+                        {isOnline(uname) ? 'online' : 'offline'}
+                      </div>
+                    </div>
+                    {/* ⋮ menu — only admin, not for self */}
+                    {isAdmin && uname !== user.username && (
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <button
+                          onClick={e => { e.stopPropagation(); setMemberMenuOpen(prev => prev === uname ? null : uname); }}
+                          title="Opțiuni"
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 5, transition: 'all 0.12s' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                            <circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/>
+                          </svg>
+                        </button>
+                        {memberMenuOpen === uname && (
+                          <div style={{ position: 'absolute', right: 0, top: 32, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', zIndex: 9999, minWidth: 170, overflow: 'hidden' }}>
+                            <button
+                              onClick={() => removeMember(uname)}
+                              style={{ width: '100%', padding: '9px 14px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: 13, color: 'var(--red)', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'inherit', transition: 'background 0.12s' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'var(--red-light)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                                <line x1="23" y1="11" x2="17" y2="11"/>
+                              </svg>
+                              Elimină din grup
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
               {isAdmin && (
                 <div style={{ padding: '10px 14px', borderTop: '1px solid var(--gray-2)', display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -1660,19 +1780,63 @@ export default function ChatPanel({ user }) {
                     style={{ padding: '9px 12px', border: '1px solid var(--gray-3)', borderRadius: 8, background: 'transparent', cursor: 'pointer', fontSize: 13, color: 'var(--red)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', flexShrink: 0 }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
                     onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="3 6 5 6 21 6"/>
                       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                       <path d="M10 11v6M14 11v6"/>
                     </svg>
-                    Șterge
+                    Șterge grup
                   </button>
-                  <button onClick={submitEditMembers} disabled={editGroupMembers.length === 0 || groupSaving}
-                    style={{ flex: 1, padding: '9px', border: 'none', borderRadius: 8, background: (editGroupMembers.length === 0 || groupSaving) ? 'var(--gray-2)' : '#ff7a3d', cursor: (editGroupMembers.length === 0 || groupSaving) ? 'default' : 'pointer', fontSize: 13, fontWeight: 600, color: 'white', fontFamily: 'inherit' }}>
-                    {groupSaving ? 'Se salvează...' : 'Salvează'}
+                  <button onClick={openAddMembers}
+                    style={{ flex: 1, padding: '9px', border: 'none', borderRadius: 8, background: '#ff7a3d', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'white', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'opacity 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+                    onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                      <circle cx="9" cy="7" r="4"/>
+                      <line x1="19" y1="8" x2="19" y2="14"/>
+                      <line x1="22" y1="11" x2="16" y2="11"/>
+                    </svg>
+                    Adaugă membri
                   </button>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* GROUP ADD MEMBERS — filtered list of non-members */}
+          {view === 'group-add-members' && (
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, animation: 'chatSlideFromRight 0.2s ease' }}>
+              <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto' }}>
+                {(() => {
+                  const nonMembers = orgUsers.filter(u => !(activeGroup?.members || []).includes(u.username));
+                  if (nonMembers.length === 0) return (
+                    <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 13, padding: '28px 16px' }}>
+                      Toți utilizatorii sunt deja în grup.
+                    </div>
+                  );
+                  return nonMembers.map(u => (
+                    <Checkbox
+                      key={u.username}
+                      checked={addMemberSel.includes(u.username)}
+                      onChange={() => setAddMemberSel(prev => prev.includes(u.username) ? prev.filter(x => x !== u.username) : [...prev, u.username])}
+                      label={dn(u.username) !== u.username ? `${dn(u.username)} (@${u.username})` : u.username}
+                    />
+                  ));
+                })()}
+              </div>
+              <div style={{ padding: '10px 14px', borderTop: '1px solid var(--gray-2)', display: 'flex', gap: 8, flexShrink: 0 }}>
+                <button onClick={() => { setSlideDir('left'); setView('group-members'); }}
+                  style={{ flex: 1, padding: '9px', border: '1px solid var(--gray-3)', borderRadius: 8, background: 'transparent', cursor: 'pointer', fontSize: 13, color: 'var(--black)', fontFamily: 'inherit', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  Anulează
+                </button>
+                <button onClick={submitAddMembers} disabled={addMemberSel.length === 0 || groupSaving}
+                  style={{ flex: 2, padding: '9px', border: 'none', borderRadius: 8, background: (addMemberSel.length === 0 || groupSaving) ? 'var(--gray-2)' : '#ff7a3d', cursor: (addMemberSel.length === 0 || groupSaving) ? 'default' : 'pointer', fontSize: 13, fontWeight: 600, color: 'white', fontFamily: 'inherit' }}>
+                  {groupSaving ? 'Se adaugă...' : `Adaugă${addMemberSel.length > 0 ? ` (${addMemberSel.length})` : ''}`}
+                </button>
+              </div>
             </div>
           )}
 
