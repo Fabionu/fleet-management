@@ -1040,7 +1040,14 @@ export default function ChatPanel({ user, currentPage }) {
         ) : (
           <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
             {msg.reply_to_id && (
-              <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div onClick={() => {
+                const el = document.getElementById(`msg-${msg.reply_to_id}`);
+                if (!el) return;
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                clearTimeout(highlightTimer.current);
+                setHighlightedMsgId(msg.reply_to_id);
+                highlightTimer.current = setTimeout(() => setHighlightedMsgId(null), 1600);
+              }} style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', borderRadius: '0 4px 4px 0', padding: '3px 6px', background: 'rgba(255,122,61,0.08)' }}>
                 <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
               </div>
             )}

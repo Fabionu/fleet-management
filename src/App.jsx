@@ -469,6 +469,7 @@ function App() {
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--gray-2)' }}>
+            {(user.role === 'admin' || user.permissions?.viewTracking !== false) && (
             <button
               onClick={() => changePage('tracking')}
               style={{
@@ -486,6 +487,8 @@ function App() {
             >
               Status flotă
             </button>
+            )}
+            {(user.role === 'admin' || user.permissions?.viewRegistru !== false) && (
             <button
               onClick={() => changePage('curse')}
               style={{
@@ -503,6 +506,8 @@ function App() {
             >
               Registru
             </button>
+            )}
+            {(user.role === 'admin' || user.permissions?.viewChat !== false) && (
             <button
               onClick={() => changePage('chat')}
               style={{
@@ -526,7 +531,8 @@ function App() {
               </svg>
               Chat
             </button>
-{(user.role === 'admin' || user.permissions?.viewReports) && (
+            )}
+            {(user.role === 'admin' || user.permissions?.viewReports) && (
               <button
                 onClick={() => changePage('rapoarte')}
                 style={{
@@ -568,11 +574,11 @@ function App() {
         </div>
 
         {/* Page Content */}
-        {currentPage === 'tracking' && <Tracking user={user} viewMode={trackingView} />}
-        {currentPage === 'curse' && <Curse user={user} />}
-        {currentPage === 'rapoarte' && (user.role === 'admin' || user.permissions?.viewReports) && <Dashboard user={user} />}
-        {currentPage === 'admin' && (user.role === 'admin' || user.permissions?.accessAdmin) && <Admin user={user} />}
-        <ChatPanel user={user} currentPage={currentPage} />
+        {currentPage === 'tracking' && (user.role === 'admin' || user.permissions?.viewTracking !== false) && <Tracking user={user} viewMode={trackingView} />}
+        {currentPage === 'curse'    && (user.role === 'admin' || user.permissions?.viewRegistru !== false)  && <Curse user={user} />}
+        {currentPage === 'rapoarte' && (user.role === 'admin' || user.permissions?.viewReports)             && <Dashboard user={user} />}
+        {currentPage === 'admin'    && (user.role === 'admin' || user.permissions?.accessAdmin)             && <Admin user={user} />}
+        {(user.role === 'admin' || user.permissions?.viewChat !== false) && <ChatPanel user={user} currentPage={currentPage} />}
       </div>
     </div>
   );
