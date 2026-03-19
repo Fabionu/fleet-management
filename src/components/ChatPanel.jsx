@@ -187,6 +187,8 @@ function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, 
         <textarea ref={inputRef} value={value} onChange={e => onChange(e.target.value)} onKeyDown={onKeyDown}
           placeholder={placeholder} rows={1} className="chat-scroll"
           style={{ flex: 1, resize: 'none', border: '1px solid var(--gray-3)', borderRadius: 10, padding: '9px 12px', fontSize: 14, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, maxHeight: 80, overflowY: 'auto', transition: 'border-color 0.2s', boxSizing: 'border-box' }}
+          onMouseEnter={e => { if (document.activeElement !== e.target) e.target.style.borderColor = 'var(--gray-4)'; }}
+          onMouseLeave={e => { if (document.activeElement !== e.target) e.target.style.borderColor = 'var(--gray-3)'; }}
           onFocus={e => e.target.style.borderColor = '#ff7a3d'}
           onBlur={e => e.target.style.borderColor = 'var(--gray-3)'}
         />
@@ -1134,7 +1136,7 @@ export default function ChatPanel({ user, currentPage }) {
           {/* Header */}
           <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid var(--gray-2)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--black)' }}>Mesaje</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--black)' }}>Chat</span>
               {isAdmin && (
                 <button onClick={() => { setNewGroupName(''); setNewGroupMembers([]); setView('create-group'); }}
                   title="Grup nou"
@@ -1232,7 +1234,7 @@ export default function ChatPanel({ user, currentPage }) {
               const lastMsg = (groupMessages[g.id] || []).at(-1);
               const isActiveGrp = activeGroup?.id === g.id && ['group-chat','group-members','group-add-members'].includes(view);
               return (
-                <div key={g.id} onClick={() => openGroupChat(g)}
+                <div key={g.id} onClick={() => openGroupConversation(g)}
                   style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', cursor: 'pointer', background: isActiveGrp ? 'var(--gray-1)' : 'transparent', transition: 'background 0.12s', borderLeft: isActiveGrp ? '3px solid #ff7a3d' : '3px solid transparent', boxSizing: 'border-box' }}
                   onMouseEnter={e => { if (!isActiveGrp) e.currentTarget.style.background = 'var(--gray-1)'; }}
                   onMouseLeave={e => { if (!isActiveGrp) e.currentTarget.style.background = 'transparent'; }}>
