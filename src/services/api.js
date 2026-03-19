@@ -73,6 +73,12 @@ export const api = {
   // Alerts
   getDocumentAlerts: () => apiClient.get('/alerts/documents'),
 
+  // Roles
+  getRoles: () => apiClient.get('/roles'),
+  createRole: (role) => apiClient.post('/roles', role),
+  updateRole: (id, role) => apiClient.put(`/roles/${id}`, role),
+  deleteRole: (id) => apiClient.delete(`/roles/${id}`),
+
   // Logs
   getLogs: () => apiClient.get('/logs'),
 

@@ -445,23 +445,14 @@ function App() {
                 <circle cx="18.5" cy="17.5" r="2.5"/>
               </svg>
               <div>
-                <div style={{
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  color: '#ff7a3d',
-                  marginBottom: '2px'
-                }}>
-                  {(user.organizationName && user.organizationName !== 'Default') ? user.organizationName.toUpperCase() : 'FLEET MANAGEMENT'}
-                </div>
                 <h1 style={{
-                  fontSize: '24px',
-                  fontWeight: 600,
+                  fontSize: '22px',
+                  fontWeight: 700,
                   color: 'var(--black)',
-                  letterSpacing: '-0.02em'
+                  letterSpacing: '-0.02em',
+                  margin: 0,
                 }}>
-                  Fleet Management System
+                  {(user.organizationName && user.organizationName !== 'Default') ? user.organizationName : 'Fleet Management'}
                 </h1>
               </div>
             </div>

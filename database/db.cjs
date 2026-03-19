@@ -422,6 +422,40 @@ async function initDb() {
     await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE`);
     await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMP`);
 
+    // Roles table
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS roles (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        color TEXT DEFAULT '#6b7280',
+        permissions TEXT DEFAULT '{}',
+        organization_id INTEGER REFERENCES organizations(id) ON DELETE CASCADE,
+        is_system BOOLEAN DEFAULT FALSE,
+        UNIQUE(name, organization_id)
+      )
+    `);
+
+    // Seed default roles for each organization (if not already present)
+    const orgs = await client.query(`SELECT id FROM organizations`);
+    const defaultRoles = [
+      { name: 'Administrator',  color: '#ff7a3d', perms: defaultPermissions.admin,       is_system: true },
+      { name: 'Dispecer',       color: '#3b82f6', perms: defaultPermissions.dispatcher,   is_system: true },
+      { name: 'Contabil',       color: '#8b5cf6', perms: defaultPermissions.contabil,     is_system: true },
+    ];
+    for (const org of orgs.rows) {
+      for (const r of defaultRoles) {
+        await client.query(
+          `INSERT INTO roles (name, color, permissions, organization_id, is_system)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (name, organization_id) DO NOTHING`,
+          [r.name, r.color, JSON.stringify(r.perms), org.id, r.is_system]
+        );
+      }
+    }
+
+    // Migration: add role_id column to users (after roles table exists)
+    await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL`);
+
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {
     client.release();

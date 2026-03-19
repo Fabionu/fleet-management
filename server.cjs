@@ -1054,7 +1054,7 @@ app.get('/api/users', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin' && !req.user.permissions?.accessUsers) return res.status(403).json({ error: 'Acces interzis' });
     const result = await pool.query(
-      'SELECT id, username, role, permissions, first_name, last_name FROM users WHERE organization_id = $1',
+      'SELECT id, username, role, role_id, permissions, first_name, last_name FROM users WHERE organization_id = $1',
       [req.user.organization_id]
     );
     res.json(result.rows.map(u => ({
@@ -1070,12 +1070,12 @@ app.get('/api/users', authMiddleware, async (req, res) => {
 app.post('/api/users', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin' && !req.user.permissions?.accessUsers) return res.status(403).json({ error: 'Acces interzis' });
-    const { username, password, role, permissions, first_name, last_name } = req.body;
+    const { username, password, role, role_id, permissions, first_name, last_name } = req.body;
     const hash = bcrypt.hashSync(password, 10);
     const perms = JSON.stringify(permissions || {});
     await pool.query(
-      'INSERT INTO users (username, password, role, permissions, organization_id, first_name, last_name) VALUES ($1,$2,$3,$4,$5,$6,$7)',
-      [username, hash, role, perms, req.user.organization_id, first_name || null, last_name || null]
+      'INSERT INTO users (username, password, role, role_id, permissions, organization_id, first_name, last_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',
+      [username, hash, role || 'dispatcher', role_id || null, perms, req.user.organization_id, first_name || null, last_name || null]
     );
     await addLog(req.user.organization_id, req.user.username, 'Adăugat utilizator', 'user', null, `${username} (${role})`);
     res.json({ success: true });
@@ -1087,17 +1087,17 @@ app.post('/api/users', authMiddleware, async (req, res) => {
 app.put('/api/users/:id', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin' && !req.user.permissions?.accessUsers) return res.status(403).json({ error: 'Acces interzis' });
-    const { password, role, permissions, first_name, last_name } = req.body;
+    const { password, role, role_id, permissions, first_name, last_name } = req.body;
     if (password) {
       const hash = bcrypt.hashSync(password, 10);
       await pool.query(
-        'UPDATE users SET password=$1, role=$2, permissions=$3, first_name=$5, last_name=$6 WHERE id=$4',
-        [hash, role, JSON.stringify(permissions || {}), req.params.id, first_name || null, last_name || null]
+        'UPDATE users SET password=$1, role=$2, role_id=$3, permissions=$4, first_name=$6, last_name=$7 WHERE id=$5',
+        [hash, role || 'dispatcher', role_id || null, JSON.stringify(permissions || {}), req.params.id, first_name || null, last_name || null]
       );
     } else {
       await pool.query(
-        'UPDATE users SET role=$1, permissions=$2, first_name=$4, last_name=$5 WHERE id=$3',
-        [role, JSON.stringify(permissions || {}), req.params.id, first_name || null, last_name || null]
+        'UPDATE users SET role=$1, role_id=$2, permissions=$3, first_name=$5, last_name=$6 WHERE id=$4',
+        [role || 'dispatcher', role_id || null, JSON.stringify(permissions || {}), req.params.id, first_name || null, last_name || null]
       );
     }
     await addLog(req.user.organization_id, req.user.username, 'Editat utilizator', 'user', req.params.id, `rol: ${role}`);
@@ -1511,12 +1511,34 @@ app.put('/api/trailers/:id', authMiddleware, async (req, res) => {
   try {
     if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
     const { number, type, status, current_truck, itp_expiry, rca_expiry, observations } = req.body;
+    const orgId = req.user.organization_id;
+
+    // Get old current_truck before updating
+    const oldRow = await pool.query(`SELECT current_truck FROM trailers WHERE id=$1 AND organization_id=$2`, [req.params.id, orgId]);
+    const oldTruck = oldRow.rows[0]?.current_truck || null;
+    const newTruck = current_truck || null;
+
     await pool.query(
       `UPDATE trailers SET number=$1, type=$2, status=$3, current_truck=$4, itp_expiry=$5, rca_expiry=$6, observations=$7
        WHERE id=$8 AND organization_id=$9`,
-      [number, type||null, status||'libera', current_truck||null, itp_expiry||null, rca_expiry||null, observations||null, req.params.id, req.user.organization_id]
+      [number, type||null, status||'libera', newTruck, itp_expiry||null, rca_expiry||null, observations||null, req.params.id, orgId]
     );
-    await addLog(req.user.organization_id, req.user.username, 'Editat remorcă', 'trailer', req.params.id, number);
+
+    // Sync truck's trailer field
+    if (oldTruck && oldTruck !== newTruck) {
+      // Clear old truck's trailer field
+      await pool.query(`UPDATE trucks SET trailer=NULL WHERE number=$1 AND organization_id=$2`, [oldTruck, orgId]);
+    }
+    if (newTruck && newTruck !== oldTruck) {
+      // Set new truck's trailer field
+      await pool.query(`UPDATE trucks SET trailer=$1 WHERE number=$2 AND organization_id=$3`, [number, newTruck, orgId]);
+    }
+    if (newTruck && newTruck === oldTruck) {
+      // Same truck, but trailer number may have changed - keep in sync
+      await pool.query(`UPDATE trucks SET trailer=$1 WHERE number=$2 AND organization_id=$3`, [number, newTruck, orgId]);
+    }
+
+    await addLog(orgId, req.user.username, 'Editat remorcă', 'trailer', req.params.id, number);
     res.json({ success: true });
   } catch (err) {
     console.error('❌ PUT /api/trailers/:id error:', err.message);
@@ -1534,6 +1556,71 @@ app.delete('/api/trailers/:id', authMiddleware, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('❌ DELETE /api/trailers/:id error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── ROLES ────────────────────────────────────────────────────
+app.get('/api/roles', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM roles WHERE organization_id=$1 ORDER BY is_system DESC, name ASC`,
+      [req.user.organization_id]
+    );
+    res.json(result.rows.map(r => ({ ...r, permissions: JSON.parse(r.permissions || '{}') })));
+  } catch (err) {
+    console.error('❌ GET /api/roles error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/roles', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
+    const { name, color, permissions } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: 'Numele rolului este obligatoriu' });
+    const result = await pool.query(
+      `INSERT INTO roles (name, color, permissions, organization_id, is_system) VALUES ($1, $2, $3, $4, FALSE) RETURNING *`,
+      [name.trim(), color || '#6b7280', JSON.stringify(permissions || {}), req.user.organization_id]
+    );
+    await addLog(req.user.organization_id, req.user.username, 'Adăugat rol', 'role', result.rows[0].id, name);
+    res.json({ ...result.rows[0], permissions: permissions || {} });
+  } catch (err) {
+    if (err.code === '23505') return res.status(400).json({ error: 'Există deja un rol cu acest nume' });
+    console.error('❌ POST /api/roles error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/roles/:id', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
+    const { name, color, permissions } = req.body;
+    if (!name?.trim()) return res.status(400).json({ error: 'Numele rolului este obligatoriu' });
+    await pool.query(
+      `UPDATE roles SET name=$1, color=$2, permissions=$3 WHERE id=$4 AND organization_id=$5`,
+      [name.trim(), color || '#6b7280', JSON.stringify(permissions || {}), req.params.id, req.user.organization_id]
+    );
+    await addLog(req.user.organization_id, req.user.username, 'Editat rol', 'role', req.params.id, name);
+    res.json({ success: true });
+  } catch (err) {
+    if (err.code === '23505') return res.status(400).json({ error: 'Există deja un rol cu acest nume' });
+    console.error('❌ PUT /api/roles/:id error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/roles/:id', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Acces interzis' });
+    const role = await pool.query(`SELECT name, is_system FROM roles WHERE id=$1 AND organization_id=$2`, [req.params.id, req.user.organization_id]);
+    if (!role.rows[0]) return res.status(404).json({ error: 'Rol negăsit' });
+    if (role.rows[0].is_system) return res.status(400).json({ error: 'Rolurile de sistem nu pot fi șterse' });
+    await pool.query(`DELETE FROM roles WHERE id=$1 AND organization_id=$2`, [req.params.id, req.user.organization_id]);
+    await addLog(req.user.organization_id, req.user.username, 'Șters rol', 'role', req.params.id, role.rows[0].name);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('❌ DELETE /api/roles/:id error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

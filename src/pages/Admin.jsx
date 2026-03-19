@@ -204,6 +204,12 @@ const IconLog = () => (
   </svg>
 );
 
+const IconRoles = () => (
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+  </svg>
+);
+
 const IconBack = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="15 18 9 12 15 6"/>
@@ -299,7 +305,7 @@ function SectionHeader({ title, icon, count, onBack, action }) {
 }
 
 // ── Dashboard carduri ──────────────────────────────────────
-function Dashboard({ onSelect, counts, canSeeUsers, canSeeLogs, canSeeTrucks, canSeeDrivers, canSeeTrailers }) {
+function Dashboard({ onSelect, counts, canSeeUsers, canSeeLogs, canSeeTrucks, canSeeDrivers, canSeeTrailers, canSeeRoles }) {
   const allCards = [
     {
       key: 'utilizatori',
@@ -309,6 +315,15 @@ function Dashboard({ onSelect, counts, canSeeUsers, canSeeLogs, canSeeTrucks, ca
       color: '#3b82f6',
       count: counts.users,
       countLabel: 'utilizatori',
+    },
+    {
+      key: 'roluri',
+      icon: <IconRoles />,
+      title: 'Roluri',
+      desc: 'Roluri custom cu permisiuni predefinite',
+      color: '#f59e0b',
+      count: counts.roles,
+      countLabel: 'roluri',
     },
     {
       key: 'camioane',
@@ -350,6 +365,7 @@ function Dashboard({ onSelect, counts, canSeeUsers, canSeeLogs, canSeeTrucks, ca
 
   const cards = allCards.filter(c => {
     if (c.key === 'utilizatori') return canSeeUsers;
+    if (c.key === 'roluri')      return canSeeRoles;
     if (c.key === 'camioane')    return canSeeTrucks;
     if (c.key === 'soferi')      return canSeeDrivers;
     if (c.key === 'remorci')     return canSeeTrailers;
@@ -436,40 +452,57 @@ function AdminCard({ card, onClick }) {
 // ── Secțiunea Utilizatori ──────────────────────────────────
 function SectionUtilizatori({ onBack }) {
   const [users, setUsers] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
-  const [form, setForm] = useState({ username:'', password:'', role:'dispatcher', permissions:{}, first_name:'', last_name:'' });
+  const [form, setForm] = useState({ username:'', password:'', role_id:'', permissions:{}, first_name:'', last_name:'' });
   const [confirm, setConfirm] = useState(null);
   const [toast, setToast] = useState('');
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    try { const res = await api.getUsers(); setUsers(res.data); } catch {}
+    try {
+      const [usersRes, rolesRes] = await Promise.all([api.getUsers(), api.getRoles()]);
+      setUsers(usersRes.data);
+      setRoles(rolesRes.data);
+    } catch {}
     setLoading(false);
   }, []);
   useEffect(() => { load(); }, [load]);
 
+  const getRoleById = (id) => roles.find(r => r.id === id || r.id === Number(id));
+  const getRoleByName = (name) => roles.find(r => r.name.toLowerCase() === name?.toLowerCase());
+
   const openAdd = () => {
-    setForm({ username:'', password:'', role:'dispatcher', permissions:{ ...DEFAULT_PERMISSIONS.dispatcher }, first_name:'', last_name:'' });
+    const defaultRole = roles.find(r => r.name === 'Dispecer') || roles[0];
+    setForm({ username:'', password:'', role_id: defaultRole?.id || '', permissions: defaultRole ? { ...defaultRole.permissions } : { ...DEFAULT_PERMISSIONS.dispatcher }, first_name:'', last_name:'' });
     setModal({ mode:'add' });
   };
   const openEdit = (u) => {
-    setForm({ username:u.username, password:'', role:u.role, permissions:{ ...u.permissions }, first_name:u.first_name||'', last_name:u.last_name||'' });
+    // Try to find role by role_id first, then by legacy role name
+    const matchedRole = u.role_id ? getRoleById(u.role_id) : getRoleByName(u.role === 'admin' ? 'Administrator' : u.role === 'dispatcher' ? 'Dispecer' : u.role === 'contabil' ? 'Contabil' : u.role);
+    setForm({ username:u.username, password:'', role_id: matchedRole?.id || u.role_id || '', permissions:{ ...u.permissions }, first_name:u.first_name||'', last_name:u.last_name||'' });
     setModal({ mode:'edit', user:u });
   };
-  const handleRoleChange = (role) => setForm(f => ({ ...f, role, permissions:{ ...DEFAULT_PERMISSIONS[role] } }));
+  const handleRoleChange = (roleId) => {
+    const role = getRoleById(roleId);
+    setForm(f => ({ ...f, role_id: roleId, permissions: role ? { ...role.permissions } : {} }));
+  };
 
   const handleSave = async () => {
     if (!form.username.trim()) return;
     setSaving(true);
     try {
+      const selectedRole = getRoleById(form.role_id);
+      // Map role name to legacy role field for backwards compat
+      const legacyRole = selectedRole?.name === 'Administrator' ? 'admin' : selectedRole?.name === 'Dispecer' ? 'dispatcher' : selectedRole?.name === 'Contabil' ? 'contabil' : 'dispatcher';
       if (modal.mode === 'add') {
         if (!form.password.trim()) { setSaving(false); return; }
-        await api.createUser({ username:form.username, password:form.password, role:form.role, permissions:form.permissions, first_name:form.first_name, last_name:form.last_name });
+        await api.createUser({ username:form.username, password:form.password, role:legacyRole, role_id:form.role_id, permissions:form.permissions, first_name:form.first_name, last_name:form.last_name });
         setToast('Utilizator adăugat');
       } else {
-        await api.updateUser(modal.user.id, { password:form.password||undefined, role:form.role, permissions:form.permissions, first_name:form.first_name, last_name:form.last_name });
+        await api.updateUser(modal.user.id, { password:form.password||undefined, role:legacyRole, role_id:form.role_id, permissions:form.permissions, first_name:form.first_name, last_name:form.last_name });
         setToast('Utilizator actualizat');
       }
       setModal(null); load();
@@ -482,9 +515,6 @@ function SectionUtilizatori({ onBack }) {
     catch { setToast('Eroare la ștergere'); }
     setConfirm(null);
   };
-
-  const roleColor = { admin:'#ff7a3d', dispatcher:'#3b82f6', contabil:'#8b5cf6' };
-  const roleLabel = { admin:'Administrator', dispatcher:'Dispecer', contabil:'Contabil' };
 
   return (
     <div>
@@ -500,30 +530,35 @@ function SectionUtilizatori({ onBack }) {
           {[...users].sort((a, b) => {
             const order = { admin: 0, contabil: 1, dispatcher: 2 };
             return (order[a.role] ?? 3) - (order[b.role] ?? 3);
-          }).map((u, i) => (
-            <tr key={u.id} style={{ borderBottom: i < users.length-1 ? '1px solid var(--gray-2)' : 'none' }}>
-              <td style={tdStyle}>
-                <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
-                  <Avatar name={u.first_name || u.username} color={roleColor[u.role]} />
-                  <div>
-                    {(u.first_name || u.last_name) && (
-                      <div style={{ fontWeight:600, color:'var(--black)', fontSize:'13px' }}>{[u.first_name, u.last_name].filter(Boolean).join(' ')}</div>
-                    )}
-                    <div style={{ fontSize: (u.first_name || u.last_name) ? '11px' : '13px', color: (u.first_name || u.last_name) ? 'var(--gray-4)' : 'var(--black)', fontWeight: (u.first_name || u.last_name) ? 400 : 600 }}>{u.username}</div>
+          }).map((u, i) => {
+            const matchedRole = u.role_id ? getRoleById(u.role_id) : getRoleByName(u.role === 'admin' ? 'Administrator' : u.role === 'dispatcher' ? 'Dispecer' : u.role === 'contabil' ? 'Contabil' : u.role);
+            const roleColor = matchedRole?.color || '#6b7280';
+            const roleLabel = matchedRole?.name || u.role;
+            return (
+              <tr key={u.id} style={{ borderBottom: i < users.length-1 ? '1px solid var(--gray-2)' : 'none' }}>
+                <td style={tdStyle}>
+                  <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                    <Avatar name={u.first_name || u.username} color={roleColor} />
+                    <div>
+                      {(u.first_name || u.last_name) && (
+                        <div style={{ fontWeight:600, color:'var(--black)', fontSize:'13px' }}>{[u.first_name, u.last_name].filter(Boolean).join(' ')}</div>
+                      )}
+                      <div style={{ fontSize: (u.first_name || u.last_name) ? '11px' : '13px', color: (u.first_name || u.last_name) ? 'var(--gray-4)' : 'var(--black)', fontWeight: (u.first_name || u.last_name) ? 400 : 600 }}>{u.username}</div>
+                    </div>
                   </div>
-                </div>
-              </td>
-              <td style={tdStyle}>
-                <Badge label={roleLabel[u.role]||u.role} color={roleColor[u.role]||'#6b7280'} />
-              </td>
-              <td style={{ ...tdStyle, color:'var(--gray-4)', fontSize:'12px', maxWidth:240, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                {Object.entries(u.permissions).filter(([,v])=>v).map(([k])=>PERM_LABELS[k]||k).join(', ')||'—'}
-              </td>
-              <td style={tdStyle}>
-                <Actions onEdit={() => openEdit(u)} onDelete={() => setConfirm({ msg:`Ștergi utilizatorul "${u.username}"?`, id:u.id })} />
-              </td>
-            </tr>
-          ))}
+                </td>
+                <td style={tdStyle}>
+                  <Badge label={roleLabel} color={roleColor} />
+                </td>
+                <td style={{ ...tdStyle, color:'var(--gray-4)', fontSize:'12px', maxWidth:240, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                  {Object.entries(u.permissions).filter(([,v])=>v).map(([k])=>PERM_LABELS[k]||k).join(', ')||'—'}
+                </td>
+                <td style={tdStyle}>
+                  <Actions onEdit={() => openEdit(u)} onDelete={() => setConfirm({ msg:`Ștergi utilizatorul "${u.username}"?`, id:u.id })} />
+                </td>
+              </tr>
+            );
+          })}
         </Table>
       )}
 
@@ -548,10 +583,11 @@ function SectionUtilizatori({ onBack }) {
               <input type="password" value={form.password} onChange={e=>setForm(f=>({...f,password:e.target.value}))} style={inputStyle} />
             </Field>
             <Field label="Rol">
-              <select value={form.role} onChange={e=>handleRoleChange(e.target.value)} style={inputStyle}>
-                <option value="admin">Administrator</option>
-                <option value="dispatcher">Dispecer</option>
-                <option value="contabil">Contabil</option>
+              <select value={form.role_id} onChange={e=>handleRoleChange(e.target.value)} style={inputStyle}>
+                <option value="">— Selectează rol —</option>
+                {roles.map(r => (
+                  <option key={r.id} value={r.id}>{r.name}{r.is_system ? ' (sistem)' : ''}</option>
+                ))}
               </select>
             </Field>
             <div>
@@ -559,12 +595,10 @@ function SectionUtilizatori({ onBack }) {
               <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
                 {PERM_GROUPS.map(group => (
                   <div key={group.label}>
-                    {/* Header grup */}
                     <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'8px', color:'var(--gray-4)' }}>
                       {group.icon}
                       <span style={{ fontSize:'11px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em' }}>{group.label}</span>
                     </div>
-                    {/* Permisiuni */}
                     <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
                       {group.items.map(({ key, label, desc, icon }) => (
                         <label key={key} style={{ display:'flex', alignItems:'flex-start', gap:'10px', cursor:'pointer', padding:'9px 11px', borderRadius:'8px', border:'1px solid var(--border)', background: form.permissions[key] ? 'var(--gray-1)' : 'var(--surface)', transition:'background 0.15s, border-color 0.15s', borderColor: form.permissions[key] ? 'var(--gray-3)' : 'var(--border)' }}>
@@ -1850,22 +1884,183 @@ function SectionRemorci({ onBack }) {
   );
 }
 
+// ── Secțiunea Roluri ───────────────────────────────────────
+function SectionRoluri({ onBack }) {
+  const [roles, setRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null);
+  const [form, setForm] = useState({ name:'', color:'#6b7280', permissions:{} });
+  const [confirm, setConfirm] = useState(null);
+  const [toast, setToast] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try { const res = await api.getRoles(); setRoles(res.data); } catch {}
+    setLoading(false);
+  }, []);
+  useEffect(() => { load(); }, [load]);
+
+  const openAdd = () => {
+    setForm({ name:'', color:'#6b7280', permissions:{} });
+    setModal({ mode:'add' });
+  };
+  const openEdit = (r) => {
+    setForm({ name:r.name, color:r.color||'#6b7280', permissions:{ ...r.permissions } });
+    setModal({ mode:'edit', role:r });
+  };
+
+  const handleSave = async () => {
+    if (!form.name.trim()) return;
+    setSaving(true);
+    try {
+      if (modal.mode === 'add') {
+        await api.createRole({ name:form.name.trim(), color:form.color, permissions:form.permissions });
+        setToast('Rol adăugat');
+      } else {
+        await api.updateRole(modal.role.id, { name:form.name.trim(), color:form.color, permissions:form.permissions });
+        setToast('Rol actualizat');
+      }
+      setModal(null); load();
+    } catch (err) { setToast(err.response?.data?.error || 'Eroare'); }
+    setSaving(false);
+  };
+
+  const doDelete = async () => {
+    try { await api.deleteRole(confirm.id); setToast('Rol șters'); load(); }
+    catch (err) { setToast(err.response?.data?.error || 'Eroare la ștergere'); }
+    setConfirm(null);
+  };
+
+  const PRESET_COLORS = ['#ff7a3d','#3b82f6','#8b5cf6','#22c55e','#f59e0b','#ef4444','#0d9488','#ec4899','#6b7280','#111110'];
+
+  return (
+    <div>
+      <Toast msg={toast} onClose={() => setToast('')} />
+      <ConfirmDialog msg={confirm?.msg} onConfirm={doDelete} onCancel={() => setConfirm(null)} />
+      <SectionHeader
+        title="Roluri" icon={<IconRoles />} count={roles.length} onBack={onBack}
+        action={<button onClick={openAdd} style={btnPrimary}>+ Adaugă rol</button>}
+      />
+
+      {loading ? <Loader /> : (
+        <Table headers={['Rol','Tip','Permisiuni active','Acțiuni']}>
+          {roles.map((r, i) => (
+            <tr key={r.id} style={{ borderBottom: i < roles.length-1 ? '1px solid var(--gray-2)' : 'none' }}>
+              <td style={tdStyle}>
+                <div style={{ display:'flex', alignItems:'center', gap:'8px' }}>
+                  <div style={{ width:10, height:10, borderRadius:'50%', background:r.color, flexShrink:0 }} />
+                  <span style={{ fontWeight:600, color:'var(--black)', fontSize:'13px' }}>{r.name}</span>
+                </div>
+              </td>
+              <td style={tdStyle}>
+                {r.is_system
+                  ? <span style={{ fontSize:'11px', color:'var(--gray-4)', background:'var(--gray-2)', borderRadius:'20px', padding:'2px 10px', fontWeight:500 }}>Sistem</span>
+                  : <span style={{ fontSize:'11px', color:r.color, background:r.color+'20', borderRadius:'20px', padding:'2px 10px', fontWeight:500 }}>Custom</span>
+                }
+              </td>
+              <td style={{ ...tdStyle, color:'var(--gray-4)', fontSize:'12px', maxWidth:260, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                {Object.entries(r.permissions).filter(([,v])=>v).map(([k])=>PERM_LABELS[k]||k).join(', ')||'—'}
+              </td>
+              <td style={tdStyle}>
+                <div style={{ display:'flex', gap:'5px' }}>
+                  <button
+                    onClick={() => openEdit(r)}
+                    style={{ ...iconBtnBase, color:'var(--black)' }}
+                    onMouseEnter={e => { e.currentTarget.style.background='var(--gray-2)'; e.currentTarget.style.borderColor='var(--gray-4)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; }}
+                  >
+                    <SvgEdit /> Editează
+                  </button>
+                  {!r.is_system && (
+                    <button
+                      onClick={() => setConfirm({ msg:`Ștergi rolul "${r.name}"?`, id:r.id })}
+                      style={{ ...iconBtnBase, color:'var(--red)' }}
+                      onMouseEnter={e => { e.currentTarget.style.background='var(--red-light)'; e.currentTarget.style.borderColor='var(--red)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.borderColor='var(--gray-3)'; }}
+                    >
+                      <SvgTrash /> Șterge
+                    </button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </Table>
+      )}
+
+      {/* Modal */}
+      {modal && (
+        <Modal title={modal.mode==='add' ? 'Adaugă rol' : `Editează rol: ${modal.role.name}`} onClose={() => setModal(null)} width={520}>
+          <div style={{ display:'grid', gap:'14px' }}>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:'10px', alignItems:'end' }}>
+              <Field label="Nume rol *">
+                <input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} style={inputStyle} placeholder="ex: Operator logistică" />
+              </Field>
+              <Field label="Culoare">
+                <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', padding:'6px 0' }}>
+                  {PRESET_COLORS.map(c => (
+                    <button key={c} onClick={() => setForm(f=>({...f,color:c}))}
+                      style={{ width:20, height:20, borderRadius:'50%', background:c, border: form.color===c ? '2px solid var(--black)' : '2px solid transparent', cursor:'pointer', outline: form.color===c ? '2px solid '+c : 'none', outlineOffset:'1px', transition:'all 0.1s' }}
+                    />
+                  ))}
+                </div>
+              </Field>
+            </div>
+            <div>
+              <div style={{ fontSize:'12px', color:'var(--gray-4)', fontWeight:500, marginBottom:'12px' }}>Permisiuni</div>
+              <div style={{ display:'flex', flexDirection:'column', gap:'16px' }}>
+                {PERM_GROUPS.map(group => (
+                  <div key={group.label}>
+                    <div style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'8px', color:'var(--gray-4)' }}>
+                      {group.icon}
+                      <span style={{ fontSize:'11px', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em' }}>{group.label}</span>
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:'6px' }}>
+                      {group.items.map(({ key, label, desc, icon }) => (
+                        <label key={key} style={{ display:'flex', alignItems:'flex-start', gap:'10px', cursor:'pointer', padding:'9px 11px', borderRadius:'8px', border:'1px solid var(--border)', background: form.permissions[key] ? 'var(--gray-1)' : 'var(--surface)', transition:'background 0.15s, border-color 0.15s', borderColor: form.permissions[key] ? 'var(--gray-3)' : 'var(--border)' }}>
+                          <input type="checkbox" checked={!!form.permissions[key]}
+                            onChange={e=>setForm(f=>({...f, permissions:{...f.permissions,[key]:e.target.checked}}))}
+                            style={{ marginTop:'2px', flexShrink:0, accentColor:'#ff7a3d', cursor:'pointer' }} />
+                          <div style={{ color: form.permissions[key] ? 'var(--gray-4)' : 'var(--gray-3)', marginTop:'1px', flexShrink:0, transition:'color 0.15s' }}>
+                            {icon}
+                          </div>
+                          <div>
+                            <div style={{ fontSize:'13px', fontWeight:500, color:'var(--black)', lineHeight:1.3 }}>{label}</div>
+                            <div style={{ fontSize:'11px', color:'var(--gray-4)', marginTop:'3px', lineHeight:1.4 }}>{desc}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <ModalFooter onCancel={() => setModal(null)} onSave={handleSave} saving={saving} />
+        </Modal>
+      )}
+    </div>
+  );
+}
+
 // ── Admin principal ────────────────────────────────────────
 function Admin({ user }) {
   const [active, setActive] = useState(() => localStorage.getItem('adminSection') || null);
-  const [counts, setCounts] = useState({ users:null, trucks:null, drivers:null, trailers:null, logs:null });
+  const [counts, setCounts] = useState({ users:null, roles:null, trucks:null, drivers:null, trailers:null, logs:null });
 
   useEffect(() => {
     Promise.all([
       api.getUsers().then(r => r.data.length).catch(() => null),
+      api.getRoles().then(r => r.data.length).catch(() => null),
       api.getTrucks().then(r => r.data.length).catch(() => null),
       api.getDrivers().then(r => r.data.length).catch(() => null),
       api.getTrailers().then(r => r.data.length).catch(() => null),
       api.getLogs().then(r => r.data.length).catch(() => null),
-    ]).then(([users, trucks, drivers, trailers, logs]) => {
-      setCounts({ users, trucks, drivers, trailers, logs });
+    ]).then(([users, roles, trucks, drivers, trailers, logs]) => {
+      setCounts({ users, roles, trucks, drivers, trailers, logs });
     });
-  }, [active]); // reîncarcă contoarele la revenire
+  }, [active]);
 
   const goTo = (section) => {
     setActive(section);
@@ -1875,6 +2070,7 @@ function Admin({ user }) {
 
   const isAdmin        = user.role === 'admin';
   const canSeeUsers    = isAdmin || user.permissions?.accessUsers;
+  const canSeeRoles    = isAdmin || user.permissions?.accessUsers;
   const canSeeLogs     = isAdmin || user.permissions?.accessLogs;
   const canSeeTrucks   = isAdmin || (user.permissions?.accessAdmin && user.permissions?.accessTrucks !== false);
   const canSeeDrivers  = isAdmin || (user.permissions?.accessAdmin && user.permissions?.accessDrivers !== false);
@@ -1882,8 +2078,9 @@ function Admin({ user }) {
 
   return (
     <div style={{ paddingTop:'16px' }}>
-      {!active && <Dashboard onSelect={goTo} counts={counts} canSeeUsers={canSeeUsers} canSeeLogs={canSeeLogs} canSeeTrucks={canSeeTrucks} canSeeDrivers={canSeeDrivers} canSeeTrailers={canSeeTrailers} />}
+      {!active && <Dashboard onSelect={goTo} counts={counts} canSeeUsers={canSeeUsers} canSeeRoles={canSeeRoles} canSeeLogs={canSeeLogs} canSeeTrucks={canSeeTrucks} canSeeDrivers={canSeeDrivers} canSeeTrailers={canSeeTrailers} />}
       {active === 'utilizatori' && canSeeUsers    && <SectionUtilizatori onBack={() => goTo(null)} />}
+      {active === 'roluri'      && canSeeRoles    && <SectionRoluri      onBack={() => goTo(null)} />}
       {active === 'camioane'    && canSeeTrucks   && <SectionCamioane    onBack={() => goTo(null)} />}
       {active === 'soferi'      && canSeeDrivers  && <SectionSoferi      onBack={() => goTo(null)} />}
       {active === 'remorci'     && canSeeTrailers && <SectionRemorci     onBack={() => goTo(null)} />}
