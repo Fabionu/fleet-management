@@ -46,12 +46,42 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
+// ── Iconițe SVG ──────────────────────────────────────────────────────────────
+const IconTruck = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M1 3h15v13H1z"/>
+    <path d="M16 8h4l3 4v5h-7V8z"/>
+    <circle cx="5.5" cy="18.5" r="2.5"/>
+    <circle cx="18.5" cy="18.5" r="2.5"/>
+  </svg>
+);
+const IconTrendingUp = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
+    <polyline points="16 7 22 7 22 13"/>
+  </svg>
+);
+const IconRoute = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="6" cy="19" r="3"/>
+    <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/>
+    <circle cx="18" cy="5" r="3"/>
+  </svg>
+);
+const IconAlertTriangle = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+    <line x1="12" y1="9" x2="12" y2="13"/>
+    <line x1="12" y1="17" x2="12.01" y2="17"/>
+  </svg>
+);
+
 // ── Card sumar ────────────────────────────────────────────────────────────────
 function SummaryCard({ icon, label, value, sub, color }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 12, padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontSize: 16 }}>{icon}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+        <div style={{ color: color || 'var(--gray-4)', display: 'flex', alignItems: 'center', flexShrink: 0 }}>{icon}</div>
         <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--gray-4)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</span>
       </div>
       <div style={{ fontSize: 26, fontWeight: 700, color: color || 'var(--black)', lineHeight: 1.1 }}>{value}</div>
@@ -153,10 +183,10 @@ export default function Dashboard() {
 
       {/* ── Carduri sumar ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
-        <SummaryCard icon="🚛" label="Total curse"     value={fmt(s.total_trips)}       sub="Perioadă selectată" />
-        <SummaryCard icon="💶" label="Venituri totale" value={fmtEur(s.total_revenue)}  sub={`Taxe drumuri: ${fmtEur(s.total_tolls)}`} color="var(--green)" />
-        <SummaryCard icon="📍" label="Km parcurși"     value={fmtKm(totalKm)}           sub={`Încărc.: ${fmtKm(s.total_km_loaded)} · Goi: ${fmtKm(s.total_km_empty)}`} />
-        <SummaryCard icon="⚠️" label="Nefacturate"     value={fmt(s.uninvoiced_count)}  sub={`Valoare: ${fmtEur(s.uninvoiced_revenue)}`} color="var(--orange)" />
+        <SummaryCard icon={<IconTruck />}         label="Total curse"     value={fmt(s.total_trips)}       sub="Perioadă selectată" />
+        <SummaryCard icon={<IconTrendingUp />}    label="Venituri totale" value={fmtEur(s.total_revenue)}  sub={`Taxe drumuri: ${fmtEur(s.total_tolls)}`} color="var(--green)" />
+        <SummaryCard icon={<IconRoute />}         label="Km parcurși"     value={fmtKm(totalKm)}           sub={`Încărc.: ${fmtKm(s.total_km_loaded)} · Goi: ${fmtKm(s.total_km_empty)}`} color="var(--blue)" />
+        <SummaryCard icon={<IconAlertTriangle />} label="Nefacturate"     value={fmt(s.uninvoiced_count)}  sub={`Valoare: ${fmtEur(s.uninvoiced_revenue)}`} color="var(--orange)" />
       </div>
 
       {/* ── Grafice rând 1 ── */}
