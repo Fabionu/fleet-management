@@ -456,6 +456,13 @@ async function initDb() {
     // Migration: add role_id column to users (after roles table exists)
     await client.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS role_id INTEGER REFERENCES roles(id) ON DELETE SET NULL`);
 
+    // Migration: message_type for DM messages
+    await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS message_type TEXT DEFAULT 'text'`);
+
+    // Migration: trip_order_status for DM and group messages
+    await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS trip_order_status TEXT`);
+    await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS trip_order_status TEXT`);
+
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {
     client.release();

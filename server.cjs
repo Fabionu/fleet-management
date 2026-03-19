@@ -607,6 +607,107 @@ app.put('/api/chat/groups/:id/read', authMiddleware, async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// Trimite comandă de transport (trip order) — DM sau grup
+app.post('/api/chat/trip-order', authMiddleware, async (req, res) => {
+  const { to, group_id, order_number, truck, payment_terms, doc_type, file_name, file_data, file_type } = req.body;
+  if (!to && !group_id) return res.status(400).json({ error: 'Destinatar lipsă' });
+  const msgData = JSON.stringify({ order_number, truck, payment_terms, doc_type, file_name, file_type, file_data });
+  try {
+    if (to) {
+      const result = await pool.query(
+        `INSERT INTO chat_messages (organization_id, username, receiver_username, message, message_type, trip_order_status)
+         VALUES ($1, $2, $3, $4, 'trip_order', 'pending') RETURNING *`,
+        [req.user.organization_id, req.user.username, to, msgData]
+      );
+      const msg = result.rows[0];
+      const orgId = req.user.organization_id;
+      io.to(`user_${to}_org_${orgId}`).emit('new_private_message', msg);
+      io.to(`user_${req.user.username}_org_${orgId}`).emit('new_private_message', msg);
+      res.json(msg);
+    } else {
+      const result = await pool.query(
+        `INSERT INTO chat_group_messages (group_id, organization_id, username, message, message_type, trip_order_status)
+         VALUES ($1, $2, $3, $4, 'trip_order', 'pending') RETURNING *`,
+        [group_id, req.user.organization_id, req.user.username, msgData]
+      );
+      const msg = result.rows[0];
+      io.to(`group_${group_id}_org_${req.user.organization_id}`).emit('new_group_message', msg);
+      res.json(msg);
+    }
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Răspunde la comandă de transport DM
+app.put('/api/chat/messages/:id/trip-order-respond', authMiddleware, async (req, res) => {
+  const { status } = req.body;
+  if (!['accepted', 'rejected'].includes(status)) return res.status(400).json({ error: 'Status invalid' });
+  try {
+    const msgResult = await pool.query(
+      'SELECT * FROM chat_messages WHERE id=$1 AND organization_id=$2',
+      [req.params.id, req.user.organization_id]
+    );
+    if (!msgResult.rows.length) return res.status(404).json({ error: 'Mesaj negăsit' });
+    const origMsg = msgResult.rows[0];
+    if (origMsg.receiver_username !== req.user.username) return res.status(403).json({ error: 'Interzis' });
+    if (origMsg.trip_order_status !== 'pending') return res.status(400).json({ error: 'Deja răspuns' });
+    const updated = await pool.query(
+      'UPDATE chat_messages SET trip_order_status=$1 WHERE id=$2 RETURNING *',
+      [status, req.params.id]
+    );
+    const updatedMsg = updated.rows[0];
+    const orgId = req.user.organization_id;
+    let orderData = {};
+    try { orderData = JSON.parse(origMsg.message); } catch {}
+    const actionText = status === 'accepted' ? 'a acceptat' : 'a refuzat';
+    const notifText = `${req.user.username} ${actionText} comanda${orderData.order_number ? ' #' + orderData.order_number : ''}`;
+    const sysResult = await pool.query(
+      `INSERT INTO chat_messages (organization_id, username, receiver_username, message, message_type)
+       VALUES ($1, $2, $3, $4, 'system') RETURNING *`,
+      [orgId, req.user.username, origMsg.username, notifText]
+    );
+    const sysMsg = sysResult.rows[0];
+    io.to(`user_${origMsg.username}_org_${orgId}`).emit('trip_order_updated', updatedMsg);
+    io.to(`user_${req.user.username}_org_${orgId}`).emit('trip_order_updated', updatedMsg);
+    io.to(`user_${origMsg.username}_org_${orgId}`).emit('new_private_message', sysMsg);
+    io.to(`user_${req.user.username}_org_${orgId}`).emit('new_private_message', sysMsg);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// Răspunde la comandă de transport grup
+app.put('/api/chat/groups/:gid/messages/:id/trip-order-respond', authMiddleware, async (req, res) => {
+  const { status } = req.body;
+  if (!['accepted', 'rejected'].includes(status)) return res.status(400).json({ error: 'Status invalid' });
+  try {
+    const msgResult = await pool.query(
+      'SELECT * FROM chat_group_messages WHERE id=$1 AND group_id=$2 AND organization_id=$3',
+      [req.params.id, req.params.gid, req.user.organization_id]
+    );
+    if (!msgResult.rows.length) return res.status(404).json({ error: 'Mesaj negăsit' });
+    const origMsg = msgResult.rows[0];
+    if (origMsg.trip_order_status !== 'pending') return res.status(400).json({ error: 'Deja răspuns' });
+    const updated = await pool.query(
+      'UPDATE chat_group_messages SET trip_order_status=$1 WHERE id=$2 RETURNING *',
+      [status, req.params.id]
+    );
+    const updatedMsg = updated.rows[0];
+    const orgId = req.user.organization_id;
+    let orderData = {};
+    try { orderData = JSON.parse(origMsg.message); } catch {}
+    const actionText = status === 'accepted' ? 'a acceptat' : 'a refuzat';
+    const notifText = `${req.user.username} ${actionText} comanda${orderData.order_number ? ' #' + orderData.order_number : ''}`;
+    const sysResult = await pool.query(
+      `INSERT INTO chat_group_messages (group_id, organization_id, username, message, message_type)
+       VALUES ($1, $2, $3, $4, 'system') RETURNING *`,
+      [req.params.gid, orgId, req.user.username, notifText]
+    );
+    const sysMsg = sysResult.rows[0];
+    io.to(`group_${req.params.gid}_org_${orgId}`).emit('group_trip_order_updated', updatedMsg);
+    io.to(`group_${req.params.gid}_org_${orgId}`).emit('new_group_message', sysMsg);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // Editare mesaj DM (doar autorul, max 5 minute)
 app.put('/api/chat/messages/:id', authMiddleware, async (req, res) => {
   try {

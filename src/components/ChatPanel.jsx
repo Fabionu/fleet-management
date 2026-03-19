@@ -154,7 +154,183 @@ function BackBtn({ onClick }) {
   );
 }
 
-function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, mentionQuery, mentionUsers, mentionHighlight, onMentionSelect, replyTo, onCancelReply }) {
+// ── Trip Order Modal ────────────────────────────────────────
+function TripOrderModal({ peer, groupName, onClose, onSend }) {
+  const [form, setForm] = useState({ order_number: '', truck: '', payment_terms: '', doc_type: 'Digital' });
+  const [file, setFile] = useState(null);
+  const [sending, setSending] = useState(false);
+
+  const handleFile = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => setFile({ name: f.name, data: ev.target.result.split(',')[1], type: f.type });
+    reader.readAsDataURL(f);
+  };
+
+  const canSubmit = form.order_number.trim() && form.truck.trim() && !sending;
+
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
+    setSending(true);
+    try {
+      await onSend({ ...form, file_name: file?.name || null, file_data: file?.data || null, file_type: file?.type || null });
+      onClose();
+    } catch {}
+    setSending(false);
+  };
+
+  const inp = { padding: '8px 10px', borderRadius: 7, border: '1px solid var(--gray-3)', background: 'var(--gray-1)', color: 'var(--black)', fontSize: 13, width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', outline: 'none' };
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 9500, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(2px)' }}>
+      <div style={{ background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: 16, width: 400, maxWidth: '95vw', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+        <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 8, background: '#ff7a3d18', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff7a3d' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--black)' }}>Trimite cursă</div>
+              <div style={{ fontSize: 11, color: 'var(--gray-4)' }}>către {peer || groupName}</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', fontSize: 22, lineHeight: 1, padding: 4 }}>×</button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px 0' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* PDF Upload */}
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--gray-4)', fontWeight: 500, marginBottom: 5 }}>Comandă de transport (PDF)</div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: `1.5px dashed ${file ? '#ff7a3d' : 'var(--gray-3)'}`, borderRadius: 8, cursor: 'pointer', background: file ? '#ff7a3d08' : 'var(--gray-1)', transition: 'all 0.15s' }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={file ? '#ff7a3d' : 'var(--gray-4)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span style={{ fontSize: 12, color: file ? '#ff7a3d' : 'var(--gray-4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file ? file.name : 'Selectează PDF...'}</span>
+                {file && <button onMouseDown={e => { e.preventDefault(); setFile(null); }} style={{ marginLeft: 'auto', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 0, display: 'flex' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>}
+                <input type="file" accept=".pdf,application/pdf" onChange={handleFile} style={{ display: 'none' }} />
+              </label>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--gray-4)', fontWeight: 500, marginBottom: 5 }}>Număr comandă *</div>
+              <input value={form.order_number} onChange={e => setForm(f => ({ ...f, order_number: e.target.value }))} style={inp} placeholder="ex: CMD-2026-001" />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--gray-4)', fontWeight: 500, marginBottom: 5 }}>Camion *</div>
+              <input value={form.truck} onChange={e => setForm(f => ({ ...f, truck: e.target.value }))} style={inp} placeholder="ex: B 123 ABC" />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--gray-4)', fontWeight: 500, marginBottom: 5 }}>Termen de plată</div>
+              <input value={form.payment_terms} onChange={e => setForm(f => ({ ...f, payment_terms: e.target.value }))} style={inp} placeholder="ex: 30 zile, imediat..." />
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: 'var(--gray-4)', fontWeight: 500, marginBottom: 5 }}>Documente</div>
+              <select value={form.doc_type} onChange={e => setForm(f => ({ ...f, doc_type: e.target.value }))} style={inp}>
+                <option value="Digital">Digital</option>
+                <option value="Originale">Originale</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '14px 22px 18px', borderTop: '1px solid var(--gray-2)', marginTop: 14, flexShrink: 0 }}>
+          <button onClick={onClose} style={{ padding: '8px 18px', border: '1px solid var(--gray-3)', background: 'var(--gray-1)', borderRadius: 7, cursor: 'pointer', color: 'var(--black)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }}>Anulează</button>
+          <button onClick={handleSubmit} disabled={!canSubmit}
+            style={{ padding: '8px 18px', border: 'none', background: canSubmit ? '#ff7a3d' : 'var(--gray-3)', color: 'white', borderRadius: 7, cursor: canSubmit ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', opacity: canSubmit ? 1 : 0.7 }}>
+            {sending ? 'Se trimite...' : 'Trimite'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Trip Order Card (rendered inside message bubble) ────────
+function TripOrderCard({ msg, currentUser, onRespond }) {
+  let data = {};
+  try { data = JSON.parse(msg.message); } catch {}
+  const isMe = msg.username === currentUser;
+  const status = msg.trip_order_status || 'pending';
+  const STATUS = {
+    pending:  { label: 'În așteptare', bg: '#fef3c7', color: '#92400e' },
+    accepted: { label: 'Acceptată',    bg: '#d1fae5', color: '#065f46' },
+    rejected: { label: 'Refuzată',     bg: '#fee2e2', color: '#991b1b' },
+  };
+  const s = STATUS[status] || STATUS.pending;
+
+  const downloadPdf = () => {
+    if (!data.file_data) return;
+    const link = document.createElement('a');
+    link.href = `data:${data.file_type || 'application/pdf'};base64,${data.file_data}`;
+    link.download = data.file_name || 'comanda.pdf';
+    link.click();
+  };
+
+  const textColor = isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)';
+  const subColor = 'rgba(128,128,128,0.75)';
+
+  return (
+    <div style={{ width: 245, borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)' }}>
+      {/* Header */}
+      <div style={{ padding: '9px 11px 7px', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ width: 26, height: 26, borderRadius: 6, background: '#ff7a3d20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: textColor }}>Comandă de transport</div>
+          {data.order_number && <div style={{ fontSize: 11, color: '#ff7a3d', fontWeight: 600 }}>#{data.order_number}</div>}
+        </div>
+        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 8, background: s.bg, color: s.color, flexShrink: 0 }}>{s.label}</span>
+      </div>
+      {/* Body */}
+      <div style={{ padding: '8px 11px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {data.truck && (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
+              <span style={{ fontSize: 10, color: subColor, width: 72, flexShrink: 0 }}>Camion</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: textColor }}>{data.truck}</span>
+            </div>
+          )}
+          {data.payment_terms && (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
+              <span style={{ fontSize: 10, color: subColor, width: 72, flexShrink: 0 }}>Termen plată</span>
+              <span style={{ fontSize: 12, color: textColor }}>{data.payment_terms}</span>
+            </div>
+          )}
+          {data.doc_type && (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
+              <span style={{ fontSize: 10, color: subColor, width: 72, flexShrink: 0 }}>Documente</span>
+              <span style={{ fontSize: 12, color: textColor }}>{data.doc_type}</span>
+            </div>
+          )}
+        </div>
+        {data.file_name && (
+          <button onClick={downloadPdf}
+            style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,122,61,0.1)', border: '1px solid rgba(255,122,61,0.22)', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', width: '100%', color: '#ff7a3d', fontSize: 11, fontWeight: 500, fontFamily: 'inherit', boxSizing: 'border-box' }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.file_name}</span>
+          </button>
+        )}
+        {!isMe && status === 'pending' && onRespond && (
+          <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>
+            <button onClick={() => onRespond('accepted')}
+              style={{ flex: 1, padding: '5px 0', border: 'none', background: '#22c55e', color: 'white', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: 'inherit' }}>
+              ✓ Acceptă
+            </button>
+            <button onClick={() => onRespond('rejected')}
+              style={{ flex: 1, padding: '5px 0', border: 'none', background: '#ef4444', color: 'white', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: 'inherit' }}>
+              ✗ Refuză
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, mentionQuery, mentionUsers, mentionHighlight, onMentionSelect, replyTo, onCancelReply, onOpenTripOrder }) {
+  const [plusOpen, setPlusOpen] = useState(false);
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
       {replyTo && (
@@ -190,8 +366,31 @@ function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, 
           onMouseEnter={e => { if (document.activeElement !== e.target) e.target.style.borderColor = 'var(--gray-4)'; }}
           onMouseLeave={e => { if (document.activeElement !== e.target) e.target.style.borderColor = 'var(--gray-3)'; }}
           onFocus={e => e.target.style.borderColor = '#ff7a3d'}
-          onBlur={e => e.target.style.borderColor = 'var(--gray-3)'}
+          onBlur={e => { e.target.style.borderColor = 'var(--gray-3)'; }}
         />
+        {/* Plus menu */}
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <button onClick={() => setPlusOpen(p => !p)}
+            style={{ width: 38, height: 38, borderRadius: '50%', background: plusOpen ? 'var(--gray-2)' : 'var(--gray-1)', border: '1px solid var(--gray-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gray-4)', transition: 'all 0.15s', transform: plusOpen ? 'rotate(45deg)' : 'rotate(0deg)' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; e.currentTarget.style.color = 'var(--black)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = plusOpen ? 'var(--gray-2)' : 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+          {plusOpen && (
+            <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.15)', minWidth: 170, overflow: 'hidden', animation: 'chatItemIn 0.15s ease', zIndex: 20 }}
+              onMouseLeave={() => setPlusOpen(false)}>
+              <button onMouseDown={(e) => { e.preventDefault(); setPlusOpen(false); onOpenTripOrder && onOpenTripOrder(); }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--black)', fontSize: 13, fontFamily: 'inherit', textAlign: 'left' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                <div style={{ width: 28, height: 28, borderRadius: 6, background: '#ff7a3d18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                </div>
+                <span style={{ fontWeight: 500 }}>Trimite cursă</span>
+              </button>
+            </div>
+          )}
+        </div>
         <button onClick={onSend} disabled={!value.trim()}
           style={{ width: 38, height: 38, borderRadius: '50%', background: value.trim() ? '#ff7a3d' : 'var(--gray-2)', border: 'none', cursor: value.trim() ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s', flexShrink: 0 }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="white" stroke="none"><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -276,6 +475,7 @@ export default function ChatPanel({ user, currentPage }) {
   const [firstUnreadId, setFirstUnreadId]   = useState(null);
   const [pinNotification, setPinNotification] = useState(null);
   const pinNotifTimer                       = useRef(null);
+  const [tripOrderModal, setTripOrderModal] = useState(false);
   const searchInputRef                      = useRef(null);
   const EDIT_LIMIT_MS = 5 * 60 * 1000;
 
@@ -493,11 +693,25 @@ export default function ChatPanel({ user, currentPage }) {
       pinNotifTimer.current = setTimeout(() => setPinNotification(null), 3500);
     };
 
-    socket.on('message_edited',       handleMsgEdited);
-    socket.on('message_deleted',      handleMsgDeleted);
-    socket.on('group_message_edited', handleGroupMsgEdited);
-    socket.on('group_message_deleted',handleGroupMsgDeleted);
-    socket.on('pin_notification',     handlePinNotification);
+    const handleTripOrderUpdated = (msg) => {
+      const peerUn = msg.username === user.username ? msg.receiver_username : msg.username;
+      setConversations(prev => prev[peerUn]
+        ? { ...prev, [peerUn]: prev[peerUn].map(m => m.id === msg.id ? { ...m, trip_order_status: msg.trip_order_status } : m) }
+        : prev);
+    };
+    const handleGroupTripOrderUpdated = (msg) => {
+      setGroupMessages(prev => prev[msg.group_id]
+        ? { ...prev, [msg.group_id]: prev[msg.group_id].map(m => m.id === msg.id ? { ...m, trip_order_status: msg.trip_order_status } : m) }
+        : prev);
+    };
+
+    socket.on('message_edited',            handleMsgEdited);
+    socket.on('message_deleted',           handleMsgDeleted);
+    socket.on('group_message_edited',      handleGroupMsgEdited);
+    socket.on('group_message_deleted',     handleGroupMsgDeleted);
+    socket.on('pin_notification',          handlePinNotification);
+    socket.on('trip_order_updated',        handleTripOrderUpdated);
+    socket.on('group_trip_order_updated',  handleGroupTripOrderUpdated);
 
     return () => {
       socket.off('new_private_message',  handleNewMessage);
@@ -512,11 +726,13 @@ export default function ChatPanel({ user, currentPage }) {
       socket.off('group_member_added',   handleGroupMemberAdded);
       socket.off('group_member_removed', handleGroupMemberRemoved);
       socket.off('user_typing',          handleUserTyping);
-      socket.off('message_edited',       handleMsgEdited);
-      socket.off('message_deleted',      handleMsgDeleted);
-      socket.off('group_message_edited', handleGroupMsgEdited);
-      socket.off('group_message_deleted',handleGroupMsgDeleted);
-      socket.off('pin_notification',     handlePinNotification);
+      socket.off('message_edited',            handleMsgEdited);
+      socket.off('message_deleted',           handleMsgDeleted);
+      socket.off('group_message_edited',      handleGroupMsgEdited);
+      socket.off('group_message_deleted',     handleGroupMsgDeleted);
+      socket.off('pin_notification',          handlePinNotification);
+      socket.off('trip_order_updated',        handleTripOrderUpdated);
+      socket.off('group_trip_order_updated',  handleGroupTripOrderUpdated);
     };
   }, []);
 
@@ -745,6 +961,26 @@ export default function ChatPanel({ user, currentPage }) {
       } catch {}
     }
     setReplyTo(null);
+  };
+
+  const sendTripOrder = async ({ order_number, truck, payment_terms, doc_type, file_name, file_data, file_type }) => {
+    if (view === 'chat' && peer) {
+      await axios.post('/api/chat/trip-order', { to: peer.username, order_number, truck, payment_terms, doc_type, file_name, file_data, file_type }, { headers });
+      playSent();
+    } else if (view === 'group-chat' && activeGroup) {
+      await axios.post('/api/chat/trip-order', { group_id: activeGroup.id, order_number, truck, payment_terms, doc_type, file_name, file_data, file_type }, { headers });
+      playSent();
+    }
+  };
+
+  const handleTripOrderRespond = async (msg, status) => {
+    try {
+      if (msg.group_id) {
+        await axios.put(`/api/chat/groups/${msg.group_id}/messages/${msg.id}/trip-order-respond`, { status }, { headers });
+      } else {
+        await axios.put(`/api/chat/messages/${msg.id}/trip-order-respond`, { status }, { headers });
+      }
+    } catch {}
   };
 
   const handlePin = async (msg) => {
@@ -1023,6 +1259,12 @@ export default function ChatPanel({ user, currentPage }) {
     const isMe = msg.username === user.username;
     const isEditing = editingMsgId === msg.id;
     if (msg.is_deleted) return <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '6px 10px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>;
+    if (msg.message_type === 'trip_order') return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse' }}>
+        {msgActionBtns(msg)}
+        <TripOrderCard msg={msg} currentUser={user.username} onRespond={(status) => handleTripOrderRespond(msg, status)} />
+      </div>
+    );
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse' }}>
         {msgActionBtns(msg)}
@@ -1386,6 +1628,7 @@ export default function ChatPanel({ user, currentPage }) {
                 mentionQuery={mentionQuery} mentionUsers={mentionUsers}
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
                 replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
+                onOpenTripOrder={() => setTripOrderModal(true)}
               />
             </div>
           )}
@@ -1977,12 +2220,30 @@ export default function ChatPanel({ user, currentPage }) {
                   </div>
                 )}
                 {messages.map((msg, i) => {
+                  if (msg.message_type === 'system') return (
+                    <div key={msg.id || `sys-dm-${i}`} style={{ textAlign: 'center', padding: '6px 14px' }}>
+                      <span style={{ fontSize: 11, color: 'var(--gray-4)', fontStyle: 'italic', background: 'var(--gray-1)', borderRadius: 10, padding: '3px 10px' }}>{msg.message}</span>
+                    </div>
+                  );
                   const isMe = msg.username === user.username;
-                  const nextSame = i < messages.length - 1 && messages[i + 1].username === msg.username;
+                  const nextSame = i < messages.length - 1 && messages[i + 1].username === msg.username && messages[i + 1].message_type !== 'system';
                   const isHovered = hoveredMsgId === msg.id;
                   const isEditing = editingMsgId === msg.id;
-                  const isSearchMatch = searchQuery.trim() && !msg.is_deleted && msg.message?.toLowerCase().includes(searchQuery.toLowerCase());
+                  const isSearchMatch = searchQuery.trim() && !msg.is_deleted && msg.message_type !== 'trip_order' && msg.message?.toLowerCase().includes(searchQuery.toLowerCase());
                   const isCurrentSearchMatch = isSearchMatch && searchMatches[searchIdx] === i;
+                  // Trip order card in DM
+                  if (msg.message_type === 'trip_order') return (
+                    <div key={msg.id} id={`msg-${msg.id}`}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, padding: '2px 4px' }}>
+                      <TripOrderCard msg={msg} currentUser={user.username} onRespond={(status) => handleTripOrderRespond(msg, status)} />
+                      {!nextSame && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, paddingLeft: isMe ? 0 : 4, paddingRight: isMe ? 4 : 0, flexDirection: isMe ? 'row-reverse' : 'row' }}>
+                          <span style={{ fontSize: 10, color: 'var(--gray-4)' }}>{formatTime(msg.created_at)}</span>
+                          {isMe && <span title={isRead(msg) ? 'Văzut' : 'Trimis'}>{isRead(msg) ? <SeenIcon /> : <SentIcon />}</span>}
+                        </div>
+                      )}
+                    </div>
+                  );
                   return (
                     <div key={msg.id}>
                       {msg.id === firstUnreadId && (
@@ -2096,6 +2357,7 @@ export default function ChatPanel({ user, currentPage }) {
                 onKeyDown={handleKeyDown} onSend={sendMessage}
                 placeholder={`Mesaj pentru ${dn(peer?.username)}...`}
                 mentionQuery={mentionQuery} mentionUsers={mentionUsers}
+                onOpenTripOrder={() => setTripOrderModal(true)}
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
                 replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
               />
@@ -2256,6 +2518,7 @@ export default function ChatPanel({ user, currentPage }) {
                 onKeyDown={handleKeyDown} onSend={sendMessage}
                 placeholder={`Mesaj în ${activeGroup?.name}...`}
                 mentionQuery={mentionQuery} mentionUsers={mentionUsers}
+                onOpenTripOrder={() => setTripOrderModal(true)}
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
                 replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
               />
@@ -2428,6 +2691,16 @@ export default function ChatPanel({ user, currentPage }) {
           )}
 
         </div>
+      )}
+
+      {/* Trip Order Modal */}
+      {tripOrderModal && (
+        <TripOrderModal
+          peer={view === 'chat' ? dn(peer?.username) : null}
+          groupName={view === 'group-chat' ? activeGroup?.name : null}
+          onClose={() => setTripOrderModal(false)}
+          onSend={sendTripOrder}
+        />
       )}
     </div>
   );
