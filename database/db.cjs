@@ -18,7 +18,8 @@ const defaultPermissions = {
     clearTruckData: true,
     deleteTruckRow: true,
     addNextTrip: true,
-    markInvoiced: true
+    markInvoiced: true,
+    viewReports: true
   },
   dispatcher: {
     editVehicleInfo: false,
@@ -29,7 +30,8 @@ const defaultPermissions = {
     clearTruckData: true,
     deleteTruckRow: true,
     addNextTrip: true,
-    markInvoiced: false
+    markInvoiced: false,
+    viewReports: false
   },
   contabil: {
     editVehicleInfo: false,
@@ -40,7 +42,8 @@ const defaultPermissions = {
     clearTruckData: false,
     deleteTruckRow: false,
     addNextTrip: false,
-    markInvoiced: true
+    markInvoiced: true,
+    viewReports: false
   }
 };
 

@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Tracking from './pages/Tracking';
 import Admin from './pages/Admin';
 import Curse from './pages/Curse';
+import Dashboard from './pages/Dashboard';
 import ChatPanel from './components/ChatPanel';
 import { connectSocket, disconnectSocket, getSocket } from './services/socket';
 import { api } from './services/api';
@@ -502,7 +503,26 @@ function App() {
             >
               Registru
             </button>
-{(user.role === 'admin' || user.permissions?.accessAdmin) && (
+{(user.role === 'admin' || user.permissions?.viewReports) && (
+              <button
+                onClick={() => changePage('rapoarte')}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  borderBottom: `2px solid ${currentPage === 'rapoarte' ? '#ff7a3d' : 'transparent'}`,
+                  padding: '12px 20px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  color: currentPage === 'rapoarte' ? '#ff7a3d' : 'var(--gray-4)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  marginBottom: '-2px'
+                }}
+              >
+                Rapoarte
+              </button>
+            )}
+            {(user.role === 'admin' || user.permissions?.accessAdmin) && (
               <button
                 onClick={() => changePage('admin')}
                 style={{
@@ -527,6 +547,7 @@ function App() {
         {/* Page Content */}
         {currentPage === 'tracking' && <Tracking user={user} viewMode={trackingView} />}
         {currentPage === 'curse' && <Curse user={user} />}
+        {currentPage === 'rapoarte' && (user.role === 'admin' || user.permissions?.viewReports) && <Dashboard user={user} />}
 {currentPage === 'admin' && (user.role === 'admin' || user.permissions?.accessAdmin) && <Admin user={user} />}
       </div>
       <ChatPanel user={user} />

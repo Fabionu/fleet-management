@@ -48,7 +48,8 @@
       "Bash(cmd /c \"echo %PATH%\")",
       "Bash(cmd /c \"git --version\")",
       "Bash(git --version)",
-      "Bash(node --input-type=module --eval \"import\\(''''./src/components/ChatPanel.jsx''''\\).catch\\(e => console.error\\(e.message\\)\\)\")"
+      "Bash(node --input-type=module --eval \"import\\(''''./src/components/ChatPanel.jsx''''\\).catch\\(e => console.error\\(e.message\\)\\)\")",
+      "Bash(npm install recharts)"
     ]
   }
 }

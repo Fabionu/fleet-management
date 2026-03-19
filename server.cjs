@@ -1538,6 +1538,108 @@ app.delete('/api/trailers/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// ── DASHBOARD / RAPOARTE ────────────────────────────────────
+app.get('/api/dashboard/stats', authMiddleware, async (req, res) => {
+  try {
+    const orgId = req.user.organization_id;
+    const { from, to, truck, driver } = req.query;
+
+    // Construiește filtrele dinamice
+    const baseParams = [orgId];
+    const baseConditions = ['organization_id = $1'];
+    if (from)   { baseParams.push(from);   baseConditions.push(`created_at >= $${baseParams.length}`); }
+    if (to)     { baseParams.push(to);     baseConditions.push(`created_at <= $${baseParams.length}`); }
+    if (truck)  { baseParams.push(truck);  baseConditions.push(`truck_number = $${baseParams.length}`); }
+    if (driver) { baseParams.push(driver); baseConditions.push(`driver = $${baseParams.length}`); }
+    const baseWhere = baseConditions.join(' AND ');
+
+    // A. Carduri sumar
+    const summaryRes = await pool.query(
+      `SELECT
+         COUNT(*)                                                    AS total_trips,
+         COALESCE(SUM(price), 0)                                     AS total_revenue,
+         COALESCE(SUM(km_loaded), 0)                                 AS total_km_loaded,
+         COALESCE(SUM(km_empty), 0)                                  AS total_km_empty,
+         COALESCE(SUM(tolls), 0)                                     AS total_tolls,
+         COUNT(*) FILTER (WHERE invoiced = 0)                        AS uninvoiced_count,
+         COALESCE(SUM(price) FILTER (WHERE invoiced = 0), 0)         AS uninvoiced_revenue
+       FROM trips WHERE ${baseWhere}`,
+      baseParams
+    );
+
+    // B. Curse per săptămână (ultimele 8 săptămâni, ignoră filtrele de dată)
+    const weekParams = [orgId];
+    const weekConditions = ['organization_id = $1', `created_at >= NOW() - INTERVAL '8 weeks'`];
+    if (truck)  { weekParams.push(truck);  weekConditions.push(`truck_number = $${weekParams.length}`); }
+    if (driver) { weekParams.push(driver); weekConditions.push(`driver = $${weekParams.length}`); }
+    const weeklyRes = await pool.query(
+      `SELECT TO_CHAR(DATE_TRUNC('week', created_at), 'DD.MM') AS week_label,
+              DATE_TRUNC('week', created_at) AS week_start,
+              COUNT(*) AS trips,
+              COALESCE(SUM(price), 0) AS revenue
+       FROM trips WHERE ${weekConditions.join(' AND ')}
+       GROUP BY week_start, week_label ORDER BY week_start`,
+      weekParams
+    );
+
+    // C. Venituri per lună (ultimele 12 luni, ignoră filtrele de dată)
+    const monthParams = [orgId];
+    const monthConditions = ['organization_id = $1', `created_at >= NOW() - INTERVAL '12 months'`];
+    if (truck)  { monthParams.push(truck);  monthConditions.push(`truck_number = $${monthParams.length}`); }
+    if (driver) { monthParams.push(driver); monthConditions.push(`driver = $${monthParams.length}`); }
+    const monthlyRes = await pool.query(
+      `SELECT TO_CHAR(DATE_TRUNC('month', created_at), 'MM.YYYY') AS month_label,
+              DATE_TRUNC('month', created_at) AS month_start,
+              COUNT(*) AS trips,
+              COALESCE(SUM(price), 0) AS revenue
+       FROM trips WHERE ${monthConditions.join(' AND ')}
+       GROUP BY month_start, month_label ORDER BY month_start`,
+      monthParams
+    );
+
+    // D. Top camioane (după venituri)
+    const truckParams = [orgId];
+    const truckConditions = ['organization_id = $1', `truck_number IS NOT NULL`, `truck_number != ''`];
+    if (from)   { truckParams.push(from);   truckConditions.push(`created_at >= $${truckParams.length}`); }
+    if (to)     { truckParams.push(to);     truckConditions.push(`created_at <= $${truckParams.length}`); }
+    if (driver) { truckParams.push(driver); truckConditions.push(`driver = $${truckParams.length}`); }
+    const topTrucksRes = await pool.query(
+      `SELECT truck_number, COUNT(*) AS trips,
+              COALESCE(SUM(price), 0) AS revenue,
+              COALESCE(SUM(km_loaded), 0) AS km
+       FROM trips WHERE ${truckConditions.join(' AND ')}
+       GROUP BY truck_number ORDER BY revenue DESC LIMIT 8`,
+      truckParams
+    );
+
+    // E. Curse nefacturate (detaliat)
+    const uninvParams = [orgId];
+    const uninvConditions = ['organization_id = $1', 'invoiced = 0'];
+    if (from)   { uninvParams.push(from);   uninvConditions.push(`created_at >= $${uninvParams.length}`); }
+    if (to)     { uninvParams.push(to);     uninvConditions.push(`created_at <= $${uninvParams.length}`); }
+    if (truck)  { uninvParams.push(truck);  uninvConditions.push(`truck_number = $${uninvParams.length}`); }
+    if (driver) { uninvParams.push(driver); uninvConditions.push(`driver = $${uninvParams.length}`); }
+    const uninvoicedRes = await pool.query(
+      `SELECT id, client, order_number, truck_number, driver,
+              load_date, unload_date, load_location, unload_location, price
+       FROM trips WHERE ${uninvConditions.join(' AND ')}
+       ORDER BY created_at DESC`,
+      uninvParams
+    );
+
+    res.json({
+      summary:        summaryRes.rows[0],
+      weeklyTrips:    weeklyRes.rows,
+      monthlyRevenue: monthlyRes.rows,
+      topTrucks:      topTrucksRes.rows,
+      uninvoiced:     uninvoicedRes.rows,
+    });
+  } catch (err) {
+    console.error('❌ GET /api/dashboard/stats error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── SPA fallback (React Router) ─────────────────────────────
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));

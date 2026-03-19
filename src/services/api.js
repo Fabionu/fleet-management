@@ -75,4 +75,7 @@ export const api = {
 
   // Logs
   getLogs: () => apiClient.get('/logs'),
+
+  // Dashboard / Rapoarte
+  getDashboardStats: (params) => apiClient.get('/dashboard/stats', { params }),
 };
