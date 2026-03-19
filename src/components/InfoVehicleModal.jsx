@@ -249,9 +249,11 @@ function InfoVehicleModal({ truck, onClose, onSave, user }) {
   const [driverAmazon, setDriverAmazon] = useState({}); // name → 0|1
 
   useEffect(() => {
-    if (!truck.trailer) return;
     api.getTrailers().then(res => {
-      const found = res.data.find(t => t.number === truck.trailer);
+      const found = res.data.find(t =>
+        (truck.trailer && t.number === truck.trailer) ||
+        (truck.number && t.current_truck === truck.number)
+      );
       setTrailerInfo(found || null);
     }).catch(() => {});
   }, []);

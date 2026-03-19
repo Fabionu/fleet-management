@@ -596,6 +596,7 @@ function SectionUtilizatori({ onBack }) {
 // ── Secțiunea Camioane ─────────────────────────────────────
 function SectionCamioane({ onBack }) {
   const [trucks, setTrucks] = useState([]);
+  const [trailersList, setTrailersList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ number:'', trailer:'', fuel_card:'', fuel_card_expiry:'', phone:'', drivers:'', vehicle_type:'' });
@@ -616,9 +617,10 @@ function SectionCamioane({ onBack }) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await api.getTrucks();
+      const [res, trRes] = await Promise.all([api.getTrucks(), api.getTrailers().catch(() => ({ data: [] }))]);
       const list = res.data;
       setTrucks(list);
+      setTrailersList(trRes.data || []);
       // Încarcă documentele pentru toate camioanele (în paralel)
       const entries = await Promise.all(
         list.map(async t => {
@@ -806,7 +808,6 @@ function SectionCamioane({ onBack }) {
           <div style={{ display:'grid', gap:'12px' }}>
             {[
               { key:'number', label:'Număr camion *', disabled:modal.mode==='edit' },
-              { key:'trailer', label:'Remorcă' },
               { key:'fuel_card', label:'Card carburant' },
               { key:'fuel_card_expiry', label:'Expirare card' },
               { key:'phone', label:'Telefon firmă' },
@@ -817,6 +818,14 @@ function SectionCamioane({ onBack }) {
                   style={{ ...inputStyle, background: disabled ? 'var(--gray-2)' : 'var(--gray-1)', color: disabled ? 'var(--gray-4)' : 'var(--black)' }} />
               </Field>
             ))}
+            <Field label="Remorcă">
+              <select value={form.trailer} onChange={e=>setForm(f=>({...f,trailer:e.target.value}))} style={inputStyle}>
+                <option value="">— Fără remorcă —</option>
+                {trailersList.map(tr => (
+                  <option key={tr.id} value={tr.number}>{tr.number}{tr.type ? ` · ${tr.type}` : ''}</option>
+                ))}
+              </select>
+            </Field>
             <Field label="Tip vehicul">
               <div style={{ display:'flex', gap:'6px', flexWrap:'wrap', marginTop:'2px' }}>
                 {VEHICLE_TYPES.map(vt => {
@@ -1459,7 +1468,7 @@ function SectionJurnal({ onBack }) {
 
 // ── Componente mici reutilizabile ──────────────────────────
 const tdStyle = { padding:'11px 14px', verticalAlign:'middle' };
-const inputStyle = { padding:'8px 10px', borderRadius:'7px', border:'1px solid var(--gray-3)', background:'var(--gray-1)', color:'var(--black)', fontSize:'13px', width:'100%', boxSizing:'border-box' };
+const inputStyle = { padding:'8px 10px', borderRadius:'7px', border:'1px solid var(--gray-3)', background:'var(--gray-1)', color:'var(--black)', fontSize:'13px', width:'100%', boxSizing:'border-box', fontFamily:'inherit' };
 const btnPrimary = { padding:'8px 16px', background:'#ff7a3d', color:'#fff', border:'none', borderRadius:'7px', cursor:'pointer', fontSize:'13px', fontWeight:600 };
 
 function Loader() {
@@ -1561,21 +1570,23 @@ function Field({ label, children }) {
 function Modal({ title, onClose, children, width=480 }) {
   return (
     <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:8000, display:'flex', alignItems:'center', justifyContent:'center', backdropFilter:'blur(2px)' }}>
-      <div style={{ background:'var(--bg-page)', border:'1px solid var(--gray-2)', borderRadius:'14px', padding:'28px', width, maxWidth:'95vw', maxHeight:'90vh', overflowY:'auto', boxShadow:'0 8px 32px rgba(0,0,0,0.2)' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:'20px' }}>
+      <div style={{ background:'var(--bg-page)', border:'1px solid var(--gray-2)', borderRadius:'14px', width, maxWidth:'95vw', maxHeight:'90vh', boxShadow:'0 8px 32px rgba(0,0,0,0.2)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'22px 28px 16px', borderBottom:'1px solid var(--gray-2)', flexShrink:0 }}>
           <h3 style={{ color:'var(--black)', margin:0, fontSize:'16px', fontWeight:700 }}>{title}</h3>
           <button onClick={onClose} style={{ background:'transparent', border:'none', cursor:'pointer', color:'var(--gray-4)', fontSize:'22px', lineHeight:1 }}>×</button>
         </div>
-        {children}
+        <div style={{ flex:1, overflowY:'auto', padding:'22px 28px 0' }}>
+          {children}
+        </div>
       </div>
     </div>
   );
 }
 function ModalFooter({ onCancel, onSave, saving }) {
   return (
-    <div style={{ display:'flex', gap:'10px', marginTop:'22px', justifyContent:'flex-end' }}>
-      <button onClick={onCancel} style={{ padding:'9px 20px', border:'1px solid var(--gray-3)', background:'var(--gray-1)', borderRadius:'7px', cursor:'pointer', color:'var(--black)', fontSize:'13px', fontWeight:500 }}>Anulează</button>
-      <button onClick={onSave} disabled={saving} style={{ padding:'9px 20px', border:'none', background: saving ? 'var(--gray-3)' : '#ff7a3d', color:'#fff', borderRadius:'7px', cursor: saving ? 'not-allowed' : 'pointer', fontSize:'13px', fontWeight:600, opacity:saving?0.7:1, display:'flex', alignItems:'center', gap:'7px' }}>
+    <div style={{ display:'flex', gap:'10px', justifyContent:'flex-end', position:'sticky', bottom:0, background:'var(--bg-page)', borderTop:'1px solid var(--gray-2)', padding:'14px 0 22px', marginTop:'22px' }}>
+      <button onClick={onCancel} style={{ padding:'9px 20px', border:'1px solid var(--gray-3)', background:'var(--gray-1)', borderRadius:'7px', cursor:'pointer', color:'var(--black)', fontSize:'13px', fontWeight:500, fontFamily:'inherit' }}>Anulează</button>
+      <button onClick={onSave} disabled={saving} style={{ padding:'9px 20px', border:'none', background: saving ? 'var(--gray-3)' : '#ff7a3d', color:'#fff', borderRadius:'7px', cursor: saving ? 'not-allowed' : 'pointer', fontSize:'13px', fontWeight:600, opacity:saving?0.7:1, display:'flex', alignItems:'center', gap:'7px', fontFamily:'inherit' }}>
         {saving && <svg style={{ animation:'spin-loader 0.8s linear infinite', flexShrink:0 }} width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/><path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/></svg>}
         {saving ? 'Se salvează...' : 'Salvează'}
       </button>
