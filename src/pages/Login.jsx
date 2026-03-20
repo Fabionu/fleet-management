@@ -1,53 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { api } from '../services/api';
 
-const FEATURES = [
-  {
-    icon: (color) => (
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="1" y="5" width="15" height="10" rx="2"/>
-        <path d="M16 8h3l3 3v4h-3"/>
-        <circle cx="5.5" cy="17.5" r="2.5"/>
-        <circle cx="18.5" cy="17.5" r="2.5"/>
-      </svg>
-    ),
-    title: 'Status flotă în timp real',
-    desc: 'Monitorizare live a tuturor vehiculelor cu actualizare automată la fiecare 2 secunde',
-  },
-  {
-    icon: (color) => (
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/>
-      </svg>
-    ),
-    title: 'Gestionare curse',
-    desc: 'Planifică transporturile cu CMR, documente atașate și facturare integrată',
-  },
-  {
-    icon: (color) => (
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-      </svg>
-    ),
-    title: 'Rapoarte financiare',
-    desc: 'Costuri, km parcurși, taxe rutiere și analiza profitabilității per cursă',
-  },
-  {
-    icon: (color) => (
-      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-      </svg>
-    ),
-    title: 'Roluri și permisiuni',
-    desc: 'Admin, Dispecer și Contabil — acces granular configurat per utilizator',
-  },
-];
 
 function Login({ onLogin }) {
   const [tab, setTab] = useState('login');
@@ -69,6 +22,18 @@ function Login({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(null);
+  const [cursor, setCursor] = useState({ x: 0, y: 0, visible: false });
+  const rightPanelRef = useRef(null);
+
+  const handleMouseMove = useCallback((e) => {
+    const rect = rightPanelRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setCursor({ x: e.clientX - rect.left, y: e.clientY - rect.top, visible: true });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setCursor(c => ({ ...c, visible: false }));
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -537,16 +502,18 @@ function Login({ onLogin }) {
       </div>
 
       {/* ─────────────── RIGHT PANEL ─────────────── */}
-      <div style={{
-        flex: 1,
-        position: 'relative',
-        background: '#17120d',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        padding: '60px 64px',
-        overflow: 'hidden',
-      }}>
+      <div
+        ref={rightPanelRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          flex: 1,
+          position: 'relative',
+          background: '#17120d',
+          overflow: 'hidden',
+          cursor: 'none',
+        }}
+      >
         {/* Dot grid */}
         <div style={{
           position: 'absolute', inset: 0,
@@ -555,109 +522,37 @@ function Login({ onLogin }) {
           pointerEvents: 'none',
         }} />
 
-        {/* Glow top-right */}
+        {/* Static glow top-right */}
         <div style={{
           position: 'absolute', top: '-100px', right: '-60px',
           width: '580px', height: '580px',
-          background: 'radial-gradient(circle, rgba(255,122,61,0.22) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(255,122,61,0.12) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
 
-        {/* Glow bottom-left */}
+        {/* Static glow bottom-left */}
         <div style={{
           position: 'absolute', bottom: '-80px', left: '15%',
           width: '360px', height: '360px',
-          background: 'radial-gradient(circle, rgba(255,122,61,0.1) 0%, transparent 65%)',
+          background: 'radial-gradient(circle, rgba(255,122,61,0.06) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
 
-        {/* Content */}
-        <div style={{ position: 'relative', zIndex: 1, maxWidth: '560px' }}>
-
-          {/* Badge */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: '8px',
-            background: 'rgba(255,122,61,0.1)',
-            border: '1px solid rgba(255,122,61,0.2)',
-            borderRadius: '20px', padding: '5px 14px',
-            marginBottom: '28px',
-          }}>
-            <span style={{
-              width: '6px', height: '6px', borderRadius: '50%',
-              background: '#ff7a3d', display: 'inline-block',
-              boxShadow: '0 0 6px #ff7a3d',
-            }} />
-            <span style={{ fontSize: '11px', fontWeight: 600, color: '#ff7a3d', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-              Fleet Management System
-            </span>
-          </div>
-
-          {/* Headline */}
-          <h2 style={{
-            fontSize: '48px', fontWeight: 800, color: '#fff',
-            letterSpacing: '-0.04em', lineHeight: 1.06, marginBottom: '18px',
-          }}>
-            Gestionează flota.<br />
-            <span style={{
-              background: 'linear-gradient(90deg, #ff7a3d 0%, #ff5500 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>
-              Eficient.
-            </span>
-          </h2>
-
-          <p style={{
-            fontSize: '15px', color: 'rgba(255,255,255,0.38)', lineHeight: 1.7,
-            marginBottom: '46px', maxWidth: '400px',
-          }}>
-            Platforma completă pentru monitorizarea vehiculelor, gestionarea curselor și analiza performanței flotei tale.
-          </p>
-
-          {/* Features list */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px', marginBottom: '46px' }}>
-            {FEATURES.map((f, i) => (
-              <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                <div style={{
-                  width: '38px', height: '38px', flexShrink: 0,
-                  background: 'rgba(255,122,61,0.08)',
-                  border: '1px solid rgba(255,122,61,0.15)',
-                  borderRadius: '9px',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  {f.icon('#ff7a3d')}
-                </div>
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff', marginBottom: '3px' }}>
-                    {f.title}
-                  </div>
-                  <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.36)', lineHeight: 1.5 }}>
-                    {f.desc}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Stats bar */}
-          <div style={{
-            paddingTop: '26px',
-            borderTop: '1px solid rgba(255,255,255,0.07)',
-            display: 'flex', gap: '40px',
-          }}>
-            {[
-              ['2s', 'Actualizare live'],
-              ['3', 'Roluri utilizatori'],
-              ['100%', 'Cloud-based'],
-            ].map(([val, label]) => (
-              <div key={label}>
-                <div style={{ fontSize: '26px', fontWeight: 800, color: '#fff', letterSpacing: '-0.03em' }}>{val}</div>
-                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.32)', marginTop: '3px' }}>{label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Cursor glow */}
+        <div style={{
+          position: 'absolute',
+          left: cursor.x,
+          top: cursor.y,
+          width: '480px',
+          height: '480px',
+          transform: 'translate(-50%, -50%)',
+          background: 'radial-gradient(circle, rgba(255,122,61,0.28) 0%, rgba(255,80,0,0.10) 35%, transparent 70%)',
+          filter: 'blur(32px)',
+          pointerEvents: 'none',
+          opacity: cursor.visible ? 1 : 0,
+          transition: 'opacity 0.3s ease',
+          borderRadius: '50%',
+        }} />
       </div>
     </div>
   );
