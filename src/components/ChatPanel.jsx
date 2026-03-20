@@ -1,7 +1,31 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { getSocket } from '../services/socket';
-import { playReceived, playSent } from '../services/sounds';
+import { playReceived, playSent, playTripOrderReceived, playTripOrderAccepted, playTripOrderRejected } from '../services/sounds';
 import axios from 'axios';
+
+function isTripOrderMsg(msg) {
+  if (msg.message_type === 'trip_order') return true;
+  if (msg.message && msg.message.startsWith('{')) {
+    try {
+      const d = JSON.parse(msg.message);
+      return !!(d.order_number !== undefined || d.truck !== undefined || d.payment_terms !== undefined || d.doc_type !== undefined);
+    } catch {}
+  }
+  return false;
+}
+
+function sanitizeReplyText(text) {
+  if (!text) return '';
+  if (text.startsWith('{')) {
+    try {
+      const d = JSON.parse(text);
+      if (d.order_number || d.truck || d.payment_terms) {
+        return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`;
+      }
+    } catch {}
+  }
+  return text;
+}
 
 function formatTime(ts) {
   if (!ts) return '';
@@ -580,7 +604,7 @@ export default function ChatPanel({ user, currentPage }) {
         if (chatOpen) {
           axios.put(`/api/chat/read/${peerOfMsg}`, {}, { headers }).catch(() => {});
         } else if (!isMuted) {
-          playReceived();
+          isTripOrderMsg(msg) ? playTripOrderReceived() : playReceived();
           setUnreadCounts(prev => ({ ...prev, [peerOfMsg]: (prev[peerOfMsg] || 0) + 1 }));
         }
       }
@@ -597,7 +621,7 @@ export default function ChatPanel({ user, currentPage }) {
       const isActive = (openRef.current || currentPageRef.current === 'chat') && activeGroupRef.current?.id === gId;
       const isMuted  = mutedRef.current.group.includes(gId);
       if (!isActive && msg.username !== user.username && msg.message_type !== 'system' && !isMuted) {
-        playReceived();
+        isTripOrderMsg(msg) ? playTripOrderReceived() : playReceived();
         setGroupUnread(prev => ({ ...prev, [gId]: (prev[gId] || 0) + 1 }));
       }
       if (isActive) {
@@ -716,11 +740,15 @@ export default function ChatPanel({ user, currentPage }) {
       setConversations(prev => prev[peerUn]
         ? { ...prev, [peerUn]: prev[peerUn].map(m => m.id === msg.id ? { ...m, trip_order_status: msg.trip_order_status } : m) }
         : prev);
+      if (msg.trip_order_status === 'accepted') playTripOrderAccepted();
+      else if (msg.trip_order_status === 'rejected') playTripOrderRejected();
     };
     const handleGroupTripOrderUpdated = (msg) => {
       setGroupMessages(prev => prev[msg.group_id]
         ? { ...prev, [msg.group_id]: prev[msg.group_id].map(m => m.id === msg.id ? { ...m, trip_order_status: msg.trip_order_status } : m) }
         : prev);
+      if (msg.trip_order_status === 'accepted') playTripOrderAccepted();
+      else if (msg.trip_order_status === 'rejected') playTripOrderRejected();
     };
 
     socket.on('message_edited',            handleMsgEdited);
@@ -1257,7 +1285,7 @@ export default function ChatPanel({ user, currentPage }) {
   // ── Shared helpers ──────────────────────────────────────────
   const msgActionBtns = (msg, isDm) => (
     <div style={{ display: 'flex', gap: 2, opacity: hoveredMsgId === msg.id && editingMsgId !== msg.id ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: hoveredMsgId === msg.id && editingMsgId !== msg.id ? 'auto' : 'none' }}>
-      <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })} title="Răspunde"
+      <button onClick={() => setReplyTo({ id: msg.id, text: isTripOrderMsg(msg) ? (() => { try { const d = JSON.parse(msg.message); return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`; } catch { return '📦 Comandă de transport'; } })() : msg.message, username: msg.username })} title="Răspunde"
         style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
         onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
         onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
@@ -1294,7 +1322,7 @@ export default function ChatPanel({ user, currentPage }) {
     const isMe = msg.username === user.username;
     const isEditing = editingMsgId === msg.id;
     if (msg.is_deleted) return <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '6px 10px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>;
-    if (msg.message_type === 'trip_order') return (
+    if (isTripOrderMsg(msg)) return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse' }}>
         {msgActionBtns(msg)}
         <TripOrderCard msg={msg} currentUser={user.username} onRespond={(status) => handleTripOrderRespond(msg, status)} />
@@ -1325,7 +1353,7 @@ export default function ChatPanel({ user, currentPage }) {
                 setHighlightedMsgId(msg.reply_to_id);
                 highlightTimer.current = setTimeout(() => setHighlightedMsgId(null), 1600);
               }} style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', borderRadius: '0 4px 4px 0', padding: '3px 6px', background: 'rgba(255,122,61,0.08)' }}>
-                <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
+                <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {sanitizeReplyText(msg.reply_to_text)}
               </div>
             )}
             {renderMessageText(msg.message, user.username)}
@@ -2308,10 +2336,10 @@ export default function ChatPanel({ user, currentPage }) {
                   const nextSame = i < messages.length - 1 && messages[i + 1].username === msg.username && messages[i + 1].message_type !== 'system';
                   const isHovered = hoveredMsgId === msg.id;
                   const isEditing = editingMsgId === msg.id;
-                  const isSearchMatch = searchQuery.trim() && !msg.is_deleted && msg.message_type !== 'trip_order' && msg.message?.toLowerCase().includes(searchQuery.toLowerCase());
+                  const isSearchMatch = searchQuery.trim() && !msg.is_deleted && !isTripOrderMsg(msg) && msg.message?.toLowerCase().includes(searchQuery.toLowerCase());
                   const isCurrentSearchMatch = isSearchMatch && searchMatches[searchIdx] === i;
                   // Trip order card in DM
-                  if (msg.message_type === 'trip_order') return (
+                  if (isTripOrderMsg(msg)) return (
                     <div key={msg.id} id={`msg-${msg.id}`}
                       style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, padding: '2px 4px' }}>
                       <TripOrderCard msg={msg} currentUser={user.username} onRespond={(status) => handleTripOrderRespond(msg, status)} />
@@ -2338,10 +2366,10 @@ export default function ChatPanel({ user, currentPage }) {
                         {msg.is_deleted ? (
                           <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '6px 10px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                         ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '75%' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '75%', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                             {/* Butoane acțiuni */}
                             <div style={{ display: 'flex', gap: 2, opacity: isHovered && !isEditing ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered && !isEditing ? 'auto' : 'none' }}>
-                              <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })} title="Răspunde"
+                              <button onClick={() => setReplyTo({ id: msg.id, text: isTripOrderMsg(msg) ? (() => { try { const d = JSON.parse(msg.message); return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`; } catch { return '📦 Comandă de transport'; } })() : msg.message, username: msg.username })} title="Răspunde"
                                 style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
                                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
                                 onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
@@ -2388,7 +2416,7 @@ export default function ChatPanel({ user, currentPage }) {
                               <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
                                 {msg.reply_to_id && (
                                   <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                    <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
+                                    <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {sanitizeReplyText(msg.reply_to_text)}
                                   </div>
                                 )}
                                 {renderMessageText(msg.message, user.username)}
@@ -2472,8 +2500,23 @@ export default function ChatPanel({ user, currentPage }) {
                   const seenBy  = getSeenBy(i, groupMsgs, memberReads[activeGroup?.id], user.username);
                   const isHovered = hoveredMsgId === msg.id;
                   const isEditing = editingMsgId === msg.id;
-                  const isSearchMatch = searchQuery.trim() && !msg.is_deleted && msg.message?.toLowerCase().includes(searchQuery.toLowerCase());
+                  const isSearchMatch = searchQuery.trim() && !msg.is_deleted && !isTripOrderMsg(msg) && msg.message?.toLowerCase().includes(searchQuery.toLowerCase());
                   const isCurrentSearchMatch = isSearchMatch && searchMatches[searchIdx] === i;
+                  // Trip order card in group
+                  if (isTripOrderMsg(msg)) return (
+                    <div key={msg.id} id={`msg-${msg.id}`}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, padding: '2px 4px' }}>
+                      {!isMe && !prevSame && (
+                        <div style={{ fontSize: 11, color: '#ff7a3d', marginBottom: 3, paddingLeft: 4, fontWeight: 600 }}>{dn(msg.username)}</div>
+                      )}
+                      <TripOrderCard msg={msg} currentUser={user.username} onRespond={(status) => handleTripOrderRespond(msg, status)} />
+                      {!nextSame && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, paddingLeft: isMe ? 0 : 4, paddingRight: isMe ? 4 : 0, flexDirection: isMe ? 'row-reverse' : 'row' }}>
+                          <span style={{ fontSize: 10, color: 'var(--gray-4)' }}>{formatTime(msg.created_at)}</span>
+                        </div>
+                      )}
+                    </div>
+                  );
                   return (
                     <div key={msg.id}>
                       {msg.id === firstUnreadId && (
@@ -2492,10 +2535,10 @@ export default function ChatPanel({ user, currentPage }) {
                         {msg.is_deleted ? (
                           <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '6px 10px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                         ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '75%' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '75%', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
                             {/* Butoane acțiuni */}
                             <div style={{ display: 'flex', gap: 2, opacity: isHovered && !isEditing ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered && !isEditing ? 'auto' : 'none' }}>
-                              <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })} title="Răspunde"
+                              <button onClick={() => setReplyTo({ id: msg.id, text: isTripOrderMsg(msg) ? (() => { try { const d = JSON.parse(msg.message); return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`; } catch { return '📦 Comandă de transport'; } })() : msg.message, username: msg.username })} title="Răspunde"
                                 style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
                                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
                                 onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
@@ -2542,7 +2585,7 @@ export default function ChatPanel({ user, currentPage }) {
                               <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
                                 {msg.reply_to_id && (
                                   <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.85 }}>
-                                    <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
+                                    <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {sanitizeReplyText(msg.reply_to_text)}
                                   </div>
                                 )}
                                 {renderMessageText(msg.message, user.username)}
