@@ -103,10 +103,14 @@ function EditCurseModal({ trip, trucks, onClose, onSave }) {
 
   const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    onSave({ ...formData, extraStops }, trip.id);
+    try {
+      await onSave({ ...formData, extraStops }, trip.id);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const inputStyle = {

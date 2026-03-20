@@ -274,7 +274,13 @@ function TripOrderModal({ peer, groupName, members, dn, onClose, onSend }) {
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', padding: '14px 22px 18px', borderTop: '1px solid var(--gray-2)', marginTop: 14, flexShrink: 0 }}>
           <button onClick={onClose} style={{ padding: '8px 18px', border: '1px solid var(--gray-3)', background: 'var(--gray-1)', borderRadius: 7, cursor: 'pointer', color: 'var(--black)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit' }}>Anulează</button>
           <button onClick={handleSubmit} disabled={!canSubmit}
-            style={{ padding: '8px 18px', border: 'none', background: canSubmit ? '#ff7a3d' : 'var(--gray-3)', color: 'white', borderRadius: 7, cursor: canSubmit ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', opacity: canSubmit ? 1 : 0.7 }}>
+            style={{ padding: '8px 18px', border: 'none', background: (!form.order_number.trim() || !form.truck.trim()) ? 'var(--gray-3)' : '#ff7a3d', color: 'white', borderRadius: 7, cursor: canSubmit ? 'pointer' : 'not-allowed', fontSize: 13, fontWeight: 600, fontFamily: 'inherit', opacity: canSubmit ? 1 : 0.7, display: 'flex', alignItems: 'center', gap: 7 }}>
+            {sending && (
+              <svg style={{ animation: 'spin-loader 0.7s linear infinite', flexShrink: 0 }} width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/>
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+              </svg>
+            )}
             {sending ? 'Se trimite...' : 'Trimite'}
           </button>
         </div>

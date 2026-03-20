@@ -79,7 +79,7 @@ function AddCurseModal({ trucks, onClose, onSave }) {
 
   const [saving, setSaving] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!formData.pdf_file) {
@@ -88,7 +88,11 @@ function AddCurseModal({ trucks, onClose, onSave }) {
     }
 
     setSaving(true);
-    onSave({ ...formData, extraStops });
+    try {
+      await onSave({ ...formData, extraStops });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const isSaveDisabled = !formData.pdf_file;
