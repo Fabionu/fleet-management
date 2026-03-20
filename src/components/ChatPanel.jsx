@@ -1301,7 +1301,7 @@ export default function ChatPanel({ user, currentPage }) {
       </div>
     );
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '75%' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '75%', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
         {msgActionBtns(msg)}
         {isEditing ? (
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
