@@ -475,6 +475,9 @@ async function initDb() {
     await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS trip_order_status TEXT`);
     await client.query(`ALTER TABLE chat_group_messages ADD COLUMN IF NOT EXISTS trip_order_status TEXT`);
 
+    // Migration: add completed column to trips
+    await client.query(`ALTER TABLE trips ADD COLUMN IF NOT EXISTS completed INTEGER DEFAULT 0`);
+
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {
     client.release();

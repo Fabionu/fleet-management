@@ -388,10 +388,17 @@ function TripDocsModal({ trip, onClose, onSave }) {
               fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
               transition: 'background 0.15s',
               opacity: saving ? 0.7 : 1,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
             }}
             onMouseEnter={e => { if (changed && !saving) e.currentTarget.style.background = '#ff8c52'; }}
             onMouseLeave={e => { if (changed && !saving) e.currentTarget.style.background = '#ff7a3d'; }}
           >
+            {saving && (
+              <svg style={{ animation: 'spin-loader 0.7s linear infinite', flexShrink: 0 }} width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/>
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+              </svg>
+            )}
             {saving ? 'Se salvează...' : changed ? 'Salvează Modificările' : 'Nicio modificare'}
           </button>
         </div>

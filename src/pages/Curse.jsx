@@ -90,6 +90,21 @@ function Curse({ user }) {
     }
   };
 
+  const handleMarkCompleted = async (trip) => {
+    if (!trip.cmr_file_name) return;
+    const newCompleted = trip.completed ? 0 : 1;
+    setTrips(prev => prev.map(t => t.id === trip.id ? { ...t, completed: newCompleted } : t));
+    setOpenMenuId(null);
+    try {
+      await api.updateTrip(trip.id, { ...trip, completed: newCompleted });
+      showToast(newCompleted ? 'Cursă marcată ca Completată' : 'Cursă marcată ca necompletată');
+      loadTrips();
+    } catch (error) {
+      setTrips(prev => prev.map(t => t.id === trip.id ? { ...t, completed: trip.completed } : t));
+      console.error('Eroare la actualizarea statusului cursă:', error);
+    }
+  };
+
   const handleSendToTracking = async (trip) => {
     setOpenMenuId(null);
 
@@ -850,6 +865,51 @@ function Curse({ user }) {
                               Documente
                             </button>
 
+                            {/* Marchează completată */}
+                            <button
+                              onClick={() => trip.cmr_file_name && handleMarkCompleted(trip)}
+                              title={!trip.cmr_file_name ? 'CMR-ul trebuie adăugat pentru a marca ca Completată' : ''}
+                              style={{
+                                width: '100%',
+                                padding: '12px 16px',
+                                background: 'transparent',
+                                border: 'none',
+                                textAlign: 'left',
+                                fontSize: '13px',
+                                color: trip.cmr_file_name
+                                  ? (trip.completed ? 'var(--gray-4)' : '#16a34a')
+                                  : 'var(--gray-3)',
+                                cursor: trip.cmr_file_name ? 'pointer' : 'not-allowed',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                transition: 'background 0.2s',
+                                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                                opacity: trip.cmr_file_name ? 1 : 0.5,
+                              }}
+                              onMouseEnter={(e) => { if (trip.cmr_file_name) e.currentTarget.style.background = 'var(--gray-1)'; }}
+                              onMouseLeave={(e) => { if (trip.cmr_file_name) e.currentTarget.style.background = 'transparent'; }}
+                            >
+                              {trip.completed ? (
+                                <>
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="15" y1="9" x2="9" y2="15"/>
+                                    <line x1="9" y1="9" x2="15" y2="15"/>
+                                  </svg>
+                                  Anulează completare
+                                </>
+                              ) : (
+                                <>
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                    <polyline points="22 4 12 14.01 9 11.01"/>
+                                  </svg>
+                                  Marchează completată
+                                </>
+                              )}
+                            </button>
+
                             {/* Trimite în Tracking */}
                             <button
                               onClick={() => handleSendToTracking(trip)}
@@ -944,8 +1004,18 @@ function Curse({ user }) {
                     <td style={{ padding: '16px', fontSize: '14px', color: cellColor, width: '140px', fontWeight: 500, verticalAlign: 'middle' }}>
                       {trip.client}
                     </td>
-                    <td style={{ padding: '16px', fontSize: '14px', color: cellColor, width: '130px', verticalAlign: 'middle' }}>
-                      {trip.order_number}
+                    <td style={{ padding: '16px', width: '130px', verticalAlign: 'middle' }}>
+                      <div style={{ fontSize: '14px', color: cellColor }}>{trip.order_number}</div>
+                      {trip.completed ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                          <span style={{ fontSize: '10px', color: '#16a34a', fontWeight: 600, letterSpacing: '0.04em' }}>
+                            Completată
+                          </span>
+                        </div>
+                      ) : null}
                     </td>
                     <td style={{ padding: '16px', width: '125px', verticalAlign: 'middle' }}>
                       <div style={{ fontSize: '14px', color: cellColor, fontWeight: 600 }}>
