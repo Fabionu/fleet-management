@@ -1937,6 +1937,76 @@ export default function ChatPanel({ user, currentPage }) {
           onSend={sendTripOrder}
         />
       )}
+
+      {/* Delete confirm modal — full page */}
+      {deleteConfirm && (
+        <div
+          onClick={() => setDeleteConfirm(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9600,
+            background: 'rgba(0,0,0,0.45)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backdropFilter: 'blur(3px)',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: 'var(--bg-page)',
+              border: '1px solid var(--gray-2)',
+              borderRadius: 16,
+              padding: '28px 28px 24px',
+              width: 320,
+              boxShadow: '0 16px 48px rgba(0,0,0,0.25)',
+              display: 'flex', flexDirection: 'column', gap: 16,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 10, background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--black)', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>Șterge mesaj</div>
+                <div style={{ fontSize: 12, color: 'var(--gray-4)', marginTop: 2, fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif" }}>Această acțiune nu poate fi anulată</div>
+              </div>
+            </div>
+            <div style={{ background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: 'var(--gray-4)', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {isTripOrderMsg(deleteConfirm) ? '📦 Comandă de transport' : (deleteConfirm.is_deleted ? 'Mesaj șters' : deleteConfirm.message)}
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setDeleteConfirm(null)}
+                style={{ flex: 1, padding: '10px 0', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: 8, fontSize: 13, fontWeight: 500, color: 'var(--black)', cursor: 'pointer', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", transition: 'background 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'var(--gray-1)'}>
+                Anulează
+              </button>
+              <button onClick={confirmDeleteMsg}
+                style={{ flex: 1, padding: '10px 0', background: '#ef4444', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, color: 'white', cursor: 'pointer', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", transition: 'background 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#dc2626'}
+                onMouseLeave={e => e.currentTarget.style.background = '#ef4444'}>
+                Șterge
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat toast — full page */}
+      {chatToast && (
+        <div style={{
+          position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+          zIndex: 9700, background: chatToast.type === 'error' ? '#ef4444' : '#111110',
+          color: 'white', padding: '10px 20px', borderRadius: 10, fontSize: 13, fontWeight: 500,
+          fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+          boxShadow: '0 4px 20px rgba(0,0,0,0.3)', pointerEvents: 'none',
+          whiteSpace: 'nowrap', animation: 'fadeInUp 0.2s ease',
+        }}>
+          {chatToast.message}
+        </div>
+      )}
       </>
     );
   }
