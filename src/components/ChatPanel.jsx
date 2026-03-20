@@ -1454,9 +1454,9 @@ export default function ChatPanel({ user, currentPage }) {
               const showMuteBtn = hoveredDm === u.username || isMutedDm;
               return (
                 <div key={u.username} onClick={() => openConversation(u)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', cursor: 'pointer', background: isActiveDm ? 'var(--gray-1)' : 'transparent', transition: 'background 0.12s', borderLeft: isActiveDm ? '3px solid #ff7a3d' : '3px solid transparent', boxSizing: 'border-box' }}
-                  onMouseEnter={e => { if (!isActiveDm) e.currentTarget.style.background = 'var(--gray-1)'; setHoveredDm(u.username); }}
-                  onMouseLeave={e => { if (!isActiveDm) e.currentTarget.style.background = 'transparent'; setHoveredDm(null); }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', cursor: 'pointer', background: isActiveDm || hoveredDm === u.username ? 'var(--gray-1)' : 'transparent', transition: 'background 0.12s', borderLeft: isActiveDm ? '3px solid #ff7a3d' : '3px solid transparent', boxSizing: 'border-box' }}
+                  onMouseEnter={() => setHoveredDm(u.username)}
+                  onMouseLeave={() => setHoveredDm(null)}>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div style={{ width: 38, height: 38, borderRadius: '50%', background: avatarColor(u.username), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 16 }}>
                       {(u.first_name || u.username).charAt(0).toUpperCase()}
@@ -1512,9 +1512,9 @@ export default function ChatPanel({ user, currentPage }) {
               const showMuteGrp = hoveredGroup === g.id || isMutedGrp;
               return (
                 <div key={g.id} onClick={() => openGroupConversation(g)}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', cursor: 'pointer', background: isActiveGrp ? 'var(--gray-1)' : 'transparent', transition: 'background 0.12s', borderLeft: isActiveGrp ? '3px solid #ff7a3d' : '3px solid transparent', boxSizing: 'border-box' }}
-                  onMouseEnter={e => { if (!isActiveGrp) e.currentTarget.style.background = 'var(--gray-1)'; setHoveredGroup(g.id); }}
-                  onMouseLeave={e => { if (!isActiveGrp) e.currentTarget.style.background = 'transparent'; setHoveredGroup(null); }}>
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', cursor: 'pointer', background: isActiveGrp || hoveredGroup === g.id ? 'var(--gray-1)' : 'transparent', transition: 'background 0.12s', borderLeft: isActiveGrp ? '3px solid #ff7a3d' : '3px solid transparent', boxSizing: 'border-box' }}
+                  onMouseEnter={() => setHoveredGroup(g.id)}
+                  onMouseLeave={() => setHoveredGroup(null)}>
                   <div style={{ width: 38, height: 38, borderRadius: '50%', background: groupColor(g.name), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
                     <GroupIcon size={17} color="white" />
                   </div>
