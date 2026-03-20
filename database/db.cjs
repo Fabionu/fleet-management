@@ -19,7 +19,11 @@ const defaultPermissions = {
     deleteTruckRow: true,
     addNextTrip: true,
     markInvoiced: true,
-    viewReports: true
+    viewReports: true,
+    chatCreateGroup: true,
+    chatManageMembers: true,
+    chatSendTripOrder: true,
+    chatDeleteMessage: true,
   },
   dispatcher: {
     editVehicleInfo: false,
@@ -31,7 +35,11 @@ const defaultPermissions = {
     deleteTruckRow: true,
     addNextTrip: true,
     markInvoiced: false,
-    viewReports: false
+    viewReports: false,
+    chatCreateGroup: true,
+    chatManageMembers: true,
+    chatSendTripOrder: true,
+    chatDeleteMessage: true,
   },
   contabil: {
     editVehicleInfo: false,
@@ -43,7 +51,11 @@ const defaultPermissions = {
     deleteTruckRow: false,
     addNextTrip: false,
     markInvoiced: true,
-    viewReports: false
+    viewReports: false,
+    chatCreateGroup: false,
+    chatManageMembers: false,
+    chatSendTripOrder: false,
+    chatDeleteMessage: true,
   }
 };
 

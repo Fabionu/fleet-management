@@ -515,6 +515,7 @@ export default function ChatPanel({ user, currentPage }) {
   const token   = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
   const headers = { Authorization: `Bearer ${token}` };
   const isAdmin = user.role === 'admin';
+  const canChat = (key) => user.role === 'admin' || user.permissions?.[key] !== false;
 
   const displayNames = useMemo(() => {
     const map = {};
@@ -1277,12 +1278,14 @@ export default function ChatPanel({ user, currentPage }) {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
         )}
-        <button onClick={() => deleteMsg(msg)} title="Șterge"
-          style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
-          onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-        </button>
+        {canChat('chatDeleteMessage') && (
+          <button onClick={() => deleteMsg(msg)} title="Șterge"
+            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        )}
       </>}
     </div>
   );
@@ -1298,10 +1301,10 @@ export default function ChatPanel({ user, currentPage }) {
       </div>
     );
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '75%' }}>
         {msgActionBtns(msg)}
         {isEditing ? (
-          <div style={{ maxWidth: '80%', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg); } if (e.key === 'Escape') cancelEdit(); }}
               style={{ resize: 'none', border: '1.5px solid #ff7a3d', borderRadius: 10, padding: '7px 10px', fontSize: 14, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, minWidth: 160 }}
@@ -1312,7 +1315,7 @@ export default function ChatPanel({ user, currentPage }) {
             </div>
           </div>
         ) : (
-          <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
+          <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
             {msg.reply_to_id && (
               <div onClick={() => {
                 const el = document.getElementById(`msg-${msg.reply_to_id}`);
@@ -1419,7 +1422,7 @@ export default function ChatPanel({ user, currentPage }) {
           <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid var(--gray-2)', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
               <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--black)' }}>Chat</span>
-              {isAdmin && (
+              {canChat('chatCreateGroup') && (
                 <button onClick={() => { setNewGroupName(''); setNewGroupMembers([]); setView('create-group'); }}
                   title="Grup nou"
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '5px 7px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'all 0.15s' }}
@@ -1689,7 +1692,7 @@ export default function ChatPanel({ user, currentPage }) {
                 mentionQuery={mentionQuery} mentionUsers={mentionUsers}
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
                 replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
-                onOpenTripOrder={() => setTripOrderModal(true)}
+                onOpenTripOrder={canChat('chatSendTripOrder') ? () => setTripOrderModal(true) : null}
               />
             </div>
           )}
@@ -1751,7 +1754,7 @@ export default function ChatPanel({ user, currentPage }) {
                           </div>
                           <div style={{ fontSize: 12, color: isOnline(uname) ? '#22c55e' : 'var(--gray-4)' }}>{isOnline(uname) ? 'online' : 'offline'}</div>
                         </div>
-                        {isAdmin && uname !== user.username && (
+                        {canChat('chatManageMembers') && uname !== user.username && (
                           <div style={{ position: 'relative', flexShrink: 0 }}>
                             <button onClick={e => { e.stopPropagation(); setMemberMenuOpen(prev => prev === uname ? null : uname); }}
                               style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 5 }}
@@ -1775,22 +1778,26 @@ export default function ChatPanel({ user, currentPage }) {
                       </div>
                     ))}
                   </div>
-                  {isAdmin && (
+                  {(isAdmin || canChat('chatManageMembers')) && (
                     <div style={{ padding: '12px 18px', borderTop: '1px solid var(--gray-2)', display: 'flex', gap: 8, flexShrink: 0 }}>
-                      <button onClick={deleteGroup}
-                        style={{ padding: '9px 12px', border: '1px solid var(--gray-3)', borderRadius: 8, background: 'transparent', cursor: 'pointer', fontSize: 13, color: 'var(--red)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', flexShrink: 0 }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
-                        Șterge grup
-                      </button>
-                      <button onClick={openAddMembers}
-                        style={{ flex: 1, padding: '9px', border: 'none', borderRadius: 8, background: '#ff7a3d', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'white', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
-                        onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
-                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-                        Adaugă membri
-                      </button>
+                      {isAdmin && (
+                        <button onClick={deleteGroup}
+                          style={{ padding: '9px 12px', border: '1px solid var(--gray-3)', borderRadius: 8, background: 'transparent', cursor: 'pointer', fontSize: 13, color: 'var(--red)', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.15s', flexShrink: 0 }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                          Șterge grup
+                        </button>
+                      )}
+                      {canChat('chatManageMembers') && (
+                        <button onClick={openAddMembers}
+                          style={{ flex: 1, padding: '9px', border: 'none', borderRadius: 8, background: '#ff7a3d', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'white', fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+                          onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
+                          onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+                          Adaugă membri
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -2209,7 +2216,7 @@ export default function ChatPanel({ user, currentPage }) {
                       Grupuri {grpsCollapsed && filteredGroups.length > 0 ? `(${filteredGroups.length})` : ''}
                     </span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      {isAdmin && (
+                      {canChat('chatCreateGroup') && (
                         <button onClick={e => { e.stopPropagation(); openCreateGroup(); }}
                           title="Grup nou"
                           style={{ background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: 6, cursor: 'pointer', padding: '2px 7px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, fontWeight: 600, transition: 'all 0.15s' }}
@@ -2331,7 +2338,7 @@ export default function ChatPanel({ user, currentPage }) {
                         {msg.is_deleted ? (
                           <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '6px 10px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                         ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '75%' }}>
                             {/* Butoane acțiuni */}
                             <div style={{ display: 'flex', gap: 2, opacity: isHovered && !isEditing ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered && !isEditing ? 'auto' : 'none' }}>
                               <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })} title="Răspunde"
@@ -2355,17 +2362,19 @@ export default function ChatPanel({ user, currentPage }) {
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </button>
                                 )}
+                                {canChat('chatDeleteMessage') && (
                                 <button onClick={() => deleteMsg(msg)} title="Șterge"
                                   style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
                                   onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
                                   onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                                 </button>
+                                )}
                               </>}
                             </div>
                             {/* Bubble / Edit inline */}
                             {isEditing ? (
-                              <div style={{ maxWidth: '80%', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2}
                                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg); } if (e.key === 'Escape') cancelEdit(); }}
                                   style={{ resize: 'none', border: '1.5px solid #ff7a3d', borderRadius: 10, padding: '7px 10px', fontSize: 14, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, minWidth: 160 }}
@@ -2376,7 +2385,7 @@ export default function ChatPanel({ user, currentPage }) {
                                 </div>
                               </div>
                             ) : (
-                              <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
+                              <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
                                 {msg.reply_to_id && (
                                   <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
@@ -2429,7 +2438,7 @@ export default function ChatPanel({ user, currentPage }) {
                 onKeyDown={handleKeyDown} onSend={sendMessage}
                 placeholder={`Mesaj pentru ${dn(peer?.username)}...`}
                 mentionQuery={mentionQuery} mentionUsers={mentionUsers}
-                onOpenTripOrder={() => setTripOrderModal(true)}
+                onOpenTripOrder={canChat('chatSendTripOrder') ? () => setTripOrderModal(true) : null}
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
                 replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
               />
@@ -2483,7 +2492,7 @@ export default function ChatPanel({ user, currentPage }) {
                         {msg.is_deleted ? (
                           <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '6px 10px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                         ) : (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '75%' }}>
                             {/* Butoane acțiuni */}
                             <div style={{ display: 'flex', gap: 2, opacity: isHovered && !isEditing ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered && !isEditing ? 'auto' : 'none' }}>
                               <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })} title="Răspunde"
@@ -2507,17 +2516,19 @@ export default function ChatPanel({ user, currentPage }) {
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                                 </button>
                                 )}
+                                {canChat('chatDeleteMessage') && (
                                 <button onClick={() => deleteMsg(msg)} title="Șterge"
                                   style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
                                   onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
                                   onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
                                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
                                 </button>
+                                )}
                               </>}
                             </div>
                             {/* Bubble / Edit inline */}
                             {isEditing ? (
-                              <div style={{ maxWidth: '80%', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                 <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2}
                                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg); } if (e.key === 'Escape') cancelEdit(); }}
                                   style={{ resize: 'none', border: '1.5px solid #ff7a3d', borderRadius: 10, padding: '7px 10px', fontSize: 14, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, minWidth: 160 }}
@@ -2528,7 +2539,7 @@ export default function ChatPanel({ user, currentPage }) {
                                 </div>
                               </div>
                             ) : (
-                              <div style={{ maxWidth: '80%', padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
+                              <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
                                 {msg.reply_to_id && (
                                   <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.85 }}>
                                     <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {msg.reply_to_text}
@@ -2590,7 +2601,7 @@ export default function ChatPanel({ user, currentPage }) {
                 onKeyDown={handleKeyDown} onSend={sendMessage}
                 placeholder={`Mesaj în ${activeGroup?.name}...`}
                 mentionQuery={mentionQuery} mentionUsers={mentionUsers}
-                onOpenTripOrder={() => setTripOrderModal(true)}
+                onOpenTripOrder={canChat('chatSendTripOrder') ? () => setTripOrderModal(true) : null}
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
                 replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
               />
@@ -2662,8 +2673,8 @@ export default function ChatPanel({ user, currentPage }) {
                         {isOnline(uname) ? 'online' : 'offline'}
                       </div>
                     </div>
-                    {/* ⋮ menu — only admin, not for self */}
-                    {isAdmin && uname !== user.username && (
+                    {/* ⋮ menu — only with manage members permission, not for self */}
+                    {canChat('chatManageMembers') && uname !== user.username && (
                       <div style={{ position: 'relative', flexShrink: 0 }}>
                         <button
                           onClick={e => { e.stopPropagation(); setMemberMenuOpen(prev => prev === uname ? null : uname); }}
