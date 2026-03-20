@@ -1378,7 +1378,7 @@ export default function ChatPanel({ user, currentPage }) {
   if (currentPage === 'chat') {
     const isConvView = view === 'chat' || view === 'group-chat';
     return (
-      <div style={{ display: 'flex', height: 'calc(100vh - 260px)', minHeight: 520, border: '1px solid var(--gray-2)', borderRadius: 12, overflow: 'hidden', marginTop: 8 }}>
+      <div style={{ display: 'flex', height: 'calc(100vh - 260px)', minHeight: 800, border: '1px solid var(--gray-2)', borderRadius: 12, overflow: 'hidden', marginTop: 8 }}>
 
         {/* ── LEFT SIDEBAR ─────────────────────────────── */}
         <div style={{ width: 300, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', background: 'var(--surface)', flexShrink: 0 }}>
