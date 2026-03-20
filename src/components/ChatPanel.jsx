@@ -494,6 +494,7 @@ export default function ChatPanel({ user, currentPage }) {
   const inputRef        = useRef(null);
   const searchRef       = useRef(null);
   const newGroupNameRef = useRef(null);
+  const currentPageRef  = useRef(currentPage);
 
   const token   = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
   const headers = { Authorization: `Bearer ${token}` };
@@ -557,7 +558,7 @@ export default function ChatPanel({ user, currentPage }) {
         [peerOfMsg]: { sender: msg.username, message: msg.message, created_at: msg.created_at },
       }));
       if (!isMine) {
-        const chatOpen = openRef.current && peerRef.current?.username === peerOfMsg;
+        const chatOpen = (openRef.current || currentPageRef.current === 'chat') && peerRef.current?.username === peerOfMsg;
         const isMuted  = mutedRef.current.dm.includes(peerOfMsg);
         if (chatOpen) {
           axios.put(`/api/chat/read/${peerOfMsg}`, {}, { headers }).catch(() => {});
@@ -576,7 +577,7 @@ export default function ChatPanel({ user, currentPage }) {
           ? { ...g, _lastMsg: { sender: msg.username, message: msg.message, created_at: msg.created_at } }
           : g
       ));
-      const isActive = openRef.current && activeGroupRef.current?.id === gId;
+      const isActive = (openRef.current || currentPageRef.current === 'chat') && activeGroupRef.current?.id === gId;
       const isMuted  = mutedRef.current.group.includes(gId);
       if (!isActive && msg.username !== user.username && msg.message_type !== 'system' && !isMuted) {
         playReceived();
@@ -755,6 +756,7 @@ export default function ChatPanel({ user, currentPage }) {
   useEffect(() => { openRef.current = open; }, [open]);
   useEffect(() => { peerRef.current = peer; }, [peer]);
   useEffect(() => { activeGroupRef.current = activeGroup; }, [activeGroup]);
+  useEffect(() => { currentPageRef.current = currentPage; }, [currentPage]);
 
   // Update pinned message whenever the active message list changes
   useEffect(() => {
@@ -782,6 +784,15 @@ export default function ChatPanel({ user, currentPage }) {
   useEffect(() => {
     if (view === 'group-chat' && activeGroup) messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
   }, [groupMessages]);
+
+  // Auto-scroll when typing indicator appears (if already near bottom)
+  useEffect(() => {
+    const dmKey  = `dm_${peerRef.current?.username}`;
+    const grpKey = `group_${activeGroupRef.current?.id}`;
+    if (typingUsers[dmKey] || typingUsers[grpKey]) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [typingUsers]);
 
   useEffect(() => {
     if (view === 'chat' || view === 'group-chat') {
@@ -1378,7 +1389,8 @@ export default function ChatPanel({ user, currentPage }) {
   if (currentPage === 'chat') {
     const isConvView = view === 'chat' || view === 'group-chat';
     return (
-      <div style={{ display: 'flex', height: 'calc(100vh - 260px)', minHeight: 800, border: '1px solid var(--gray-2)', borderRadius: 12, overflow: 'hidden', marginTop: 8 }}>
+      <>
+      <div style={{ display: 'flex', height: 'calc(100vh - 185px)', minHeight: 420, border: '1px solid var(--gray-2)', borderRadius: 12, overflow: 'hidden', marginTop: 8 }}>
 
         {/* ── LEFT SIDEBAR ─────────────────────────────── */}
         <div style={{ width: 300, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', background: 'var(--surface)', flexShrink: 0 }}>
@@ -1438,11 +1450,13 @@ export default function ChatPanel({ user, currentPage }) {
             {!dmCollapsed && filteredUsers.map(u => {
               const last = lastMessages[u.username], unread = unreadCounts[u.username] || 0, online = isOnline(u.username);
               const isActiveDm = peer?.username === u.username && view === 'chat';
+              const isMutedDm  = muted.dm.includes(u.username);
+              const showMuteBtn = hoveredDm === u.username || isMutedDm;
               return (
                 <div key={u.username} onClick={() => openConversation(u)}
                   style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', cursor: 'pointer', background: isActiveDm ? 'var(--gray-1)' : 'transparent', transition: 'background 0.12s', borderLeft: isActiveDm ? '3px solid #ff7a3d' : '3px solid transparent', boxSizing: 'border-box' }}
-                  onMouseEnter={e => { if (!isActiveDm) e.currentTarget.style.background = 'var(--gray-1)'; }}
-                  onMouseLeave={e => { if (!isActiveDm) e.currentTarget.style.background = 'transparent'; }}>
+                  onMouseEnter={e => { if (!isActiveDm) e.currentTarget.style.background = 'var(--gray-1)'; setHoveredDm(u.username); }}
+                  onMouseLeave={e => { if (!isActiveDm) e.currentTarget.style.background = 'transparent'; setHoveredDm(null); }}>
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div style={{ width: 38, height: 38, borderRadius: '50%', background: avatarColor(u.username), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 16 }}>
                       {(u.first_name || u.username).charAt(0).toUpperCase()}
@@ -1450,9 +1464,21 @@ export default function ChatPanel({ user, currentPage }) {
                     <div style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: online ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--surface)' }}/>
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 2 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                       <span style={{ fontSize: 13, fontWeight: unread > 0 ? 700 : 500, color: 'var(--black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{dn(u.username)}</span>
-                      {last && <span style={{ fontSize: 10, color: 'var(--gray-4)', flexShrink: 0, marginLeft: 4 }}>{formatTime(last.created_at)}</span>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                        <button onClick={e => { e.stopPropagation(); toggleMuteDm(u.username); }}
+                          title={isMutedDm ? 'Activează notificări' : 'Silențios'}
+                          style={{ visibility: showMuteBtn ? 'visible' : 'hidden', background: 'transparent', border: 'none', cursor: 'pointer', padding: '3px 4px', color: isMutedDm ? 'var(--gray-4)' : 'var(--gray-3)', display: 'flex', alignItems: 'center', borderRadius: 5, transition: 'all 0.12s' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = isMutedDm ? 'var(--black)' : 'var(--gray-4)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = isMutedDm ? 'var(--gray-4)' : 'var(--gray-3)'; }}>
+                          {isMutedDm
+                            ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                          }
+                        </button>
+                        {last && <span style={{ fontSize: 10, color: 'var(--gray-4)' }}>{formatTime(last.created_at)}</span>}
+                      </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
                       <span style={{ fontSize: 12, color: unread > 0 ? 'var(--black)' : 'var(--gray-4)', fontWeight: unread > 0 ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
@@ -1480,24 +1506,38 @@ export default function ChatPanel({ user, currentPage }) {
             </div>
             {!grpsCollapsed && filteredGroups.map(g => {
               const unread = groupUnread[g.id] || 0;
-              const lastMsg = (groupMessages[g.id] || []).at(-1);
+              const lastMsg = (groupMessages[g.id] || []).at(-1) || g._lastMsg;
               const isActiveGrp = activeGroup?.id === g.id && ['group-chat','group-members','group-add-members'].includes(view);
+              const isMutedGrp  = muted.group.includes(g.id);
+              const showMuteGrp = hoveredGroup === g.id || isMutedGrp;
               return (
                 <div key={g.id} onClick={() => openGroupConversation(g)}
                   style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', cursor: 'pointer', background: isActiveGrp ? 'var(--gray-1)' : 'transparent', transition: 'background 0.12s', borderLeft: isActiveGrp ? '3px solid #ff7a3d' : '3px solid transparent', boxSizing: 'border-box' }}
-                  onMouseEnter={e => { if (!isActiveGrp) e.currentTarget.style.background = 'var(--gray-1)'; }}
-                  onMouseLeave={e => { if (!isActiveGrp) e.currentTarget.style.background = 'transparent'; }}>
+                  onMouseEnter={e => { if (!isActiveGrp) e.currentTarget.style.background = 'var(--gray-1)'; setHoveredGroup(g.id); }}
+                  onMouseLeave={e => { if (!isActiveGrp) e.currentTarget.style.background = 'transparent'; setHoveredGroup(null); }}>
                   <div style={{ width: 38, height: 38, borderRadius: '50%', background: groupColor(g.name), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
                     <GroupIcon size={17} color="white" />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 2 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                       <span style={{ fontSize: 13, fontWeight: unread > 0 ? 700 : 500, color: 'var(--black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{g.name}</span>
-                      {lastMsg && <span style={{ fontSize: 10, color: 'var(--gray-4)', flexShrink: 0, marginLeft: 4 }}>{formatTime(lastMsg.created_at)}</span>}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+                        <button onClick={e => { e.stopPropagation(); toggleMuteGroup(g.id); }}
+                          title={isMutedGrp ? 'Activează notificări' : 'Silențios'}
+                          style={{ visibility: showMuteGrp ? 'visible' : 'hidden', background: 'transparent', border: 'none', cursor: 'pointer', padding: '3px 4px', color: isMutedGrp ? 'var(--gray-4)' : 'var(--gray-3)', display: 'flex', alignItems: 'center', borderRadius: 5, transition: 'all 0.12s' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = isMutedGrp ? 'var(--black)' : 'var(--gray-4)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = isMutedGrp ? 'var(--gray-4)' : 'var(--gray-3)'; }}>
+                          {isMutedGrp
+                            ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                          }
+                        </button>
+                        {lastMsg && <span style={{ fontSize: 10, color: 'var(--gray-4)' }}>{formatTime(lastMsg.created_at)}</span>}
+                      </div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4 }}>
-                      <span style={{ fontSize: 12, color: 'var(--gray-4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                        {lastMsg ? `${lastMsg.username === user.username ? 'Tu' : lastMsg.username}: ${lastMsg.message}` : <em style={{ opacity: 0.6 }}>{g.members?.length || 0} membri</em>}
+                      <span style={{ fontSize: 12, color: unread > 0 ? 'var(--black)' : 'var(--gray-4)', fontWeight: unread > 0 ? 500 : 400, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                        {lastMsg ? `${lastMsg.username === user.username ? 'Tu' : dn(lastMsg.username)}: ${lastMsg.message}` : <em style={{ opacity: 0.6 }}>{g.members?.length || 0} membri</em>}
                       </span>
                       {unread > 0 && <span style={{ background: '#ff7a3d', color: 'white', borderRadius: '50%', minWidth: 17, height: 17, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 3px', boxSizing: 'border-box', flexShrink: 0 }}>{unread > 9 ? '9+' : unread}</span>}
                     </div>
@@ -1810,6 +1850,15 @@ export default function ChatPanel({ user, currentPage }) {
 
         </div>
       </div>
+      {tripOrderModal && (
+        <TripOrderModal
+          peer={view === 'chat' ? dn(peer?.username) : null}
+          groupName={view === 'group-chat' ? activeGroup?.name : null}
+          onClose={() => setTripOrderModal(false)}
+          onSend={sendTripOrder}
+        />
+      )}
+      </>
     );
   }
 
