@@ -155,8 +155,8 @@ function BackBtn({ onClick }) {
 }
 
 // ── Trip Order Modal ────────────────────────────────────────
-function TripOrderModal({ peer, groupName, onClose, onSend }) {
-  const [form, setForm] = useState({ order_number: '', truck: '', payment_terms: '', doc_type: 'Digital' });
+function TripOrderModal({ peer, groupName, members, dn, onClose, onSend }) {
+  const [form, setForm] = useState({ order_number: '', truck: '', payment_terms: '', doc_type: 'Digital', to_user: '' });
   const [file, setFile] = useState(null);
   const [sending, setSending] = useState(false);
 
@@ -181,6 +181,9 @@ function TripOrderModal({ peer, groupName, onClose, onSend }) {
   };
 
   const inp = { padding: '8px 10px', borderRadius: 7, border: '1px solid var(--gray-3)', background: 'var(--gray-1)', color: 'var(--black)', fontSize: 13, width: '100%', boxSizing: 'border-box', fontFamily: 'inherit', outline: 'none' };
+  const lbl = { fontSize: 12, color: 'var(--gray-4)', fontWeight: 500, marginBottom: 5 };
+
+  const dest = form.to_user ? (dn ? dn(form.to_user) : form.to_user) : (peer || groupName);
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 9500, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(2px)' }}>
@@ -192,7 +195,7 @@ function TripOrderModal({ peer, groupName, onClose, onSend }) {
             </div>
             <div>
               <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--black)' }}>Trimite cursă</div>
-              <div style={{ fontSize: 11, color: 'var(--gray-4)' }}>către {peer || groupName}</div>
+              <div style={{ fontSize: 11, color: 'var(--gray-4)' }}>către {dest}</div>
             </div>
           </div>
           <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', fontSize: 22, lineHeight: 1, padding: 4 }}>×</button>
@@ -200,9 +203,19 @@ function TripOrderModal({ peer, groupName, onClose, onSend }) {
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 22px 0' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Destinatar — only for group */}
+            {members && members.length > 0 && (
+              <div>
+                <div style={lbl}>Destinatar</div>
+                <select value={form.to_user} onChange={e => setForm(f => ({ ...f, to_user: e.target.value }))} style={inp}>
+                  <option value="">Întreg grupul</option>
+                  {members.map(m => <option key={m} value={m}>{dn ? dn(m) : m}</option>)}
+                </select>
+              </div>
+            )}
             {/* PDF Upload */}
             <div>
-              <div style={{ fontSize: 12, color: 'var(--gray-4)', fontWeight: 500, marginBottom: 5 }}>Comandă de transport (PDF)</div>
+              <div style={lbl}>Comandă de transport (PDF)</div>
               <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', border: `1.5px dashed ${file ? '#ff7a3d' : 'var(--gray-3)'}`, borderRadius: 8, cursor: 'pointer', background: file ? '#ff7a3d08' : 'var(--gray-1)', transition: 'all 0.15s' }}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={file ? '#ff7a3d' : 'var(--gray-4)'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
                 <span style={{ fontSize: 12, color: file ? '#ff7a3d' : 'var(--gray-4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file ? file.name : 'Selectează PDF...'}</span>
@@ -213,19 +226,19 @@ function TripOrderModal({ peer, groupName, onClose, onSend }) {
               </label>
             </div>
             <div>
-              <div style={{ fontSize: 12, color: 'var(--gray-4)', fontWeight: 500, marginBottom: 5 }}>Număr comandă *</div>
+              <div style={lbl}>Număr comandă *</div>
               <input value={form.order_number} onChange={e => setForm(f => ({ ...f, order_number: e.target.value }))} style={inp} placeholder="ex: CMD-2026-001" />
             </div>
             <div>
-              <div style={{ fontSize: 12, color: 'var(--gray-4)', fontWeight: 500, marginBottom: 5 }}>Camion *</div>
+              <div style={lbl}>Camion *</div>
               <input value={form.truck} onChange={e => setForm(f => ({ ...f, truck: e.target.value }))} style={inp} placeholder="ex: B 123 ABC" />
             </div>
             <div>
-              <div style={{ fontSize: 12, color: 'var(--gray-4)', fontWeight: 500, marginBottom: 5 }}>Termen de plată</div>
+              <div style={lbl}>Termen de plată</div>
               <input value={form.payment_terms} onChange={e => setForm(f => ({ ...f, payment_terms: e.target.value }))} style={inp} placeholder="ex: 30 zile, imediat..." />
             </div>
             <div>
-              <div style={{ fontSize: 12, color: 'var(--gray-4)', fontWeight: 500, marginBottom: 5 }}>Documente</div>
+              <div style={lbl}>Documente</div>
               <select value={form.doc_type} onChange={e => setForm(f => ({ ...f, doc_type: e.target.value }))} style={inp}>
                 <option value="Digital">Digital</option>
                 <option value="Originale">Originale</option>
@@ -248,14 +261,16 @@ function TripOrderModal({ peer, groupName, onClose, onSend }) {
 
 // ── Trip Order Card (rendered inside message bubble) ────────
 function TripOrderCard({ msg, currentUser, onRespond }) {
+  const [hoverAccept, setHoverAccept] = useState(false);
+  const [hoverReject, setHoverReject] = useState(false);
   let data = {};
   try { data = JSON.parse(msg.message); } catch {}
   const isMe = msg.username === currentUser;
   const status = msg.trip_order_status || 'pending';
   const STATUS = {
-    pending:  { label: 'În așteptare', bg: '#fef3c7', color: '#92400e' },
-    accepted: { label: 'Acceptată',    bg: '#d1fae5', color: '#065f46' },
-    rejected: { label: 'Refuzată',     bg: '#fee2e2', color: '#991b1b' },
+    pending:  { label: 'În așteptare', color: 'var(--orange)' },
+    accepted: { label: 'Acceptată',    color: 'var(--green)' },
+    rejected: { label: 'Refuzată',     color: 'var(--red)' },
   };
   const s = STATUS[status] || STATUS.pending;
 
@@ -267,47 +282,44 @@ function TripOrderCard({ msg, currentUser, onRespond }) {
     link.click();
   };
 
-  const textColor = isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)';
-  const subColor = 'rgba(128,128,128,0.75)';
-
   return (
-    <div style={{ width: 245, borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', overflow: 'hidden', border: '1px solid rgba(0,0,0,0.06)', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)' }}>
+    <div style={{ width: 245, borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', overflow: 'hidden', border: '1px solid var(--gray-2)', background: 'var(--surface)' }}>
       {/* Header */}
-      <div style={{ padding: '9px 11px 7px', borderBottom: '1px solid rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div style={{ width: 26, height: 26, borderRadius: 6, background: '#ff7a3d20', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+      <div style={{ padding: '9px 11px 7px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ width: 26, height: 26, borderRadius: 6, background: 'var(--gray-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: textColor }}>Comandă de transport</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--black)' }}>Comandă de transport</div>
           {data.order_number && <div style={{ fontSize: 11, color: '#ff7a3d', fontWeight: 600 }}>#{data.order_number}</div>}
         </div>
-        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 8, background: s.bg, color: s.color, flexShrink: 0 }}>{s.label}</span>
+        <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, border: `1px solid ${s.color}`, color: s.color, flexShrink: 0 }}>{s.label}</span>
       </div>
       {/* Body */}
       <div style={{ padding: '8px 11px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           {data.truck && (
             <div style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
-              <span style={{ fontSize: 10, color: subColor, width: 72, flexShrink: 0 }}>Camion</span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: textColor }}>{data.truck}</span>
+              <span style={{ fontSize: 10, color: 'var(--gray-4)', width: 72, flexShrink: 0 }}>Camion</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--black)' }}>{data.truck}</span>
             </div>
           )}
           {data.payment_terms && (
             <div style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
-              <span style={{ fontSize: 10, color: subColor, width: 72, flexShrink: 0 }}>Termen plată</span>
-              <span style={{ fontSize: 12, color: textColor }}>{data.payment_terms}</span>
+              <span style={{ fontSize: 10, color: 'var(--gray-4)', width: 72, flexShrink: 0 }}>Termen plată</span>
+              <span style={{ fontSize: 12, color: 'var(--black)' }}>{data.payment_terms}</span>
             </div>
           )}
           {data.doc_type && (
             <div style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>
-              <span style={{ fontSize: 10, color: subColor, width: 72, flexShrink: 0 }}>Documente</span>
-              <span style={{ fontSize: 12, color: textColor }}>{data.doc_type}</span>
+              <span style={{ fontSize: 10, color: 'var(--gray-4)', width: 72, flexShrink: 0 }}>Documente</span>
+              <span style={{ fontSize: 12, color: 'var(--black)' }}>{data.doc_type}</span>
             </div>
           )}
         </div>
         {data.file_name && (
           <button onClick={downloadPdf}
-            style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,122,61,0.1)', border: '1px solid rgba(255,122,61,0.22)', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', width: '100%', color: '#ff7a3d', fontSize: 11, fontWeight: 500, fontFamily: 'inherit', boxSizing: 'border-box' }}>
+            style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, background: 'transparent', border: '1px solid var(--gray-3)', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', width: '100%', color: 'var(--gray-4)', fontSize: 11, fontWeight: 500, fontFamily: 'inherit', boxSizing: 'border-box' }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 18 15 15"/></svg>
             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{data.file_name}</span>
           </button>
@@ -315,11 +327,15 @@ function TripOrderCard({ msg, currentUser, onRespond }) {
         {!isMe && status === 'pending' && onRespond && (
           <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>
             <button onClick={() => onRespond('accepted')}
-              style={{ flex: 1, padding: '5px 0', border: 'none', background: '#22c55e', color: 'white', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: 'inherit' }}>
+              onMouseEnter={() => setHoverAccept(true)}
+              onMouseLeave={() => setHoverAccept(false)}
+              style={{ flex: 1, padding: '5px 0', border: '1px solid var(--green)', background: hoverAccept ? 'var(--green)' : 'transparent', color: hoverAccept ? 'white' : 'var(--green)', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'inherit', transition: 'all 0.15s' }}>
               ✓ Acceptă
             </button>
             <button onClick={() => onRespond('rejected')}
-              style={{ flex: 1, padding: '5px 0', border: 'none', background: '#ef4444', color: 'white', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: 'inherit' }}>
+              onMouseEnter={() => setHoverReject(true)}
+              onMouseLeave={() => setHoverReject(false)}
+              style={{ flex: 1, padding: '5px 0', border: '1px solid var(--red)', background: hoverReject ? 'var(--red)' : 'transparent', color: hoverReject ? 'white' : 'var(--red)', borderRadius: 6, cursor: 'pointer', fontSize: 11, fontWeight: 600, fontFamily: 'inherit', transition: 'all 0.15s' }}>
               ✗ Refuză
             </button>
           </div>
@@ -974,12 +990,17 @@ export default function ChatPanel({ user, currentPage }) {
     setReplyTo(null);
   };
 
-  const sendTripOrder = async ({ order_number, truck, payment_terms, doc_type, file_name, file_data, file_type }) => {
+  const sendTripOrder = async ({ order_number, truck, payment_terms, doc_type, file_name, file_data, file_type, to_user }) => {
     if (view === 'chat' && peer) {
       await axios.post('/api/chat/trip-order', { to: peer.username, order_number, truck, payment_terms, doc_type, file_name, file_data, file_type }, { headers });
       playSent();
     } else if (view === 'group-chat' && activeGroup) {
-      await axios.post('/api/chat/trip-order', { group_id: activeGroup.id, order_number, truck, payment_terms, doc_type, file_name, file_data, file_type }, { headers });
+      if (to_user) {
+        // Send as DM to specific group member
+        await axios.post('/api/chat/trip-order', { to: to_user, order_number, truck, payment_terms, doc_type, file_name, file_data, file_type }, { headers });
+      } else {
+        await axios.post('/api/chat/trip-order', { group_id: activeGroup.id, order_number, truck, payment_terms, doc_type, file_name, file_data, file_type }, { headers });
+      }
       playSent();
     }
   };
@@ -1854,6 +1875,8 @@ export default function ChatPanel({ user, currentPage }) {
         <TripOrderModal
           peer={view === 'chat' ? dn(peer?.username) : null}
           groupName={view === 'group-chat' ? activeGroup?.name : null}
+          members={view === 'group-chat' ? (activeGroup?.members || []).filter(m => m !== user.username) : []}
+          dn={dn}
           onClose={() => setTripOrderModal(false)}
           onSend={sendTripOrder}
         />
@@ -2747,6 +2770,8 @@ export default function ChatPanel({ user, currentPage }) {
         <TripOrderModal
           peer={view === 'chat' ? dn(peer?.username) : null}
           groupName={view === 'group-chat' ? activeGroup?.name : null}
+          members={view === 'group-chat' ? (activeGroup?.members || []).filter(m => m !== user.username) : []}
+          dn={dn}
           onClose={() => setTripOrderModal(false)}
           onSend={sendTripOrder}
         />
