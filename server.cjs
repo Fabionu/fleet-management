@@ -1112,8 +1112,8 @@ app.put('/api/trips/:id', authMiddleware, requirePermission('editTrip'), async (
         load_coords=$21, unload_coords=$22,
         cmr_file_name=$23, cmr_file_data=$24, cmr_file_type=$25,
         invoice_file_name=$26, invoice_file_data=$27, invoice_file_type=$28,
-        extra_stops=$29
-      WHERE id=$30
+        extra_stops=$29, completed=$30
+      WHERE id=$31
     `, [
       t.client, t.order_number, t.load_date, t.unload_date,
       t.load_firm ?? null, t.load_street ?? null, t.load_location ?? null,
@@ -1126,6 +1126,7 @@ app.put('/api/trips/:id', authMiddleware, requirePermission('editTrip'), async (
       t.cmr_file_name ?? null, t.cmr_file_data ?? null, t.cmr_file_type ?? null,
       t.invoice_file_name ?? null, t.invoice_file_data ?? null, t.invoice_file_type ?? null,
       t.extra_stops ?? '[]',
+      t.completed ? 1 : 0,
       req.params.id
     ]);
     emitToOrg(req.user.organization_id, 'trips_updated');
