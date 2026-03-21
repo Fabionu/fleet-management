@@ -491,7 +491,7 @@ function SectionUtilizatori({ onBack }) {
   };
   const openEdit = (u) => {
     // Try to find role by role_id first, then by legacy role name
-    const matchedRole = u.role_id ? getRoleById(u.role_id) : getRoleByName(u.role === 'admin' ? 'Administrator' : u.role === 'dispatcher' ? 'Dispecer' : u.role === 'contabil' ? 'Contabil' : u.role);
+    const matchedRole = u.role_id ? getRoleById(u.role_id) : getRoleByName(u.role === 'admin' ? 'Administrator' : u.role === 'dispatcher' ? 'Dispecer' : u.role === 'contabil' ? 'Contabil' : u.role === 'camion' ? 'Camion' : u.role);
     setForm({ username:u.username, password:'', role_id: matchedRole?.id || u.role_id || '', permissions:{ ...u.permissions }, first_name:u.first_name||'', last_name:u.last_name||'' });
     setModal({ mode:'edit', user:u });
   };
@@ -506,7 +506,7 @@ function SectionUtilizatori({ onBack }) {
     try {
       const selectedRole = getRoleById(form.role_id);
       // Map role name to legacy role field for backwards compat
-      const legacyRole = selectedRole?.name === 'Administrator' ? 'admin' : selectedRole?.name === 'Dispecer' ? 'dispatcher' : selectedRole?.name === 'Contabil' ? 'contabil' : 'dispatcher';
+      const legacyRole = selectedRole?.name === 'Administrator' ? 'admin' : selectedRole?.name === 'Dispecer' ? 'dispatcher' : selectedRole?.name === 'Contabil' ? 'contabil' : selectedRole?.name === 'Camion' ? 'camion' : 'dispatcher';
       if (modal.mode === 'add') {
         if (!form.password.trim()) { setSaving(false); return; }
         await api.createUser({ username:form.username, password:form.password, role:legacyRole, role_id:form.role_id, permissions:form.permissions, first_name:form.first_name, last_name:form.last_name });
@@ -541,7 +541,7 @@ function SectionUtilizatori({ onBack }) {
             const order = { admin: 0, contabil: 1, dispatcher: 2 };
             return (order[a.role] ?? 3) - (order[b.role] ?? 3);
           }).map((u, i) => {
-            const matchedRole = u.role_id ? getRoleById(u.role_id) : getRoleByName(u.role === 'admin' ? 'Administrator' : u.role === 'dispatcher' ? 'Dispecer' : u.role === 'contabil' ? 'Contabil' : u.role);
+            const matchedRole = u.role_id ? getRoleById(u.role_id) : getRoleByName(u.role === 'admin' ? 'Administrator' : u.role === 'dispatcher' ? 'Dispecer' : u.role === 'contabil' ? 'Contabil' : u.role === 'camion' ? 'Camion' : u.role);
             const roleColor = matchedRole?.color || '#6b7280';
             const roleLabel = matchedRole?.name || u.role;
             return (

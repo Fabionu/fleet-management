@@ -56,6 +56,24 @@ const defaultPermissions = {
     chatManageMembers: false,
     chatSendTripOrder: false,
     chatDeleteMessage: true,
+  },
+  camion: {
+    editVehicleInfo: false,
+    toggleAmazon: false,
+    addTrip: false,
+    editTrip: false,
+    deleteTrip: false,
+    clearTruckData: false,
+    deleteTruckRow: false,
+    addNextTrip: false,
+    markInvoiced: false,
+    viewReports: false,
+    viewTracking: false,
+    viewRegistru: false,
+    chatCreateGroup: false,
+    chatManageMembers: false,
+    chatSendTripOrder: false,
+    chatDeleteMessage: false,
   }
 };
 
@@ -453,6 +471,7 @@ async function initDb() {
       { name: 'Administrator',  color: '#ff7a3d', perms: defaultPermissions.admin,       is_system: true },
       { name: 'Dispecer',       color: '#3b82f6', perms: defaultPermissions.dispatcher,   is_system: true },
       { name: 'Contabil',       color: '#8b5cf6', perms: defaultPermissions.contabil,     is_system: true },
+      { name: 'Camion',         color: '#22c55e', perms: defaultPermissions.camion,       is_system: true },
     ];
     for (const org of orgs.rows) {
       for (const r of defaultRoles) {

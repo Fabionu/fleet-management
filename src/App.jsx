@@ -88,14 +88,16 @@ function App() {
         if (sock.connected) setSocketConnected(true);
       }
       setIsAuthenticated(true);
+      const role = storage.getItem('role');
       setUser({
         username,
-        role: storage.getItem('role'),
+        role,
         permissions: JSON.parse(storage.getItem('permissions') || '{}'),
         organizationName: storage.getItem('organizationName'),
         first_name: storage.getItem('firstName') || '',
         last_name: storage.getItem('lastName') || '',
       });
+      if (role === 'camion') setCurrentPage('chat');
       setTrackingView(localStorage.getItem(`trackingView_${username}`) || 'card');
     }
 
@@ -124,6 +126,7 @@ function App() {
       first_name: data.first_name || '',
       last_name: data.last_name || '',
     });
+    if (data.role === 'camion') setCurrentPage('chat');
     setTrackingView(localStorage.getItem(`trackingView_${data.username}`) || 'card');
 
     // Conectează socket după login
