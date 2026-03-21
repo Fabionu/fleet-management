@@ -1716,7 +1716,8 @@ export default function ChatPanel({ user, currentPage }) {
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
             </div>
-            {!dmCollapsed && filteredUsers.map(u => {
+            <div style={{ overflow: 'hidden', maxHeight: dmCollapsed ? '0px' : '2000px', opacity: dmCollapsed ? 0 : 1, transition: 'max-height 0.32s ease, opacity 0.22s ease' }}>
+            {filteredUsers.map(u => {
               const last = lastMessages[u.username], unread = unreadCounts[u.username] || 0, online = isOnline(u.username);
               const isActiveDm = peer?.username === u.username && view === 'chat';
               const isMutedDm  = muted.dm.includes(u.username);
@@ -1759,6 +1760,7 @@ export default function ChatPanel({ user, currentPage }) {
                 </div>
               );
             })}
+            </div>
 
             {/* Groups section */}
             <div onClick={toggleGrps}
@@ -1773,7 +1775,8 @@ export default function ChatPanel({ user, currentPage }) {
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
             </div>
-            {!grpsCollapsed && filteredGroups.map(g => {
+            <div style={{ overflow: 'hidden', maxHeight: grpsCollapsed ? '0px' : '2000px', opacity: grpsCollapsed ? 0 : 1, transition: 'max-height 0.32s ease, opacity 0.22s ease' }}>
+            {filteredGroups.map(g => {
               const unread = groupUnread[g.id] || 0;
               const lastMsg = (groupMessages[g.id] || []).at(-1) || g._lastMsg;
               const isActiveGrp = activeGroup?.id === g.id && ['group-chat','group-members','group-add-members'].includes(view);
@@ -1814,6 +1817,7 @@ export default function ChatPanel({ user, currentPage }) {
                 </div>
               );
             })}
+            </div>
             </>}
 
           </div>
@@ -2469,10 +2473,11 @@ export default function ChatPanel({ user, currentPage }) {
                 </svg>
               </div>
 
-              {!dmCollapsed && filteredUsers.length === 0 && !search && (
+              <div style={{ overflow: 'hidden', maxHeight: dmCollapsed ? '0px' : '5000px', opacity: dmCollapsed ? 0 : 1, transition: 'max-height 0.32s ease, opacity 0.22s ease' }}>
+              {filteredUsers.length === 0 && !search && (
                 <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 13, padding: '12px 14px' }}>Niciun coleg în organizație.</div>
               )}
-              {!dmCollapsed && filteredUsers.map((u, i) => {
+              {filteredUsers.map((u, i) => {
                 const last = lastMessages[u.username], unread = unreadCounts[u.username] || 0, online = isOnline(u.username);
                 const isMutedDm = muted.dm.includes(u.username);
                 const showMuteBtn = hoveredDm === u.username || isMutedDm;
@@ -2521,10 +2526,11 @@ export default function ChatPanel({ user, currentPage }) {
                   </div>
                 );
               })}
+              </div>
 
               {/* Groups section */}
               {(!search || filteredGroups.length > 0) && (
-                <div style={{ borderTop: filteredUsers.length > 0 && !dmCollapsed ? '1px solid var(--gray-2)' : 'none' }}>
+                <div style={{ borderTop: filteredUsers.length > 0 ? '1px solid var(--gray-2)' : 'none' }}>
                   <div onClick={toggleGrps}
                     style={{ padding: '8px 14px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
@@ -2552,12 +2558,13 @@ export default function ChatPanel({ user, currentPage }) {
                 </div>
               )}
 
-              {!grpsCollapsed && filteredGroups.length === 0 && !search && (
+              <div style={{ overflow: 'hidden', maxHeight: grpsCollapsed ? '0px' : '5000px', opacity: grpsCollapsed ? 0 : 1, transition: 'max-height 0.32s ease, opacity 0.22s ease' }}>
+              {filteredGroups.length === 0 && !search && (
                 <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 12, padding: '10px 14px 16px', fontStyle: 'italic' }}>
                   {isAdmin ? 'Niciun grup creat.' : 'Nu ești în niciun grup.'}
                 </div>
               )}
-              {!grpsCollapsed && filteredGroups.map((g, i) => {
+              {filteredGroups.map((g, i) => {
                 const unread = groupUnread[g.id] || 0, lastMsg = g._lastMsg;
                 const isMutedGrp = muted.group.includes(g.id);
                 const showMuteGrp = hoveredGroup === g.id || isMutedGrp;
@@ -2603,6 +2610,7 @@ export default function ChatPanel({ user, currentPage }) {
                   </div>
                 );
               })}
+              </div>
             </div>
           )}
 

@@ -52,7 +52,18 @@
       "Bash(npm install recharts)",
       "Bash(npm install:*)",
       "Bash(npx tsc:*)",
-      "Bash(node -e \"const fs = require\\(''expo-file-system''\\); console.log\\(Object.keys\\(fs\\).filter\\(k => k.includes\\(''cache''\\) || k.includes\\(''Cache''\\) || k.includes\\(''Encoding''\\)\\).join\\(''\\\\n''\\)\\)\")"
+      "Bash(node -e \"const fs = require\\(''expo-file-system''\\); console.log\\(Object.keys\\(fs\\).filter\\(k => k.includes\\(''cache''\\) || k.includes\\(''Cache''\\) || k.includes\\(''Encoding''\\)\\).join\\(''\\\\n''\\)\\)\")",
+      "Bash(npx expo:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(netstat -ano)",
+      "Bash(findstr :8081)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(Get-Process node:*)",
+      "Bash(Stop-Process -Force)",
+      "Bash(Write-Host \"done\")",
+      "Bash(timeout /t 12 /nobreak)",
+      "Read(//tmp/**)",
+      "Read(//c/Users/Home/AppData/Local/Temp/**)"
     ]
   }
 }
