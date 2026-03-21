@@ -153,9 +153,25 @@ function requirePermission(perm) {
 // Toți userii din organizație (pentru lista de contacte)
 app.get('/api/chat/users', authMiddleware, async (req, res) => {
   try {
+    const me = req.user.username;
+    const orgId = req.user.organization_id;
     const result = await pool.query(
-      `SELECT username, role, first_name, last_name FROM users WHERE organization_id = $1 AND username != $2 ORDER BY username`,
-      [req.user.organization_id, req.user.username]
+      `SELECT u.username, u.role, u.first_name, u.last_name,
+         lm.message    AS last_message,
+         lm.created_at AS last_message_at
+       FROM users u
+       LEFT JOIN LATERAL (
+         SELECT message, created_at
+         FROM chat_messages
+         WHERE ((username = $1 AND receiver_username = u.username)
+             OR (username = u.username AND receiver_username = $1))
+           AND is_deleted = FALSE
+         ORDER BY created_at DESC
+         LIMIT 1
+       ) lm ON true
+       WHERE u.organization_id = $2 AND u.username != $1
+       ORDER BY COALESCE(lm.created_at, '1970-01-01') DESC, u.username`,
+      [me, orgId]
     );
     res.json(result.rows);
   } catch (e) { res.status(500).json({ error: e.message }); }

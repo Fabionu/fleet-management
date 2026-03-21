@@ -507,6 +507,7 @@ export default function ChatPanel({ user, currentPage }) {
 
   const [typingUsers, setTypingUsers]       = useState({});
   const typingTimers                        = useRef({});
+  const stopTypingTimer                     = useRef(null);
   const [replyTo, setReplyTo]               = useState(null);
   const [pinnedMsg, setPinnedMsg]           = useState(null);
   const [hoveredMsgId, setHoveredMsgId]     = useState(null);
@@ -1026,12 +1027,24 @@ export default function ChatPanel({ user, currentPage }) {
     } else { setMentionQuery(null); }
     // Emit typing indicator
     const socket = getSocket();
-    if (socket && val.trim()) {
-      if (view === 'group-chat' && activeGroup) {
-        socket.emit('typing', { groupId: activeGroup.id });
-      } else if (view === 'chat' && peer) {
-        socket.emit('typing', { to: peer.username });
+    if (socket) {
+      if (val.trim()) {
+        if (view === 'group-chat' && activeGroup) {
+          socket.emit('typing', { groupId: activeGroup.id });
+        } else if (view === 'chat' && peer) {
+          socket.emit('typing', { to: peer.username });
+        }
       }
+      // Emit stop_typing după 2s de pauză (sau imediat dacă input e gol)
+      if (stopTypingTimer.current) clearTimeout(stopTypingTimer.current);
+      const delay = val.trim() ? 2000 : 0;
+      stopTypingTimer.current = setTimeout(() => {
+        if (view === 'group-chat' && activeGroup) {
+          socket.emit('stop_typing', { groupId: activeGroup.id });
+        } else if (view === 'chat' && peer) {
+          socket.emit('stop_typing', { to: peer.username });
+        }
+      }, delay);
     }
   };
 
@@ -1053,6 +1066,13 @@ export default function ChatPanel({ user, currentPage }) {
     const msg = inputVal.trim();
     if (!msg) return;
     setInputVal(''); setMentionQuery(null);
+    // Stop typing imediat la trimitere
+    if (stopTypingTimer.current) clearTimeout(stopTypingTimer.current);
+    const socket = getSocket();
+    if (socket) {
+      if (view === 'group-chat' && activeGroup) socket.emit('stop_typing', { groupId: activeGroup.id });
+      else if (view === 'chat' && peer) socket.emit('stop_typing', { to: peer.username });
+    }
     if (view === 'group-chat' && activeGroup) {
       try {
         await axios.post(`/api/chat/groups/${activeGroup.id}/messages`, {
