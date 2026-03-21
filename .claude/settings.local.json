@@ -50,7 +50,9 @@
       "Bash(git --version)",
       "Bash(node --input-type=module --eval \"import\\(''''./src/components/ChatPanel.jsx''''\\).catch\\(e => console.error\\(e.message\\)\\)\")",
       "Bash(npm install recharts)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(node -e \"const fs = require\\(''expo-file-system''\\); console.log\\(Object.keys\\(fs\\).filter\\(k => k.includes\\(''cache''\\) || k.includes\\(''Cache''\\) || k.includes\\(''Encoding''\\)\\).join\\(''\\\\n''\\)\\)\")"
     ]
   }
 }
