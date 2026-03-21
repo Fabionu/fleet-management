@@ -591,7 +591,7 @@ export default function ChatPanel({ user, currentPage }) {
     const idx = text.toLowerCase().indexOf(query.toLowerCase());
     if (idx === -1) return text;
     return (
-      <>{text.slice(0, idx)}<mark style={{ background: 'rgba(255,122,61,0.3)', color: 'inherit', borderRadius: 2, padding: '0 1px' }}>{text.slice(idx, idx + query.length)}</mark>{text.slice(idx + query.length)}</>
+      <>{text.slice(0, idx)}<span style={{ background: 'rgba(255,122,61,0.28)', color: '#ff7a3d', fontWeight: 600, borderRadius: 2, padding: '0 2px' }}>{text.slice(idx, idx + query.length)}</span>{text.slice(idx + query.length)}</>
     );
   };
 
@@ -1629,8 +1629,8 @@ export default function ChatPanel({ user, currentPage }) {
                           return (
                             <div key={r.id} onClick={() => openGlobalResult(r)}
                               style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 14px', cursor: 'pointer', transition: 'background 0.12s' }}
-                              onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
-                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                              onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'var(--surface)'}>
                               <div style={{ width: 34, height: 34, borderRadius: '50%', background: avatarColor(r.peer), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 14, flexShrink: 0, marginTop: 1 }}>
                                 {(peerU?.first_name || r.peer).charAt(0).toUpperCase()}
                               </div>
@@ -1657,8 +1657,8 @@ export default function ChatPanel({ user, currentPage }) {
                         {globalResults.groups.map(r => (
                           <div key={r.id} onClick={() => openGlobalResult(r)}
                             style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 14px', cursor: 'pointer', transition: 'background 0.12s' }}
-                            onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
-                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'var(--surface)'}>
                             <div style={{ width: 34, height: 34, borderRadius: '50%', background: groupColor(r.group_name), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                               <GroupIcon size={15} color="white" />
                             </div>
