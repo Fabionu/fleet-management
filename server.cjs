@@ -97,6 +97,16 @@ io.on('connection', async (socket) => {
     }
   });
 
+  socket.on('stop_typing', ({ to, groupId }) => {
+    const uname = socket.user?.username;
+    if (!uname) return;
+    if (groupId) {
+      socket.to(`group_${groupId}_org_${orgId}`).emit('user_stop_typing', { username: uname, groupId });
+    } else if (to) {
+      io.to(`user_${to}_org_${orgId}`).emit('user_stop_typing', { username: uname });
+    }
+  });
+
   socket.on('disconnect', () => {
     console.log(`⚡ Socket: ${username} deconectat`);
     const orgMap = onlineUsers.get(orgId);
