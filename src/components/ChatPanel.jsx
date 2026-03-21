@@ -527,6 +527,13 @@ export default function ChatPanel({ user, currentPage }) {
   const searchInputRef                      = useRef(null);
   const EDIT_LIMIT_MS = 5 * 60 * 1000;
 
+  const [globalSearch, setGlobalSearch]       = useState(false);
+  const [globalQuery, setGlobalQuery]         = useState('');
+  const [globalResults, setGlobalResults]     = useState({ dm: [], groups: [] });
+  const [globalSearching, setGlobalSearching] = useState(false);
+  const globalSearchRef  = useRef(null);
+  const globalSearchTimer = useRef(null);
+
   const mutedKey = `chat_muted_${user.username}`;
   const [muted, setMuted] = useState(() => {
     try { return JSON.parse(localStorage.getItem(mutedKey)) || { dm: [], group: [] }; } catch { return { dm: [], group: [] }; }
@@ -559,6 +566,50 @@ export default function ChatPanel({ user, currentPage }) {
   }, [orgUsers]);
 
   const dn = (username) => displayNames[username] || username;
+
+  // ── Global search debounce ─────────────────────────────────
+  useEffect(() => {
+    clearTimeout(globalSearchTimer.current);
+    if (globalQuery.trim().length < 2) {
+      setGlobalResults({ dm: [], groups: [] });
+      setGlobalSearching(false);
+      return;
+    }
+    setGlobalSearching(true);
+    globalSearchTimer.current = setTimeout(async () => {
+      try {
+        const res = await axios.get(`/api/chat/search?q=${encodeURIComponent(globalQuery.trim())}`, { headers });
+        setGlobalResults(res.data);
+      } catch {}
+      setGlobalSearching(false);
+    }, 300);
+    return () => clearTimeout(globalSearchTimer.current);
+  }, [globalQuery]);
+
+  const highlightMatch = (text, query) => {
+    if (!text || !query) return text;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return text;
+    return (
+      <>{text.slice(0, idx)}<mark style={{ background: 'rgba(255,122,61,0.3)', color: 'inherit', borderRadius: 2, padding: '0 1px' }}>{text.slice(idx, idx + query.length)}</mark>{text.slice(idx + query.length)}</>
+    );
+  };
+
+  const openGlobalResult = (result) => {
+    if (result.type === 'dm') {
+      const peerObj = orgUsers.find(u => u.username === result.peer);
+      if (peerObj) openConversation(peerObj);
+    } else {
+      const grp = groups.find(g => g.id === result.group_id);
+      if (grp) openGroupChat(grp);
+    }
+    setGlobalSearch(false);
+    setGlobalQuery('');
+    setTimeout(() => {
+      setShowSearch(true);
+      setSearchQuery(result.message.slice(0, 30));
+    }, 400);
+  };
 
   // ── Load initial data + socket listeners ──────────────────
   useEffect(() => {
@@ -1469,44 +1520,169 @@ export default function ChatPanel({ user, currentPage }) {
         <div style={{ width: 300, borderRight: '1px solid var(--gray-2)', display: 'flex', flexDirection: 'column', background: 'var(--surface)', flexShrink: 0 }}>
           {/* Header */}
           <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid var(--gray-2)', flexShrink: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--black)' }}>Chat</span>
-              {canChat('chatCreateGroup') && (
-                <button onClick={() => { setNewGroupName(''); setNewGroupMembers([]); setView('create-group'); }}
-                  title="Grup nou"
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '5px 7px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'all 0.15s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                    <circle cx="9" cy="7" r="4"/>
-                    <line x1="19" y1="8" x2="19" y2="14"/>
-                    <line x1="22" y1="11" x2="16" y2="11"/>
+            {globalSearch ? (
+              /* ── Global search mode ── */
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button onClick={() => { setGlobalSearch(false); setGlobalQuery(''); setGlobalResults({ dm: [], groups: [] }); }}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 2px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                  onMouseEnter={e => e.currentTarget.style.color = 'var(--black)'}
+                  onMouseLeave={e => e.currentTarget.style.color = 'var(--gray-4)'}>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gray-4)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                   </svg>
-                </button>
-              )}
-            </div>
-            {/* Search */}
-            <div style={{ position: 'relative' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gray-4)" strokeWidth="2" style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <input ref={searchRef} type="text" value={search} onChange={e => setSearch(e.target.value)}
-                placeholder="Caută..."
-                style={{ width: '100%', boxSizing: 'border-box', padding: '7px 30px 7px 28px', border: '1px solid var(--gray-3)', borderRadius: 8, fontSize: 13, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.2s' }}
-                onFocus={e => e.target.style.borderColor = '#ff7a3d'}
-                onBlur={e => e.target.style.borderColor = 'var(--gray-3)'}
-              />
-              {search && (
-                <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 2, display: 'flex' }}>
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                </button>
-              )}
-            </div>
+                  <input ref={globalSearchRef} type="text" value={globalQuery} onChange={e => setGlobalQuery(e.target.value)}
+                    placeholder="Caută în toate mesajele..."
+                    autoFocus
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '7px 28px 7px 28px', border: '1px solid #ff7a3d', borderRadius: 8, fontSize: 13, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit' }}
+                  />
+                  {globalQuery && (
+                    <button onClick={() => setGlobalQuery('')} style={{ position: 'absolute', right: 7, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 2, display: 'flex' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* ── Normal mode ── */
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--black)' }}>Chat</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <button onClick={() => { setGlobalSearch(true); setGlobalQuery(''); setGlobalResults({ dm: [], groups: [] }); setTimeout(() => globalSearchRef.current?.focus(), 50); }}
+                      title="Caută în toate mesajele"
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '5px 7px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'all 0.15s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                      </svg>
+                    </button>
+                    {canChat('chatCreateGroup') && (
+                      <button onClick={() => { setNewGroupName(''); setNewGroupMembers([]); setView('create-group'); }}
+                        title="Grup nou"
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '5px 7px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'all 0.15s' }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                          <circle cx="9" cy="7" r="4"/>
+                          <line x1="19" y1="8" x2="19" y2="14"/>
+                          <line x1="22" y1="11" x2="16" y2="11"/>
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {/* Contact filter search */}
+                <div style={{ position: 'relative' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gray-4)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: 9, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  <input ref={searchRef} type="text" value={search} onChange={e => setSearch(e.target.value)}
+                    placeholder="Caută contact..."
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '7px 30px 7px 28px', border: '1px solid var(--gray-3)', borderRadius: 8, fontSize: 13, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.2s' }}
+                    onFocus={e => e.target.style.borderColor = '#ff7a3d'}
+                    onBlur={e => e.target.style.borderColor = 'var(--gray-3)'}
+                  />
+                  {search && (
+                    <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 2, display: 'flex' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Contacts scroll */}
+          {/* Contacts scroll / Global search results */}
           <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto' }}>
+
+            {/* ── Global search results ── */}
+            {globalSearch && (
+              <div>
+                {globalQuery.trim().length < 2 ? (
+                  <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--gray-4)' }}>
+                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block', margin: '0 auto 10px', opacity: 0.3 }}>
+                      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <div style={{ fontSize: 13 }}>Scrie minim 2 caractere</div>
+                  </div>
+                ) : globalSearching ? (
+                  <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--gray-4)', fontSize: 13 }}>Se caută...</div>
+                ) : globalResults.dm.length === 0 && globalResults.groups.length === 0 ? (
+                  <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--gray-4)' }}>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>Niciun rezultat</div>
+                    <div style={{ fontSize: 12, marginTop: 4 }}>pentru „{globalQuery}"</div>
+                  </div>
+                ) : (
+                  <>
+                    {globalResults.dm.length > 0 && (
+                      <>
+                        <div style={{ padding: '8px 14px 4px', fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gray-4)' }}>
+                          Mesaje directe · {globalResults.dm.length}
+                        </div>
+                        {globalResults.dm.map(r => {
+                          const peerU = orgUsers.find(u => u.username === r.peer);
+                          return (
+                            <div key={r.id} onClick={() => openGlobalResult(r)}
+                              style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 14px', cursor: 'pointer', transition: 'background 0.12s' }}
+                              onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                              <div style={{ width: 34, height: 34, borderRadius: '50%', background: avatarColor(r.peer), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 14, flexShrink: 0, marginTop: 1 }}>
+                                {(peerU?.first_name || r.peer).charAt(0).toUpperCase()}
+                              </div>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--black)' }}>{dn(r.peer)}</span>
+                                  <span style={{ fontSize: 10, color: 'var(--gray-4)', flexShrink: 0, marginLeft: 6 }}>{formatTime(r.created_at)}</span>
+                                </div>
+                                <div style={{ fontSize: 12, color: 'var(--gray-4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  {r.username === user.username && <span style={{ color: 'var(--gray-3)', marginRight: 3 }}>Tu:</span>}
+                                  {highlightMatch(r.message, globalQuery)}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </>
+                    )}
+                    {globalResults.groups.length > 0 && (
+                      <>
+                        <div style={{ padding: '8px 14px 4px', fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gray-4)', marginTop: globalResults.dm.length > 0 ? 4 : 0 }}>
+                          Grupuri · {globalResults.groups.length}
+                        </div>
+                        {globalResults.groups.map(r => (
+                          <div key={r.id} onClick={() => openGlobalResult(r)}
+                            style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '9px 14px', cursor: 'pointer', transition: 'background 0.12s' }}
+                            onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            <div style={{ width: 34, height: 34, borderRadius: '50%', background: groupColor(r.group_name), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                              <GroupIcon size={15} color="white" />
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--black)' }}>{r.group_name}</span>
+                                <span style={{ fontSize: 10, color: 'var(--gray-4)', flexShrink: 0, marginLeft: 6 }}>{formatTime(r.created_at)}</span>
+                              </div>
+                              <div style={{ fontSize: 12, color: 'var(--gray-4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                <span style={{ color: 'var(--gray-3)', marginRight: 3 }}>{r.username === user.username ? 'Tu' : r.username}:</span>
+                                {highlightMatch(r.message, globalQuery)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ── Normal contacts list ── */}
+            {!globalSearch && <>
             {/* DM section */}
             <div onClick={toggleDm}
               style={{ padding: '8px 14px 5px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }}
@@ -1618,6 +1794,8 @@ export default function ChatPanel({ user, currentPage }) {
                 </div>
               );
             })}
+            </>}
+
           </div>
         </div>
 

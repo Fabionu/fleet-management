@@ -815,6 +815,48 @@ app.put('/api/chat/groups/:gid/messages/:id/pin', authMiddleware, async (req, re
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// ── Căutare globală mesaje ───────────────────────────────────
+app.get('/api/chat/search', authMiddleware, async (req, res) => {
+  try {
+    const me = req.user.username;
+    const org = req.user.organization_id;
+    const q = (req.query.q || '').trim();
+    if (q.length < 2) return res.json({ dm: [], groups: [] });
+
+    const pattern = `%${q}%`;
+
+    const dmRes = await pool.query(
+      `SELECT id, message, username, receiver_username, created_at,
+              'dm' AS type,
+              CASE WHEN username=$1 THEN receiver_username ELSE username END AS peer
+       FROM chat_messages
+       WHERE organization_id=$2
+         AND (username=$1 OR receiver_username=$1)
+         AND is_deleted=FALSE
+         AND (message_type IS NULL OR message_type='text')
+         AND message ILIKE $3
+       ORDER BY created_at DESC LIMIT 20`,
+      [me, org, pattern]
+    );
+
+    const grpRes = await pool.query(
+      `SELECT gm.id, gm.message, gm.username, gm.group_id, gm.created_at,
+              'group' AS type, g.name AS group_name
+       FROM chat_group_messages gm
+       JOIN chat_group_members cgm ON cgm.group_id=gm.group_id AND cgm.username=$1
+       JOIN chat_groups g ON g.id=gm.group_id
+       WHERE gm.organization_id=$2
+         AND gm.is_deleted=FALSE
+         AND (gm.message_type IS NULL OR gm.message_type='text')
+         AND gm.message ILIKE $3
+       ORDER BY gm.created_at DESC LIMIT 20`,
+      [me, org, pattern]
+    );
+
+    res.json({ dm: dmRes.rows, groups: grpRes.rows });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // ── AUTH ────────────────────────────────────────────────────
 app.post('/api/login', async (req, res) => {
   try {
