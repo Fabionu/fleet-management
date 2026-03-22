@@ -4,7 +4,8 @@ import { DRIVER_DOC_TYPES, TRUCK_DOC_TYPES } from '../constants/docTypes';
 
 // ── Constante ──────────────────────────────────────────────
 const PERM_LABELS = {
-  editVehicleInfo:  'Editare info vehicul',
+  editVehicleInfo:     'Editare info vehicul',
+  editWeekendHistory:  'Editare istoric pauze săptămânale',
   toggleAmazon:     'Toggle Amazon',
   addTrip:          'Adăugare cursă',
   editTrip:         'Editare cursă',
@@ -20,8 +21,9 @@ const PERM_GROUPS = [
     label: 'Vehicule',
     icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>,
     items: [
-      { key: 'editVehicleInfo', label: 'Editare info vehicul',   desc: 'Modifică firmă, locație, dată și coordonate pe camion', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> },
-      { key: 'toggleAmazon',    label: 'Toggle Amazon',          desc: 'Activează / dezactivează contul Amazon pe un camion',    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> },
+      { key: 'editVehicleInfo',    label: 'Editare info vehicul',              desc: 'Modifică firmă, locație, dată și coordonate pe camion',           icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> },
+      { key: 'editWeekendHistory', label: 'Editare istoric pauze săptămânale', desc: 'Modifică sau șterge înregistrări din istoricul pauzelor săptămânale', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+      { key: 'toggleAmazon',       label: 'Toggle Amazon',                     desc: 'Activează / dezactivează contul Amazon pe un camion',              icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> },
       { key: 'clearTruckData',  label: 'Golire date camion',     desc: 'Resetează statusul și toate datele active ale unui camion', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg> },
       { key: 'deleteTruckRow',  label: 'Ștergere rând camion',   desc: 'Elimină definitiv un camion din lista de tracking',       icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> },
     ],
@@ -72,9 +74,9 @@ const PERM_GROUPS = [
 ];
 
 const DEFAULT_PERMISSIONS = {
-  admin:      { editVehicleInfo:true,  toggleAmazon:true,  addTrip:true,  editTrip:true,  deleteTrip:true,  clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:true,  accessAdmin:true,  accessTrucks:true,  accessDrivers:true,  accessTrailers:true,  accessUsers:true,  accessLogs:true,  viewTracking:true,  viewRegistru:true,  viewChat:true,  viewReports:true,  chatCreateGroup:true,  chatManageMembers:true,  chatSendTripOrder:true,  chatDeleteMessage:true  },
-  dispatcher: { editVehicleInfo:false, toggleAmazon:false, addTrip:true,  editTrip:true,  deleteTrip:false, clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:false, accessAdmin:false, accessTrucks:false, accessDrivers:false, accessTrailers:false, accessUsers:false, accessLogs:false, viewTracking:true,  viewRegistru:true,  viewChat:true,  viewReports:false, chatCreateGroup:true,  chatManageMembers:true,  chatSendTripOrder:true,  chatDeleteMessage:true  },
-  contabil:   { editVehicleInfo:false, toggleAmazon:false, addTrip:false, editTrip:true,  deleteTrip:false, clearTruckData:false, deleteTruckRow:false, addNextTrip:false, markInvoiced:true,  accessAdmin:false, accessTrucks:false, accessDrivers:false, accessTrailers:false, accessUsers:false, accessLogs:false, viewTracking:true,  viewRegistru:true,  viewChat:true,  viewReports:false, chatCreateGroup:false, chatManageMembers:false, chatSendTripOrder:false, chatDeleteMessage:true  },
+  admin:      { editVehicleInfo:true,  editWeekendHistory:true,  toggleAmazon:true,  addTrip:true,  editTrip:true,  deleteTrip:true,  clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:true,  accessAdmin:true,  accessTrucks:true,  accessDrivers:true,  accessTrailers:true,  accessUsers:true,  accessLogs:true,  viewTracking:true,  viewRegistru:true,  viewChat:true,  viewReports:true,  chatCreateGroup:true,  chatManageMembers:true,  chatSendTripOrder:true,  chatDeleteMessage:true  },
+  dispatcher: { editVehicleInfo:false, editWeekendHistory:false, toggleAmazon:false, addTrip:true,  editTrip:true,  deleteTrip:false, clearTruckData:true,  deleteTruckRow:true,  addNextTrip:true,  markInvoiced:false, accessAdmin:false, accessTrucks:false, accessDrivers:false, accessTrailers:false, accessUsers:false, accessLogs:false, viewTracking:true,  viewRegistru:true,  viewChat:true,  viewReports:false, chatCreateGroup:true,  chatManageMembers:true,  chatSendTripOrder:true,  chatDeleteMessage:true  },
+  contabil:   { editVehicleInfo:false, editWeekendHistory:false, toggleAmazon:false, addTrip:false, editTrip:true,  deleteTrip:false, clearTruckData:false, deleteTruckRow:false, addNextTrip:false, markInvoiced:true,  accessAdmin:false, accessTrucks:false, accessDrivers:false, accessTrailers:false, accessUsers:false, accessLogs:false, viewTracking:true,  viewRegistru:true,  viewChat:true,  viewReports:false, chatCreateGroup:false, chatManageMembers:false, chatSendTripOrder:false, chatDeleteMessage:true  },
 };
 
 const DOC_TYPES = DRIVER_DOC_TYPES;
