@@ -500,6 +500,22 @@ async function initDb() {
     // Migration: add completed column to trips
     await client.query(`ALTER TABLE trips ADD COLUMN IF NOT EXISTS completed INTEGER DEFAULT 0`);
 
+    // Migration: completează permisiunile lipsă pentru utilizatorii existenți
+    // (când se adaugă permisiuni noi în defaultPermissions, utilizatorii existenți le primesc automat)
+    const usersResult = await client.query('SELECT id, role, permissions FROM users');
+    for (const u of usersResult.rows) {
+      const roleDefaults = defaultPermissions[u.role] || defaultPermissions.dispatcher;
+      let stored = {};
+      try { stored = JSON.parse(u.permissions || '{}'); } catch {}
+      let changed = false;
+      for (const [key, val] of Object.entries(roleDefaults)) {
+        if (!(key in stored)) { stored[key] = val; changed = true; }
+      }
+      if (changed) {
+        await client.query('UPDATE users SET permissions=$1 WHERE id=$2', [JSON.stringify(stored), u.id]);
+      }
+    }
+
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {
     client.release();
