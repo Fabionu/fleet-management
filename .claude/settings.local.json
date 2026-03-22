@@ -63,7 +63,16 @@
       "Bash(Write-Host \"done\")",
       "Bash(timeout /t 12 /nobreak)",
       "Read(//tmp/**)",
-      "Read(//c/Users/Home/AppData/Local/Temp/**)"
+      "Read(//c/Users/Home/AppData/Local/Temp/**)",
+      "Bash(node -e \"const fs=require\\(''''fs''''\\); const pkg=JSON.parse\\(fs.readFileSync\\(''''node_modules/expo-file-system/package.json'''',''''utf8''''\\)\\); console.log\\(JSON.stringify\\(pkg.exports||{},null,2\\)\\)\")",
+      "Bash(dir \"C:\\\\Users\\\\Home\\\\Desktop\\\\fleet-driver-app\\\\node_modules\\\\expo-file-system\")",
+      "Bash(dir \"C:\\\\Users\\\\Home\\\\Desktop\\\\fleet-driver-app\\\\node_modules\\\\expo-file-system\\\\build\")",
+      "Bash(dir \"C:\\\\Users\\\\Home\\\\Desktop\\\\fleet-driver-app\\\\node_modules\\\\expo-file-system\\\\build\\\\legacy\")",
+      "Bash(dir \"C:\\\\Users\\\\Home\\\\Desktop\\\\fleet-driver-app\\\\node_modules\\\\expo-file-system\\\\src\\\\legacy\")",
+      "Bash(dir \"C:\\\\Users\\\\Home\\\\Desktop\\\\fleet-driver-app\\\\app\")",
+      "Bash(dir \"C:\\\\Users\\\\Home\\\\Desktop\\\\fleet-driver-app\" /b)",
+      "Bash(rm -rf node_modules/.cache)",
+      "Bash(rm -rf .expo)"
     ]
   }
 }

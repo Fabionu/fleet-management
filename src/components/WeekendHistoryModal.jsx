@@ -78,22 +78,27 @@ function WeekendHistoryModal({ truck, onClose, onSave }) {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {/* Duration toggle */}
                     <div style={{ display: 'flex', flex: 1, gap: '8px' }}>
-                      {['24H', '45H'].map(dur => (
+                      {[
+                        { val: '24H', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> },
+                        { val: '45H', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg> },
+                      ].map(({ val, icon }) => (
                         <button
-                          key={dur}
+                          key={val}
                           type="button"
-                          onClick={() => setDuration(idx, dur)}
+                          onClick={() => setDuration(idx, val)}
                           style={{
                             flex: 1, padding: '9px 0', borderRadius: '8px', border: '1px solid',
-                            borderColor: entry.duration === dur ? '#ff7a3d' : 'var(--gray-3)',
-                            background: entry.duration === dur ? '#ff7a3d' : 'var(--bg-page)',
-                            color: entry.duration === dur ? 'white' : 'var(--black)',
-                            fontWeight: 700, fontSize: '14px', cursor: 'pointer',
+                            borderColor: entry.duration === val ? '#ff7a3d' : 'var(--gray-3)',
+                            background: entry.duration === val ? '#ff7a3d' : 'var(--bg-page)',
+                            color: entry.duration === val ? 'white' : 'var(--black)',
+                            fontWeight: 700, fontSize: '13px', cursor: 'pointer',
                             transition: 'all 0.15s',
                             fontFamily: "'SF Pro Display', -apple-system, sans-serif",
+                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
                           }}
                         >
-                          {dur}
+                          {icon}
+                          {val}
                         </button>
                       ))}
                     </div>
@@ -102,13 +107,15 @@ function WeekendHistoryModal({ truck, onClose, onSave }) {
                       type="button"
                       onClick={() => deleteEntry(idx)}
                       title="Șterge înregistrarea"
-                      style={{ padding: '9px 11px', borderRadius: '8px', border: '1px solid var(--gray-3)', background: 'transparent', color: 'var(--red)', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.15s', flexShrink: 0 }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
+                      style={{ padding: '9px 11px', borderRadius: '8px', border: '1px solid var(--gray-3)', background: 'transparent', color: 'var(--gray-4)', cursor: 'pointer', display: 'flex', alignItems: 'center', transition: 'all 0.15s', flexShrink: 0 }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.borderColor = 'var(--red)'; e.currentTarget.style.color = 'var(--red)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; e.currentTarget.style.color = 'var(--gray-4)'; }}
                     >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="3 6 5 6 21 6"/>
                         <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        <line x1="10" y1="11" x2="10" y2="17"/>
+                        <line x1="14" y1="11" x2="14" y2="17"/>
                       </svg>
                     </button>
                   </div>
