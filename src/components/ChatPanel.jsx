@@ -547,6 +547,54 @@ export default function ChatPanel({ user, currentPage }) {
   const peerRef         = useRef(null);
   const activeGroupRef  = useRef(null);
   const messagesEndRef  = useRef(null);
+
+  // ── Resize ─────────────────────────────────────────────────
+  const PANEL_MIN_W = 300;
+  const PANEL_MAX_W = 680;
+  const PANEL_MIN_H = 420;
+  const PANEL_MAX_H = 860;
+  const [panelSize, setPanelSize] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('chatPanelSize'));
+      if (saved?.width && saved?.height) return saved;
+    } catch {}
+    return { width: 400, height: 580 };
+  });
+  const resizeRef   = useRef(null); // { dir, startX, startY, startW, startH }
+
+  useEffect(() => {
+    const onMouseMove = (e) => {
+      const r = resizeRef.current;
+      if (!r) return;
+      const dx = r.startX - e.clientX; // panel expands leftward
+      const dy = r.startY - e.clientY; // panel expands upward
+      setPanelSize(prev => {
+        const w = (r.dir === 'left' || r.dir === 'corner')
+          ? Math.min(PANEL_MAX_W, Math.max(PANEL_MIN_W, r.startW + dx))
+          : prev.width;
+        const h = (r.dir === 'top' || r.dir === 'corner')
+          ? Math.min(PANEL_MAX_H, Math.max(PANEL_MIN_H, r.startH + dy))
+          : prev.height;
+        return { width: w, height: h };
+      });
+    };
+    const onMouseUp = () => {
+      if (!resizeRef.current) return;
+      resizeRef.current = null;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      setPanelSize(prev => {
+        localStorage.setItem('chatPanelSize', JSON.stringify(prev));
+        return prev;
+      });
+    };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []);
   const inputRef        = useRef(null);
   const searchRef       = useRef(null);
   const newGroupNameRef = useRef(null);
@@ -2236,7 +2284,27 @@ export default function ChatPanel({ user, currentPage }) {
 
       {/* Panel */}
       {open && (
-        <div style={{ width: 400, height: 580, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: 16, boxShadow: '0 12px 48px rgba(0,0,0,0.22)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", animation: isClosing ? 'chatPanelOut 0.2s ease forwards' : 'chatPanelIn 0.28s cubic-bezier(0.34,1.56,0.64,1)' }}>
+        <div style={{ width: panelSize.width, height: panelSize.height, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: 16, boxShadow: '0 12px 48px rgba(0,0,0,0.22)', display: 'flex', flexDirection: 'column', overflow: 'hidden', fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif", animation: isClosing ? 'chatPanelOut 0.2s ease forwards' : 'chatPanelIn 0.28s cubic-bezier(0.34,1.56,0.64,1)', position: 'relative' }}>
+
+          {/* ── Resize handles ── */}
+          {/* Left edge */}
+          <div onMouseDown={e => { e.preventDefault(); resizeRef.current = { dir: 'left', startX: e.clientX, startY: e.clientY, startW: panelSize.width, startH: panelSize.height }; document.body.style.cursor = 'ew-resize'; document.body.style.userSelect = 'none'; }}
+            style={{ position: 'absolute', left: 0, top: 8, bottom: 8, width: 6, cursor: 'ew-resize', zIndex: 10, borderRadius: '4px 0 0 4px' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,122,61,0.25)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          />
+          {/* Top edge */}
+          <div onMouseDown={e => { e.preventDefault(); resizeRef.current = { dir: 'top', startX: e.clientX, startY: e.clientY, startW: panelSize.width, startH: panelSize.height }; document.body.style.cursor = 'ns-resize'; document.body.style.userSelect = 'none'; }}
+            style={{ position: 'absolute', top: 0, left: 8, right: 8, height: 6, cursor: 'ns-resize', zIndex: 10, borderRadius: '4px 4px 0 0' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,122,61,0.25)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          />
+          {/* Top-left corner */}
+          <div onMouseDown={e => { e.preventDefault(); resizeRef.current = { dir: 'corner', startX: e.clientX, startY: e.clientY, startW: panelSize.width, startH: panelSize.height }; document.body.style.cursor = 'nwse-resize'; document.body.style.userSelect = 'none'; }}
+            style={{ position: 'absolute', top: 0, left: 0, width: 14, height: 14, cursor: 'nwse-resize', zIndex: 11, borderRadius: '4px 0 0 0' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,122,61,0.35)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+          />
 
           {/* CONTACTS HEADER */}
           {view === 'contacts' && (

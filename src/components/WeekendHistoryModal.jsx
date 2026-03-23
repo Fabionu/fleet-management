@@ -140,10 +140,16 @@ function WeekendHistoryModal({ truck, onClose, onSave }) {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            style={{ flex: 1, padding: '12px', background: '#ff7a3d', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: 'white', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, transition: 'all 0.15s', fontFamily: "'SF Pro Display', -apple-system, sans-serif" }}
+            style={{ flex: 1, padding: '12px', background: '#ff7a3d', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: 600, color: 'white', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, transition: 'all 0.15s', fontFamily: "'SF Pro Display', -apple-system, sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
             onMouseEnter={e => { if (!saving) e.currentTarget.style.background = '#ff8c52'; }}
             onMouseLeave={e => { if (!saving) e.currentTarget.style.background = '#ff7a3d'; }}
           >
+            {saving && (
+              <svg style={{ animation: 'spin-loader 0.8s linear infinite', flexShrink: 0 }} width="15" height="15" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" stroke="rgba(255,255,255,0.35)" strokeWidth="3"/>
+                <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round"/>
+              </svg>
+            )}
             {saving ? 'Se salvează...' : 'Salvează'}
           </button>
         </div>
