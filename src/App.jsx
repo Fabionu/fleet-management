@@ -20,6 +20,7 @@ function App() {
   const [trackingView, setTrackingView] = useState('card');
   const [alerts, setAlerts]         = useState([]);
   const [alertsOpen, setAlertsOpen] = useState(false);
+  const [bodyZoom, setBodyZoom]     = useState(1);
   const userMenuRef = useRef(null);
   const bellRef     = useRef(null);
 
@@ -34,6 +35,7 @@ function App() {
       else if (w <= 2300) zoom = 1.10;
       else                zoom = 1.00;
       document.body.style.zoom = zoom;
+      setBodyZoom(zoom);
     };
     applyZoom();
     window.addEventListener('resize', applyZoom);
@@ -177,7 +179,8 @@ function App() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      height: currentPage === 'chat' ? `${window.innerHeight / bodyZoom}px` : undefined,
+      minHeight: currentPage === 'chat' ? undefined : '100vh',
       background: 'var(--bg-body)',
       padding: '20px',
       boxSizing: 'border-box',
@@ -192,7 +195,7 @@ function App() {
         padding: currentPage === 'chat' ? '32px 32px 0 32px' : '32px',
         boxShadow: '0 8px 30px var(--shadow)',
         position: 'relative',
-        minHeight: currentPage === 'chat' ? 'calc(100vh - 40px)' : undefined,
+        height: currentPage === 'chat' ? `${(window.innerHeight - 40) / bodyZoom}px` : undefined,
         display: currentPage === 'chat' ? 'flex' : undefined,
         flexDirection: currentPage === 'chat' ? 'column' : undefined,
       }}>
