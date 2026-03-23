@@ -837,6 +837,7 @@ const handleDeleteTrip = async (truck) => {
                         </div>
                         {/* Pauza sapt. */}
                         <div data-weekend-form onMouseDown={e => e.stopPropagation()} style={{ position: 'relative' }}>
+                          <div style={{ display: 'flex', gap: 3, alignItems: 'stretch' }}>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -853,9 +854,21 @@ const handleDeleteTrip = async (truck) => {
                               setWeekendTooltipTruck(truck);
                             }}
                             onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipTruck(null); }}
-                            style={{ width: '100%', background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'center', transition: 'background 0.15s', boxSizing: 'border-box' }}>
+                            style={{ flex: 1, background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'center', transition: 'background 0.15s', boxSizing: 'border-box' }}>
                             {hasWeekend ? (<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', whiteSpace: 'nowrap', fontSize: '12px' }}><span style={{ fontWeight: 700, color: 'var(--green)' }}>{truck.weekend_duration}</span><span style={{ color: 'var(--gray-3)', fontSize: '10px' }}>|</span><span style={{ color: 'var(--gray-4)' }}>{truck.weekend_day || '—'} {truck.weekend_time || '—'}</span></div>) : (<div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza sapt.</div>)}
                           </button>
+                          {user?.permissions?.editWeekendHistory && weekendEditId !== truck.id && (
+                            <button
+                              onClick={e => { e.stopPropagation(); setWeekendHistoryTruck(truck); }}
+                              title="Editează istoricul pauzelor"
+                              style={{ padding: '5px 7px', background: 'transparent', border: '1px solid var(--gray-2)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--gray-3)', flexShrink: 0, transition: 'color 0.15s, border-color 0.15s' }}
+                              onMouseEnter={e => { e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
+                              onMouseLeave={e => { e.currentTarget.style.color = 'var(--gray-3)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}
+                            >
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            </button>
+                          )}
+                          </div>
                           {weekendTooltipTruck?.id === truck.id && weekendEditId !== truck.id && (() => {
                             let wh = [];
                             try { wh = typeof truck.weekend_history === 'string' ? JSON.parse(truck.weekend_history) : (Array.isArray(truck.weekend_history) ? truck.weekend_history : []); } catch(e) {}
@@ -873,18 +886,6 @@ const handleDeleteTrip = async (truck) => {
                               </div>
                             );
                           })()}
-                          {user?.permissions?.editWeekendHistory && weekendEditId !== truck.id && (
-                            <button
-                              onClick={e => { e.stopPropagation(); setWeekendHistoryTruck(truck); }}
-                              title="Editează istoricul pauzelor"
-                              style={{ marginTop: 3, width: '100%', padding: '3px 0', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, color: 'var(--gray-3)', fontSize: 10, fontWeight: 500, transition: 'color 0.15s' }}
-                              onMouseEnter={e => { e.currentTarget.style.color = 'var(--gray-4)'; }}
-                              onMouseLeave={e => { e.currentTarget.style.color = 'var(--gray-3)'; }}
-                            >
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                              Editează istoric
-                            </button>
-                          )}
                           {weekendEditId === truck.id && (
                             <div
                               onMouseDown={e => e.stopPropagation()}
@@ -1429,6 +1430,7 @@ const handleDeleteTrip = async (truck) => {
                           </div>
                           {/* Weekend badge */}
                           <div data-weekend-form onMouseDown={e => e.stopPropagation()} style={{ position: 'relative' }}>
+                            <div style={{ display: 'flex', gap: 3, alignItems: 'stretch' }}>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1445,7 +1447,7 @@ const handleDeleteTrip = async (truck) => {
                                 setWeekendTooltipTruck(truck);
                               }}
                               onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; setWeekendTooltipTruck(null); }}
-                              style={{ width: '100%', background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'center', transition: 'background 0.15s', boxSizing: 'border-box' }}
+                              style={{ flex: 1, background: 'transparent', border: hasWeekend ? '1px solid var(--green)' : '1px dashed var(--gray-3)', borderLeft: hasWeekend ? '3px solid var(--green)' : '1px dashed var(--gray-3)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', display: 'block', textAlign: 'center', transition: 'background 0.15s', boxSizing: 'border-box' }}
                             >
                               {hasWeekend ? (
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', whiteSpace: 'nowrap', fontSize: '12px' }}>
@@ -1457,6 +1459,18 @@ const handleDeleteTrip = async (truck) => {
                                 <div style={{ fontSize: '12px', color: 'var(--gray-3)', textAlign: 'center' }}>Pauza sapt.</div>
                               )}
                             </button>
+                            {user?.permissions?.editWeekendHistory && weekendEditId !== truck.id && (
+                              <button
+                                onClick={e => { e.stopPropagation(); setWeekendHistoryTruck(truck); }}
+                                title="Editează istoricul pauzelor"
+                                style={{ padding: '5px 7px', background: 'transparent', border: '1px solid var(--gray-2)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--gray-3)', flexShrink: 0, transition: 'color 0.15s, border-color 0.15s' }}
+                                onMouseEnter={e => { e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.color = 'var(--gray-3)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}
+                              >
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                              </button>
+                            )}
+                            </div>
                             {weekendTooltipTruck?.id === truck.id && weekendEditId !== truck.id && (() => {
                               let wh = [];
                               try { wh = typeof truck.weekend_history === 'string' ? JSON.parse(truck.weekend_history) : (Array.isArray(truck.weekend_history) ? truck.weekend_history : []); } catch(e) {}
@@ -1474,18 +1488,6 @@ const handleDeleteTrip = async (truck) => {
                                 </div>
                               );
                             })()}
-                            {user?.permissions?.editWeekendHistory && weekendEditId !== truck.id && (
-                              <button
-                                onClick={e => { e.stopPropagation(); setWeekendHistoryTruck(truck); }}
-                                title="Editează istoricul pauzelor"
-                                style={{ marginTop: 3, width: '100%', padding: '3px 0', background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, color: 'var(--gray-3)', fontSize: 10, fontWeight: 500, transition: 'color 0.15s' }}
-                                onMouseEnter={e => { e.currentTarget.style.color = 'var(--gray-4)'; }}
-                                onMouseLeave={e => { e.currentTarget.style.color = 'var(--gray-3)'; }}
-                              >
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                                Editează istoric
-                              </button>
-                            )}
                             {weekendEditId === truck.id && (
                               <div
                                 onMouseDown={e => e.stopPropagation()}
