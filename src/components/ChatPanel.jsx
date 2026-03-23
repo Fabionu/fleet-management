@@ -379,9 +379,52 @@ function TripOrderCard({ msg, currentUser, onRespond }) {
   );
 }
 
+async function compressImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1400;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w >= h) { h = Math.round(h * MAX / w); w = MAX; }
+          else        { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => {
+          resolve(new File([blob], file.name?.replace(/\.[^.]+$/, '.jpg') || 'imagine.jpg', { type: 'image/jpeg' }));
+        }, 'image/jpeg', 0.85);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, mentionQuery, mentionUsers, mentionHighlight, onMentionSelect, replyTo, onCancelReply, onOpenTripOrder, onSendImage }) {
-  const [plusOpen, setPlusOpen] = useState(false);
+  const [plusOpen, setPlusOpen]         = useState(false);
+  const [imgPreview, setImgPreview]     = useState(null); // { dataUrl, file, sizeKb }
+  const [imgCompressing, setImgCompressing] = useState(false);
   const fileRef = useRef(null);
+
+  const prepareImage = async (rawFile) => {
+    if (!rawFile || !rawFile.type.startsWith('image/')) return;
+    setImgCompressing(true);
+    try {
+      const compressed = await compressImage(rawFile);
+      const dataUrl = await new Promise((res) => {
+        const r = new FileReader();
+        r.onload = (e) => res(e.target.result);
+        r.readAsDataURL(compressed);
+      });
+      setImgPreview({ dataUrl, file: compressed, sizeKb: Math.round(compressed.size / 1024) });
+    } finally {
+      setImgCompressing(false);
+    }
+  };
 
   const handlePaste = (e) => {
     const items = e.clipboardData?.items;
@@ -389,7 +432,7 @@ function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, 
     for (const item of items) {
       if (item.type.startsWith('image/')) {
         e.preventDefault();
-        onSendImage && onSendImage(item.getAsFile());
+        prepareImage(item.getAsFile());
         return;
       }
     }
@@ -397,12 +440,59 @@ function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, 
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) { onSendImage && onSendImage(file); }
+    if (file) prepareImage(file);
     e.target.value = '';
+  };
+
+  const confirmSend = () => {
+    if (!imgPreview) return;
+    onSendImage && onSendImage(imgPreview.file);
+    setImgPreview(null);
   };
 
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
+      {/* Image preview strip */}
+      {(imgPreview || imgCompressing) && (
+        <div style={{ margin: '0 12px 6px', padding: '8px 10px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: 10, display: 'flex', alignItems: 'center', gap: 10, animation: 'chatItemIn 0.15s ease' }}>
+          {imgCompressing ? (
+            <>
+              <div style={{ width: 44, height: 44, borderRadius: 7, background: 'var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg style={{ animation: 'spin-loader 0.8s linear infinite' }} width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="10" stroke="rgba(0,0,0,0.15)" strokeWidth="3"/>
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="var(--gray-4)" strokeWidth="3" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <span style={{ fontSize: 12, color: 'var(--gray-4)', fontFamily: 'inherit' }}>Se comprimă imaginea...</span>
+            </>
+          ) : (
+            <>
+              <img src={imgPreview.dataUrl} alt="preview"
+                style={{ width: 44, height: 44, borderRadius: 7, objectFit: 'cover', flexShrink: 0, border: '1px solid var(--gray-2)' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'inherit' }}>
+                  {imgPreview.file.name}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--gray-4)', fontFamily: 'inherit' }}>
+                  {imgPreview.sizeKb < 1024 ? `${imgPreview.sizeKb} KB` : `${(imgPreview.sizeKb / 1024).toFixed(1)} MB`} · JPEG comprimat
+                </div>
+              </div>
+              <button onClick={confirmSend}
+                style={{ padding: '5px 12px', background: '#ff7a3d', border: 'none', borderRadius: 7, cursor: 'pointer', color: 'white', fontSize: 12, fontWeight: 600, fontFamily: 'inherit', flexShrink: 0, transition: 'background 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#ff8c52'}
+                onMouseLeave={e => e.currentTarget.style.background = '#ff7a3d'}>
+                Trimite
+              </button>
+              <button onClick={() => setImgPreview(null)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 2, display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--black)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--gray-4)'}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            </>
+          )}
+        </div>
+      )}
       {replyTo && (
         <div style={{ margin: '0 12px 6px', padding: '6px 10px', background: 'var(--gray-1)', borderLeft: '3px solid #ff7a3d', borderRadius: '0 6px 6px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -1186,11 +1276,6 @@ export default function ChatPanel({ user, currentPage }) {
 
   const sendImage = async (file) => {
     if (!file || !file.type.startsWith('image/')) return;
-    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
-    if (file.size > MAX_SIZE) {
-      showChatToast('Imaginea depășește limita de 5 MB', 'error');
-      return;
-    }
     const reader = new FileReader();
     reader.onload = async (e) => {
       const dataUrl = e.target.result;
