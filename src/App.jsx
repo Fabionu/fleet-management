@@ -181,7 +181,7 @@ function App() {
     <div style={{
       minHeight: '100vh',
       background: 'var(--bg-body)',
-      padding: '20px',
+      padding: currentPage === 'chat' ? '20px 8px 0 8px' : '20px',
       fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
     }}>
       <div style={{
@@ -189,7 +189,7 @@ function App() {
         margin: '0 auto',
         background: 'var(--bg-page)',
         border: '1px solid var(--gray-2)',
-        borderRadius: '16px',
+        borderRadius: currentPage === 'chat' ? '16px 16px 0 0' : '16px',
         padding: currentPage === 'chat' ? '32px 32px 0 32px' : '32px',
         boxShadow: '0 8px 30px var(--shadow)',
         position: 'relative',
