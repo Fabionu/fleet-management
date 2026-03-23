@@ -72,7 +72,8 @@
       "Bash(dir \"C:\\\\Users\\\\Home\\\\Desktop\\\\fleet-driver-app\\\\app\")",
       "Bash(dir \"C:\\\\Users\\\\Home\\\\Desktop\\\\fleet-driver-app\" /b)",
       "Bash(rm -rf node_modules/.cache)",
-      "Bash(rm -rf .expo)"
+      "Bash(rm -rf .expo)",
+      "Bash(grep -v \"^\\\\s*//\")"
     ]
   }
 }
