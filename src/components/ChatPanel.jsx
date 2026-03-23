@@ -14,6 +14,10 @@ function isTripOrderMsg(msg) {
   return false;
 }
 
+function isImageMsg(msg) {
+  return msg.message_type === 'image' && msg.image_data;
+}
+
 function sanitizeReplyText(text) {
   if (!text) return '';
   if (text.startsWith('{')) {
@@ -375,8 +379,28 @@ function TripOrderCard({ msg, currentUser, onRespond }) {
   );
 }
 
-function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, mentionQuery, mentionUsers, mentionHighlight, onMentionSelect, replyTo, onCancelReply, onOpenTripOrder }) {
+function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, mentionQuery, mentionUsers, mentionHighlight, onMentionSelect, replyTo, onCancelReply, onOpenTripOrder, onSendImage }) {
   const [plusOpen, setPlusOpen] = useState(false);
+  const fileRef = useRef(null);
+
+  const handlePaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        e.preventDefault();
+        onSendImage && onSendImage(item.getAsFile());
+        return;
+      }
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) { onSendImage && onSendImage(file); }
+    e.target.value = '';
+  };
+
   return (
     <div style={{ position: 'relative', flexShrink: 0 }}>
       {replyTo && (
@@ -405,8 +429,9 @@ function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, 
           ))}
         </div>
       )}
+      <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
       <div style={{ padding: '10px 12px', borderTop: '1px solid var(--gray-2)', display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-        <textarea ref={inputRef} value={value} onChange={e => onChange(e.target.value)} onKeyDown={onKeyDown}
+        <textarea ref={inputRef} value={value} onChange={e => onChange(e.target.value)} onKeyDown={onKeyDown} onPaste={handlePaste}
           placeholder={placeholder} rows={1} className="chat-scroll"
           style={{ flex: 1, resize: 'none', border: '1px solid var(--gray-3)', borderRadius: 10, padding: '9px 12px', fontSize: 14, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, maxHeight: 80, overflowY: 'auto', transition: 'border-color 0.2s', boxSizing: 'border-box' }}
           onMouseEnter={e => { if (document.activeElement !== e.target) e.target.style.borderColor = 'var(--gray-4)'; }}
@@ -423,16 +448,27 @@ function ChatInput({ inputRef, value, onChange, onKeyDown, onSend, placeholder, 
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
           {plusOpen && (
-            <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.15)', minWidth: 170, overflow: 'hidden', animation: 'chatItemIn 0.15s ease', zIndex: 20 }}
+            <div style={{ position: 'absolute', bottom: 'calc(100% + 6px)', right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 16px rgba(0,0,0,0.15)', minWidth: 180, overflow: 'hidden', animation: 'chatItemIn 0.15s ease', zIndex: 20 }}
               onMouseLeave={() => setPlusOpen(false)}>
-              <button onMouseDown={(e) => { e.preventDefault(); setPlusOpen(false); onOpenTripOrder && onOpenTripOrder(); }}
+              {onOpenTripOrder && (
+                <button onMouseDown={(e) => { e.preventDefault(); setPlusOpen(false); onOpenTripOrder(); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--black)', fontSize: 13, fontFamily: 'inherit', textAlign: 'left' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <div style={{ width: 28, height: 28, borderRadius: 6, background: '#ff7a3d18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                  </div>
+                  <span style={{ fontWeight: 500 }}>Trimite cursă</span>
+                </button>
+              )}
+              <button onMouseDown={(e) => { e.preventDefault(); setPlusOpen(false); fileRef.current?.click(); }}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--black)', fontSize: 13, fontFamily: 'inherit', textAlign: 'left' }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <div style={{ width: 28, height: 28, borderRadius: 6, background: '#ff7a3d18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                <div style={{ width: 28, height: 28, borderRadius: 6, background: 'rgba(37,99,235,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 </div>
-                <span style={{ fontWeight: 500 }}>Trimite cursă</span>
+                <span style={{ fontWeight: 500 }}>Adaugă imagine</span>
               </button>
             </div>
           )}
@@ -525,6 +561,8 @@ export default function ChatPanel({ user, currentPage }) {
   const [tripOrderModal, setTripOrderModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm]   = useState(null); // mesajul pending ștergere
   const [chatToast, setChatToast]           = useState(null); // { message, type }
+  const [lightboxSrc, setLightboxSrc]       = useState(null); // src imagine full-screen
+  const fileInputRef                        = useRef(null);
   const searchInputRef                      = useRef(null);
   const EDIT_LIMIT_MS = 5 * 60 * 1000;
 
@@ -1146,6 +1184,39 @@ export default function ChatPanel({ user, currentPage }) {
     setReplyTo(null);
   };
 
+  const sendImage = async (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
+    if (file.size > MAX_SIZE) {
+      showChatToast('Imaginea depășește limita de 5 MB', 'error');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const dataUrl = e.target.result;
+      const base64 = dataUrl.split(',')[1];
+      const imgType = file.type;
+      const payload = {
+        message: file.name || 'imagine.png',
+        image_data: base64,
+        image_type: imgType,
+        reply_to_id: replyTo?.id || null,
+        reply_to_text: replyTo?.text || null,
+        reply_to_username: replyTo?.username || null,
+      };
+      try {
+        if (view === 'group-chat' && activeGroup) {
+          await axios.post(`/api/chat/groups/${activeGroup.id}/messages`, payload, { headers });
+        } else if (view === 'chat' && peer) {
+          await axios.post('/api/chat/messages', { to: peer.username, ...payload }, { headers });
+        }
+        playSent();
+        setReplyTo(null);
+      } catch { showChatToast('Eroare la trimiterea imaginii', 'error'); }
+    };
+    reader.readAsDataURL(file);
+  };
+
   const sendTripOrder = async ({ order_number, truck, payment_terms, doc_type, file_name, file_data, file_type, to_user }) => {
     if (view === 'chat' && peer) {
       await axios.post('/api/chat/trip-order', { to: peer.username, order_number, truck, payment_terms, doc_type, file_name, file_data, file_type }, { headers });
@@ -1481,6 +1552,19 @@ export default function ChatPanel({ user, currentPage }) {
               <button onClick={cancelEdit} style={{ fontSize: 11, padding: '3px 8px', border: '1px solid var(--gray-3)', borderRadius: 6, background: 'transparent', cursor: 'pointer', color: 'var(--gray-4)' }}>Anulează</button>
               <button onClick={() => submitEdit(msg)} style={{ fontSize: 11, padding: '3px 8px', border: 'none', borderRadius: 6, background: '#ff7a3d', color: 'white', cursor: 'pointer', fontWeight: 600 }}>Salvează</button>
             </div>
+          </div>
+        ) : isImageMsg(msg) ? (
+          <div style={{ padding: 4, borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', overflow: 'hidden', cursor: 'pointer' }}
+            onClick={() => setLightboxSrc(`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`)}>
+            {msg.reply_to_id && (
+              <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', padding: '3px 6px', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', background: 'rgba(255,122,61,0.08)', borderRadius: '0 4px 4px 0' }}>
+                <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {sanitizeReplyText(msg.reply_to_text)}
+              </div>
+            )}
+            <img src={`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`}
+              alt={msg.message || 'imagine'}
+              style={{ display: 'block', maxWidth: 220, maxHeight: 200, borderRadius: 10, objectFit: 'cover' }}
+            />
           </div>
         ) : (
           <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
@@ -1992,6 +2076,7 @@ export default function ChatPanel({ user, currentPage }) {
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
                 replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
                 onOpenTripOrder={canChat('chatSendTripOrder') ? () => setTripOrderModal(true) : null}
+                onSendImage={sendImage}
               />
             </div>
           )}
@@ -2186,6 +2271,27 @@ export default function ChatPanel({ user, currentPage }) {
           onClose={() => setTripOrderModal(false)}
           onSend={sendTripOrder}
         />
+      )}
+
+      {/* Lightbox imagine — full page */}
+      {lightboxSrc && (
+        <div onClick={() => setLightboxSrc(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 9800, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)', cursor: 'zoom-out', animation: 'chatItemIn 0.18s ease' }}>
+          <img src={lightboxSrc} alt="imagine" onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '90vw', maxHeight: '88vh', borderRadius: 12, boxShadow: '0 24px 64px rgba(0,0,0,0.6)', objectFit: 'contain', cursor: 'default' }} />
+          <button onClick={() => setLightboxSrc(null)}
+            style={{ position: 'absolute', top: 18, right: 18, background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', transition: 'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.24)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <a href={lightboxSrc} download="imagine.png" onClick={e => e.stopPropagation()}
+            style={{ position: 'absolute', top: 18, right: 62, background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', transition: 'background 0.15s', textDecoration: 'none' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.24)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </a>
+        </div>
       )}
 
       {/* Delete confirm modal — full page */}
@@ -2777,6 +2883,17 @@ export default function ChatPanel({ user, currentPage }) {
                                   <button onClick={() => submitEdit(msg)} style={{ fontSize: 11, padding: '3px 8px', border: 'none', borderRadius: 6, background: '#ff7a3d', color: 'white', cursor: 'pointer', fontWeight: 600 }}>Salvează</button>
                                 </div>
                               </div>
+                            ) : isImageMsg(msg) ? (
+                              <div style={{ padding: 4, borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', overflow: 'hidden', cursor: 'pointer' }}
+                                onClick={() => setLightboxSrc(`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`)}>
+                                {msg.reply_to_id && (
+                                  <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', padding: '3px 6px', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', background: 'rgba(255,122,61,0.08)', borderRadius: '0 4px 4px 0' }}>
+                                    <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {sanitizeReplyText(msg.reply_to_text)}
+                                  </div>
+                                )}
+                                <img src={`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`} alt={msg.message || 'imagine'}
+                                  style={{ display: 'block', maxWidth: 280, maxHeight: 240, borderRadius: 10, objectFit: 'cover' }} />
+                              </div>
                             ) : (
                               <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
                                 {msg.reply_to_id && (
@@ -2832,6 +2949,7 @@ export default function ChatPanel({ user, currentPage }) {
                 placeholder={`Mesaj pentru ${dn(peer?.username)}...`}
                 mentionQuery={mentionQuery} mentionUsers={mentionUsers}
                 onOpenTripOrder={canChat('chatSendTripOrder') ? () => setTripOrderModal(true) : null}
+                onSendImage={sendImage}
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
                 replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
               />
@@ -2946,6 +3064,17 @@ export default function ChatPanel({ user, currentPage }) {
                                   <button onClick={() => submitEdit(msg)} style={{ fontSize: 11, padding: '3px 8px', border: 'none', borderRadius: 6, background: '#ff7a3d', color: 'white', cursor: 'pointer', fontWeight: 600 }}>Salvează</button>
                                 </div>
                               </div>
+                            ) : isImageMsg(msg) ? (
+                              <div style={{ padding: 4, borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', overflow: 'hidden', cursor: 'pointer' }}
+                                onClick={() => setLightboxSrc(`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`)}>
+                                {msg.reply_to_id && (
+                                  <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', padding: '3px 6px', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', background: 'rgba(255,122,61,0.08)', borderRadius: '0 4px 4px 0' }}>
+                                    <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {sanitizeReplyText(msg.reply_to_text)}
+                                  </div>
+                                )}
+                                <img src={`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`} alt={msg.message || 'imagine'}
+                                  style={{ display: 'block', maxWidth: 320, maxHeight: 280, borderRadius: 10, objectFit: 'cover' }} />
+                              </div>
                             ) : (
                               <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
                                 {msg.reply_to_id && (
@@ -3010,6 +3139,7 @@ export default function ChatPanel({ user, currentPage }) {
                 placeholder={`Mesaj în ${activeGroup?.name}...`}
                 mentionQuery={mentionQuery} mentionUsers={mentionUsers}
                 onOpenTripOrder={canChat('chatSendTripOrder') ? () => setTripOrderModal(true) : null}
+                onSendImage={sendImage}
                 mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
                 replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
               />
@@ -3194,6 +3324,27 @@ export default function ChatPanel({ user, currentPage }) {
           onClose={() => setTripOrderModal(false)}
           onSend={sendTripOrder}
         />
+      )}
+
+      {/* Lightbox imagine — mini panel */}
+      {lightboxSrc && (
+        <div onClick={() => setLightboxSrc(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 9800, background: 'rgba(0,0,0,0.88)', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(6px)', cursor: 'zoom-out', animation: 'chatItemIn 0.18s ease' }}>
+          <img src={lightboxSrc} alt="imagine" onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '90vw', maxHeight: '88vh', borderRadius: 12, boxShadow: '0 24px 64px rgba(0,0,0,0.6)', objectFit: 'contain', cursor: 'default' }} />
+          <button onClick={() => setLightboxSrc(null)}
+            style={{ position: 'absolute', top: 18, right: 18, background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', transition: 'background 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.24)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <a href={lightboxSrc} download="imagine.png" onClick={e => e.stopPropagation()}
+            style={{ position: 'absolute', top: 18, right: 62, background: 'rgba(255,255,255,0.12)', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', transition: 'background 0.15s', textDecoration: 'none' }}
+            onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.24)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.12)'}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          </a>
+        </div>
       )}
 
       {/* Delete confirm modal */}

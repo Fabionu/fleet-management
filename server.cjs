@@ -196,17 +196,17 @@ app.get('/api/chat/messages/:peer', authMiddleware, async (req, res) => {
 
 // Trimite mesaj privat
 app.post('/api/chat/messages', authMiddleware, async (req, res) => {
-  const { to, message, reply_to_id, reply_to_text, reply_to_username } = req.body;
-  if (!to || !message?.trim()) return res.status(400).json({ error: 'Date lipsă' });
+  const { to, message, reply_to_id, reply_to_text, reply_to_username, image_data, image_type } = req.body;
+  if (!to || (!message?.trim() && !image_data)) return res.status(400).json({ error: 'Date lipsă' });
+  const msgType = image_data ? 'image' : 'text';
   try {
     const result = await pool.query(
-      `INSERT INTO chat_messages (organization_id, username, receiver_username, message, reply_to_id, reply_to_text, reply_to_username)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [req.user.organization_id, req.user.username, to, message.trim(), reply_to_id || null, reply_to_text || null, reply_to_username || null]
+      `INSERT INTO chat_messages (organization_id, username, receiver_username, message, reply_to_id, reply_to_text, reply_to_username, message_type, image_data, image_type)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [req.user.organization_id, req.user.username, to, message?.trim() || '', reply_to_id || null, reply_to_text || null, reply_to_username || null, msgType, image_data || null, image_type || null]
     );
     const msg = result.rows[0];
     const orgId = req.user.organization_id;
-    // Emit în camerele private ale ambelor părți (suport multi-tab)
     io.to(`user_${to}_org_${orgId}`).emit('new_private_message', msg);
     io.to(`user_${req.user.username}_org_${orgId}`).emit('new_private_message', msg);
     res.json(msg);
@@ -569,10 +569,11 @@ app.get('/api/chat/groups/:id/messages', authMiddleware, async (req, res) => {
 
 // Trimite mesaj în grup
 app.post('/api/chat/groups/:id/messages', authMiddleware, async (req, res) => {
-  const { message, reply_to_id, reply_to_text, reply_to_username } = req.body;
-  if (!message?.trim()) return res.status(400).json({ error: 'Mesajul este gol' });
+  const { message, reply_to_id, reply_to_text, reply_to_username, image_data, image_type } = req.body;
+  if (!message?.trim() && !image_data) return res.status(400).json({ error: 'Mesajul este gol' });
   const orgId = req.user.organization_id;
   const groupId = parseInt(req.params.id);
+  const msgType = image_data ? 'image' : 'text';
   try {
     // Verifică că userul e membru
     const memRes = await pool.query(
@@ -582,8 +583,8 @@ app.post('/api/chat/groups/:id/messages', authMiddleware, async (req, res) => {
     if (memRes.rows.length === 0) return res.status(403).json({ error: 'Nu ești membru al acestui grup' });
 
     const result = await pool.query(
-      `INSERT INTO chat_group_messages (group_id, organization_id, username, message, reply_to_id, reply_to_text, reply_to_username) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [groupId, orgId, req.user.username, message.trim(), reply_to_id || null, reply_to_text || null, reply_to_username || null]
+      `INSERT INTO chat_group_messages (group_id, organization_id, username, message, reply_to_id, reply_to_text, reply_to_username, message_type, image_data, image_type) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [groupId, orgId, req.user.username, message?.trim() || '', reply_to_id || null, reply_to_text || null, reply_to_username || null, msgType, image_data || null, image_type || null]
     );
     const msg = result.rows[0];
     io.to(`group_${groupId}_org_${orgId}`).emit('new_group_message', msg);
