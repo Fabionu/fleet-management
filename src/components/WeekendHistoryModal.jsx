@@ -1,12 +1,23 @@
 import { useState } from 'react';
 
+function getWeekNumber(date = new Date()) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
 function WeekendHistoryModal({ truck, onClose, onSave }) {
+  const currentWeek = `W${getWeekNumber()}`;
+
   const parseHistory = () => {
     try {
       const h = typeof truck.weekend_history === 'string'
         ? JSON.parse(truck.weekend_history)
         : (Array.isArray(truck.weekend_history) ? truck.weekend_history : []);
-      return [...h];
+      // Exclude săptămâna curentă — aceasta se editează din butonul principal
+      return h.filter(e => e.week !== currentWeek);
     } catch { return []; }
   };
 
