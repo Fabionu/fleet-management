@@ -179,11 +179,9 @@ function App() {
 
   return (
     <div style={{
-      height: currentPage === 'chat' ? `${window.innerHeight / bodyZoom}px` : undefined,
-      minHeight: currentPage === 'chat' ? undefined : '100vh',
+      minHeight: '100vh',
       background: 'var(--bg-body)',
       padding: '20px',
-      boxSizing: 'border-box',
       fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
     }}>
       <div style={{
@@ -195,9 +193,6 @@ function App() {
         padding: currentPage === 'chat' ? '32px 32px 0 32px' : '32px',
         boxShadow: '0 8px 30px var(--shadow)',
         position: 'relative',
-        height: currentPage === 'chat' ? `${(window.innerHeight - 40) / bodyZoom}px` : undefined,
-        display: currentPage === 'chat' ? 'flex' : undefined,
-        flexDirection: currentPage === 'chat' ? 'column' : undefined,
       }}>
         {/* Theme Toggle */}
         <button 
@@ -579,9 +574,7 @@ function App() {
         {currentPage === 'curse'    && (user.role === 'admin' || user.permissions?.viewRegistru !== false)  && <Curse user={user} />}
         {currentPage === 'rapoarte' && (user.role === 'admin' || user.permissions?.viewReports)             && <Dashboard user={user} />}
         {currentPage === 'admin'    && (user.role === 'admin' || user.permissions?.accessAdmin)             && <Admin user={user} />}
-        <div style={{ flex: currentPage === 'chat' ? 1 : undefined, minHeight: currentPage === 'chat' ? 0 : undefined, display: 'flex', flexDirection: 'column' }}>
-          {(user.role === 'admin' || user.permissions?.viewChat !== false) && <ChatPanel user={user} currentPage={currentPage} />}
-        </div>
+        {(user.role === 'admin' || user.permissions?.viewChat !== false) && <ChatPanel user={user} currentPage={currentPage} />}
       </div>
     </div>
   );
