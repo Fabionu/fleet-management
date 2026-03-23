@@ -177,9 +177,13 @@ function App() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      height: currentPage === 'chat' ? '100vh' : undefined,
+      minHeight: currentPage === 'chat' ? undefined : '100vh',
+      boxSizing: 'border-box',
       background: 'var(--bg-body)',
       padding: '20px',
+      display: currentPage === 'chat' ? 'flex' : undefined,
+      flexDirection: currentPage === 'chat' ? 'column' : undefined,
       fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
     }}>
       <div style={{
@@ -190,7 +194,11 @@ function App() {
         borderRadius: '16px',
         padding: currentPage === 'chat' ? '32px 32px 0 32px' : '32px',
         boxShadow: '0 8px 30px var(--shadow)',
-        position: 'relative'
+        position: 'relative',
+        flex: currentPage === 'chat' ? 1 : undefined,
+        display: currentPage === 'chat' ? 'flex' : undefined,
+        flexDirection: currentPage === 'chat' ? 'column' : undefined,
+        minHeight: currentPage === 'chat' ? 0 : undefined,
       }}>
         {/* Theme Toggle */}
         <button 
@@ -572,7 +580,9 @@ function App() {
         {currentPage === 'curse'    && (user.role === 'admin' || user.permissions?.viewRegistru !== false)  && <Curse user={user} />}
         {currentPage === 'rapoarte' && (user.role === 'admin' || user.permissions?.viewReports)             && <Dashboard user={user} />}
         {currentPage === 'admin'    && (user.role === 'admin' || user.permissions?.accessAdmin)             && <Admin user={user} />}
-        {(user.role === 'admin' || user.permissions?.viewChat !== false) && <ChatPanel user={user} currentPage={currentPage} />}
+        <div style={{ flex: currentPage === 'chat' ? 1 : undefined, minHeight: currentPage === 'chat' ? 0 : undefined, display: currentPage === 'chat' ? 'flex' : undefined, flexDirection: 'column' }}>
+          {(user.role === 'admin' || user.permissions?.viewChat !== false) && <ChatPanel user={user} currentPage={currentPage} />}
+        </div>
       </div>
     </div>
   );
