@@ -9,17 +9,37 @@
  * contextul audio în avans, astfel încât sunetele funcționează pentru toți userii.
  */
 
-let _ctx = null;
+let _ctx        = null;
+let _keepAlive  = null; // nod silențios care ține contextul activ
+
+// ── Keepalive: oscilator silențios care previne suspendarea contextului ──
+function startKeepAlive(ac) {
+  if (_keepAlive) return;
+  try {
+    const gain = ac.createGain();
+    gain.gain.value = 0; // complet silențios
+    gain.connect(ac.destination);
+    const osc = ac.createOscillator();
+    osc.frequency.value = 1; // 1 Hz — imperceptibil
+    osc.connect(gain);
+    osc.start();
+    _keepAlive = osc;
+  } catch (_) {}
+}
 
 // ── Deblocare AudioContext la prima interacțiune ───────────
 function unlockAudio() {
   if (_ctx) {
-    if (_ctx.state === 'suspended') _ctx.resume();
+    if (_ctx.state === 'suspended') _ctx.resume().then(() => startKeepAlive(_ctx));
     return;
   }
   try {
     _ctx = new (window.AudioContext || window.webkitAudioContext)();
-    if (_ctx.state === 'suspended') _ctx.resume();
+    if (_ctx.state === 'suspended') {
+      _ctx.resume().then(() => startKeepAlive(_ctx));
+    } else {
+      startKeepAlive(_ctx);
+    }
   } catch (_) {}
 }
 
@@ -39,8 +59,13 @@ if (typeof document !== 'undefined') {
 function getCtx() {
   if (!_ctx || _ctx.state === 'closed') {
     _ctx = new (window.AudioContext || window.webkitAudioContext)();
+    _keepAlive = null;
   }
-  if (_ctx.state === 'suspended') _ctx.resume();
+  if (_ctx.state === 'suspended') {
+    _ctx.resume().then(() => startKeepAlive(_ctx));
+  } else {
+    startKeepAlive(_ctx);
+  }
   return _ctx;
 }
 

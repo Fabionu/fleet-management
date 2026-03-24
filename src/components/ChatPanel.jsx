@@ -798,6 +798,28 @@ export default function ChatPanel({ user, currentPage }) {
     }
   }, []);
 
+  // ── Titlu tab cu număr mesaje necitite ────────────────────
+  const originalTitle = useRef(document.title);
+  useEffect(() => {
+    if (totalUnread > 0) {
+      document.title = `(${totalUnread}) ${originalTitle.current}`;
+    } else {
+      document.title = originalTitle.current;
+    }
+    return () => { document.title = originalTitle.current; };
+  }, [totalUnread]);
+
+  // ── Restaurare titlu la focus tab ─────────────────────────
+  useEffect(() => {
+    const onVisible = () => {
+      if (!document.hidden && totalUnread === 0) {
+        document.title = originalTitle.current;
+      }
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [totalUnread]);
+
   // ── Trimitere notificare browser ──────────────────────────
   const sendBrowserNotif = (title, body, icon) => {
     if (!('Notification' in window)) return;
