@@ -1915,27 +1915,31 @@ Analizează documentul PDF și extrage EXACT următoarele câmpuri, returnând U
 
 {
   "order_number": "numărul comenzii",
-  "client": "numele clientului/firmei",
+  "client": "numele clientului/expeditorului comenzii (firma care a emis comanda, NU firmele de încărcare/descărcare)",
   "load_date": "data încărcării în format DD.MM.YYYY",
   "load_time": "ora încărcării în format HH:MM",
-  "load_address": "adresa completă de încărcare",
-  "load_lat": "latitudine GPS cu 6 zecimale",
-  "load_lng": "longitudine GPS cu 6 zecimale",
+  "load_company": "numele firmei/depozitului de la locul de ÎNCĂRCARE (Loading Address)",
+  "load_street": "strada, numărul sau zona industrială de la locul de ÎNCĂRCARE",
+  "load_city": "țara (abreviere ISO), codul poștal și orașul de la locul de ÎNCĂRCARE (ex: CZ, 796 01 PROSTEJOV)",
+  "load_coords": "coordonate GPS încărcare în format \"lat, lng\" cu 6 zecimale (ex: 49.472345, 17.121456)",
   "load_details": "detalii marfă/încărcare (tip marfă, greutate, paleți, etc.)",
   "load_ref": "referința/numărul de referință de încărcare dacă există",
   "unload_date": "data descărcării în format DD.MM.YYYY",
   "unload_time": "ora descărcării în format HH:MM",
-  "unload_address": "adresa completă de descărcare",
-  "unload_lat": "latitudine GPS cu 6 zecimale",
-  "unload_lng": "longitudine GPS cu 6 zecimale",
+  "unload_company": "numele firmei/depozitului de la locul de DESCĂRCARE (Delivery Address)",
+  "unload_street": "strada, numărul sau zona industrială de la locul de DESCĂRCARE",
+  "unload_city": "țara (abreviere ISO), codul poștal și orașul de la locul de DESCĂRCARE (ex: RO, 115400 MIOVENI)",
+  "unload_coords": "coordonate GPS descărcare în format \"lat, lng\" cu 6 zecimale (ex: 44.923456, 24.873456)",
   "unload_ref": "referința/numărul de referință de descărcare dacă există"
 }
 
-Reguli:
+Reguli CRITICE:
+- ATENȚIE MAXIMĂ la distincția Loading Address (încărcare) vs Delivery Address (descărcare) — NU le inversa!
+- Loading Address = locul de unde se ridică marfa; Delivery Address = locul unde se livrează marfa
 - Returnează DOAR JSON-ul, fără text suplimentar, fără markdown
 - Dacă un câmp nu există în document, lasă-l string gol ""
 - Datele să fie în formatul specificat (DD.MM.YYYY pentru date, HH:MM pentru ore)
-- Pentru coordonate GPS: dacă sunt scrise explicit în PDF folosește-le, altfel DEDUCE-LE din adresă folosind cunoștințele tale geografice. Folosește coordonate precise pentru orașul/strada respectivă (6 zecimale). Nu lăsa coordonatele goale dacă ai adresa.`;
+- Pentru coordonate GPS: dacă sunt scrise explicit în PDF folosește-le, altfel DEDUCE-LE din adresă folosind cunoștințele tale geografice. Folosește coordonate precise pentru orașul/strada respectivă (6 zecimale, format \"lat, lng\"). Nu lăsa coordonatele goale dacă ai adresa.`;
 
     const response = await client.messages.create({
       model: 'claude-opus-4-5',

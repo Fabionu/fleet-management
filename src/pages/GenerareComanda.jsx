@@ -2,19 +2,20 @@ import { useState, useRef, useCallback } from 'react';
 
 const EMPTY = {
   order_number: '', client: '',
-  load_date: '', load_time: '', load_address: '', load_lat: '', load_lng: '',
-  load_details: '', load_ref: '',
-  unload_date: '', unload_time: '', unload_address: '', unload_lat: '', unload_lng: '',
-  unload_ref: '',
+  load_date: '', load_time: '',
+  load_company: '', load_street: '', load_city: '',
+  load_coords: '', load_details: '', load_ref: '',
+  unload_date: '', unload_time: '',
+  unload_company: '', unload_street: '', unload_city: '',
+  unload_coords: '', unload_ref: '',
 };
 
 function buildWhatsApp(f) {
-  const coordInc = (f.load_lat || f.load_lng)
-    ? `NORD - EST ${f.load_lat || '__________'}, ${f.load_lng || '__________'}`
-    : 'NORD - EST __________, __________';
-  const coordDesc = (f.unload_lat || f.unload_lng)
-    ? `NORD - EST ${f.unload_lat || '__________'}, ${f.unload_lng || '__________'}`
-    : 'NORD - EST __________, __________';
+  const coordInc   = f.load_coords   ? `NORD - EST ${f.load_coords}`   : 'NORD - EST __________, __________';
+  const coordDesc  = f.unload_coords ? `NORD - EST ${f.unload_coords}` : 'NORD - EST __________, __________';
+
+  const loadAddr   = [f.load_company,   f.load_street,   f.load_city  ].filter(Boolean).join('\n') || '___________';
+  const unloadAddr = [f.unload_company, f.unload_street, f.unload_city].filter(Boolean).join('\n') || '___________';
 
   const lines = [
     `*•NUMĂR COMANDĂ:* ${f.order_number || '___________'}`,
@@ -22,7 +23,7 @@ function buildWhatsApp(f) {
     ``,
     `*•ÎNCĂRCARE ${f.load_date || '___'}, LA ORA ${f.load_time || '___'}, LA ADRESA:*`,
     ``,
-    f.load_address || '___________',
+    loadAddr,
     ``,
     `*•COORDONATE INCARCARE:*`,
     coordInc,
@@ -32,7 +33,7 @@ function buildWhatsApp(f) {
     ``,
     `*•DESCARCARE ${f.unload_date || '___'}, LA ORA ${f.unload_time || '___'}, LA ADRESA:*`,
     ``,
-    f.unload_address || '___________',
+    unloadAddr,
     ``,
     `*•COORDONATE DESCARCARE:*`,
     coordDesc,
@@ -234,11 +235,10 @@ export default function GenerareComanda({ user }) {
                   <Field label="Dată" value={fields.load_date} onChange={set('load_date')} placeholder="DD.MM.YYYY" />
                   <Field label="Oră" value={fields.load_time} onChange={set('load_time')} placeholder="HH:MM" />
                 </div>
-                <Field label="Adresă" value={fields.load_address} onChange={set('load_address')} multiline />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <Field label="Latitudine (Nord)" value={fields.load_lat} onChange={set('load_lat')} placeholder="47.123456" />
-                  <Field label="Longitudine (Est)" value={fields.load_lng} onChange={set('load_lng')} placeholder="27.123456" />
-                </div>
+                <Field label="Nume firmă" value={fields.load_company} onChange={set('load_company')} placeholder="ex: MUBEA PROSTEJOV" />
+                <Field label="Stradă / Nr. / Zonă industrială" value={fields.load_street} onChange={set('load_street')} placeholder="ex: ROVNA 4708" />
+                <Field label="Țară, Cod poștal, Oraș" value={fields.load_city} onChange={set('load_city')} placeholder="ex: CZ, 796 01 PROSTEJOV" />
+                <Field label="Coordonate (Lat, Long)" value={fields.load_coords} onChange={set('load_coords')} placeholder="47.123456, 27.123456" />
                 <Field label="Detalii marfă / Tonaj" value={fields.load_details} onChange={set('load_details')} multiline />
                 <Field label="Referință încărcare" value={fields.load_ref} onChange={set('load_ref')} />
               </div>
@@ -251,11 +251,10 @@ export default function GenerareComanda({ user }) {
                   <Field label="Dată" value={fields.unload_date} onChange={set('unload_date')} placeholder="DD.MM.YYYY" />
                   <Field label="Oră" value={fields.unload_time} onChange={set('unload_time')} placeholder="HH:MM" />
                 </div>
-                <Field label="Adresă" value={fields.unload_address} onChange={set('unload_address')} multiline />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <Field label="Latitudine (Nord)" value={fields.unload_lat} onChange={set('unload_lat')} placeholder="47.123456" />
-                  <Field label="Longitudine (Est)" value={fields.unload_lng} onChange={set('unload_lng')} placeholder="27.123456" />
-                </div>
+                <Field label="Nume firmă" value={fields.unload_company} onChange={set('unload_company')} placeholder="ex: ILN MIOVENI" />
+                <Field label="Stradă / Nr. / Zonă industrială" value={fields.unload_street} onChange={set('unload_street')} placeholder="ex: 148 BLD DACIA NR" />
+                <Field label="Țară, Cod poștal, Oraș" value={fields.unload_city} onChange={set('unload_city')} placeholder="ex: RO, 115400 MIOVENI" />
+                <Field label="Coordonate (Lat, Long)" value={fields.unload_coords} onChange={set('unload_coords')} placeholder="47.123456, 27.123456" />
                 <Field label="Referință descărcare" value={fields.unload_ref} onChange={set('unload_ref')} />
               </div>
             </div>
