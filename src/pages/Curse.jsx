@@ -619,7 +619,7 @@ function Curse({ user }) {
                 <th style={{ padding: '16px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '60px' }}>
                   ✓
                 </th>
-                <th style={{ padding: '10px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '48px' }}>
+                <th style={{ padding: '10px 4px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '40px' }}>
                 </th>
                 <th style={{ padding: '16px 8px 16px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '140px' }}>
                   CLIENT
@@ -722,7 +722,7 @@ function Curse({ user }) {
     )}
   </div>
 </td>
-                    <td style={{ padding: '10px 8px', verticalAlign: 'middle', width: '48px' }}>
+                    <td style={{ padding: '10px 4px', verticalAlign: 'middle', width: '40px' }}>
                       <div style={{ position: 'relative' }}>
                         <button
                           onClick={(e) => {
@@ -741,8 +741,8 @@ function Curse({ user }) {
                             background: 'transparent',
                             border: '1px solid var(--gray-2)',
                             color: 'var(--gray-4)',
-                            width: '32px',
-                            height: '32px',
+                            width: '28px',
+                            height: '28px',
                             borderRadius: '6px',
                             cursor: 'pointer',
                             fontSize: '16px',
