@@ -161,7 +161,7 @@ export default function GenerareComanda({ user }) {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '20px', alignItems: 'start' }}>
 
         {/* LEFT — Upload + Fields */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -223,14 +223,18 @@ export default function GenerareComanda({ user }) {
           {/* Fields */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', padding: '16px' }}>
 
+            {/* Număr comandă + Client */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <Field label="Număr comandă" value={fields.order_number} onChange={set('order_number')} />
               <Field label="Client" value={fields.client} onChange={set('client')} />
             </div>
 
-            <div style={{ borderTop: '1px solid var(--gray-1)', paddingTop: '12px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>Încărcare</div>
+            {/* Încărcare | Descărcare — 2 coloane */}
+            <div style={{ borderTop: '1px solid var(--gray-1)', paddingTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+
+              {/* STÂNGA — Încărcare */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>Încărcare</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <Field label="Dată" value={fields.load_date} onChange={set('load_date')} placeholder="DD.MM.YYYY" />
                   <Field label="Oră" value={fields.load_time} onChange={set('load_time')} placeholder="HH:MM" />
@@ -242,11 +246,10 @@ export default function GenerareComanda({ user }) {
                 <Field label="Detalii marfă / Tonaj" value={fields.load_details} onChange={set('load_details')} multiline />
                 <Field label="Referință încărcare" value={fields.load_ref} onChange={set('load_ref')} />
               </div>
-            </div>
 
-            <div style={{ borderTop: '1px solid var(--gray-1)', paddingTop: '12px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px' }}>Descărcare</div>
+              {/* DREAPTA — Descărcare */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>Descărcare</div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                   <Field label="Dată" value={fields.unload_date} onChange={set('unload_date')} placeholder="DD.MM.YYYY" />
                   <Field label="Oră" value={fields.unload_time} onChange={set('unload_time')} placeholder="HH:MM" />
@@ -255,8 +258,10 @@ export default function GenerareComanda({ user }) {
                 <Field label="Stradă / Nr. / Zonă industrială" value={fields.unload_street} onChange={set('unload_street')} placeholder="ex: 148 BLD DACIA NR" />
                 <Field label="Țară, Cod poștal, Oraș" value={fields.unload_city} onChange={set('unload_city')} placeholder="ex: RO, 115400 MIOVENI" />
                 <Field label="Coordonate (Lat, Long)" value={fields.unload_coords} onChange={set('unload_coords')} placeholder="47.123456, 27.123456" />
+                <div style={{ height: '56px' }} />{/* spacer pentru aliniere cu detalii marfă */}
                 <Field label="Referință descărcare" value={fields.unload_ref} onChange={set('unload_ref')} />
               </div>
+
             </div>
 
             <div style={{ display: 'flex', gap: '8px', paddingTop: '4px' }}>
