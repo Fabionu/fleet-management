@@ -9,6 +9,9 @@ import GenerareComanda from './pages/GenerareComanda';
 import { connectSocket, disconnectSocket, getSocket } from './services/socket';
 import { api } from './services/api';
 
+// Cheile de permisiuni pentru vizibilitatea paginilor
+const VIEW_KEYS = ['viewTracking', 'viewRegistru', 'viewChat', 'viewReports', 'viewGenerare'];
+
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
@@ -129,6 +132,24 @@ function App() {
       first_name: data.first_name || '',
       last_name: data.last_name || '',
     });
+    // Redirect la prima pagină permisă dacă pagina curentă nu e accesibilă
+    const perms = data.permissions || {};
+    const anyViewExplicit = VIEW_KEYS.some(k => k in perms);
+    if (data.role !== 'admin' && anyViewExplicit) {
+      const pageMap = [
+        { page: 'tracking', key: 'viewTracking' },
+        { page: 'curse',    key: 'viewRegistru' },
+        { page: 'generare', key: 'viewGenerare' },
+        { page: 'chat',     key: 'viewChat'     },
+        { page: 'rapoarte', key: 'viewReports'  },
+      ];
+      const savedPage = localStorage.getItem('currentPage') || 'tracking';
+      const savedAllowed = pageMap.find(p => p.page === savedPage && perms[p.key] === true);
+      if (!savedAllowed) {
+        const firstAllowed = pageMap.find(p => perms[p.key] === true);
+        if (firstAllowed) setCurrentPage(firstAllowed.page);
+      }
+    }
     if (data.role === 'camion') setCurrentPage('chat');
     setTrackingView(localStorage.getItem(`trackingView_${data.username}`) || 'card');
 
@@ -139,6 +160,16 @@ function App() {
       sock.on('disconnect', () => setSocketConnected(false));
       if (sock.connected) setSocketConnected(true);
     }
+  };
+
+  // ── Helper permisiuni pagini ──────────────────────────────
+  const canView = (key) => {
+    if (!user) return false;
+    if (user.role === 'admin') return true;
+    const perms = user.permissions || {};
+    if (key in perms) return !!perms[key];
+    const hasAnyExplicit = VIEW_KEYS.some(k => k in perms);
+    return !hasAnyExplicit; // dacă nu are nicio restricție de view → arată totul
   };
 
   const handleLogout = () => {
@@ -466,7 +497,7 @@ function App() {
 
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--gray-2)' }}>
-            {(user.role === 'admin' || user.permissions?.viewTracking !== false) && (
+            {canView('viewTracking') && (
             <button
               onClick={() => changePage('tracking')}
               style={{
@@ -485,7 +516,7 @@ function App() {
               Status flotă
             </button>
             )}
-            {(user.role === 'admin' || user.permissions?.viewRegistru !== false) && (
+            {canView('viewRegistru') && (
             <button
               onClick={() => changePage('curse')}
               style={{
@@ -504,7 +535,7 @@ function App() {
               Registru
             </button>
             )}
-            {(user.role === 'admin' || user.permissions?.viewGenerare !== false) && (
+            {canView('viewGenerare') && (
             <button
               onClick={() => changePage('generare')}
               style={{
@@ -532,7 +563,7 @@ function App() {
               Generare
             </button>
             )}
-            {(user.role === 'admin' || user.permissions?.viewChat !== false) && (
+            {canView('viewChat') && (
             <button
               onClick={() => changePage('chat')}
               style={{
@@ -557,7 +588,7 @@ function App() {
               Chat
             </button>
             )}
-            {(user.role === 'admin' || user.permissions?.viewReports) && (
+            {canView('viewReports') && (
               <button
                 onClick={() => changePage('rapoarte')}
                 style={{
@@ -599,12 +630,12 @@ function App() {
         </div>
 
         {/* Page Content */}
-        {currentPage === 'generare' && (user.role === 'admin' || user.permissions?.viewGenerare !== false) && <GenerareComanda user={user} />}
-        {currentPage === 'tracking' && (user.role === 'admin' || user.permissions?.viewTracking !== false) && <Tracking user={user} viewMode={trackingView} />}
-        {currentPage === 'curse'    && (user.role === 'admin' || user.permissions?.viewRegistru !== false)  && <Curse user={user} />}
-        {currentPage === 'rapoarte' && (user.role === 'admin' || user.permissions?.viewReports)             && <Dashboard user={user} />}
-        {currentPage === 'admin'    && (user.role === 'admin' || user.permissions?.accessAdmin)             && <Admin user={user} />}
-        {(user.role === 'admin' || user.permissions?.viewChat !== false) && <ChatPanel user={user} currentPage={currentPage} />}
+        {currentPage === 'generare' && canView('viewGenerare') && <GenerareComanda user={user} />}
+        {currentPage === 'tracking' && canView('viewTracking') && <Tracking user={user} viewMode={trackingView} />}
+        {currentPage === 'curse'    && canView('viewRegistru') && <Curse user={user} />}
+        {currentPage === 'rapoarte' && canView('viewReports')  && <Dashboard user={user} />}
+        {currentPage === 'admin'    && (user.role === 'admin' || user.permissions?.accessAdmin) && <Admin user={user} />}
+        {canView('viewChat') && <ChatPanel user={user} currentPage={currentPage} />}
       </div>
     </div>
   );
