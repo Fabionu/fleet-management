@@ -1948,11 +1948,21 @@ REGULI CRITICE — citește cu mare atenție:
 
 4. Datele să fie în formatul specificat (DD.MM.YYYY pentru date, HH:MM pentru ore)
 
-5. Pentru coordonate GPS: dacă sunt scrise explicit în PDF folosește-le, altfel DEDUCE-LE din adresă folosind cunoștințele tale geografice. Folosește coordonate precise pentru orașul/strada respectivă (6 zecimale, format \"lat, lng\"). Nu lăsa coordonatele goale dacă ai adresa.`;
+5. COORDONATE GPS — precizie maximă la nivel de clădire/fabrică:
+   - Dacă coordonatele sunt scrise explicit în PDF → folosește-le exact
+   - Dacă NU sunt în PDF → urmează această logică în ordine:
+     a) Caută FIRMA (load_company / unload_company) combinată cu STRADA și ORAȘUL — multe fabrici/depozite mari au coordonate cunoscute (ex: "MUBEA Prostejov ROVNA 4708" → localizează fabrica specifică, nu centrul orașului)
+     b) Folosește numărul strazii dacă există — "ROVNA 4708" este mult mai precis decât doar "PROSTEJOV"
+     c) Dacă firma este un producător cunoscut (automotive, logistică, retail) sau un depozit mare, folosește coordonatele INTRĂRII / PORȚII DE MARFĂ ale acelei locații specifice
+     d) Dacă strada și numărul sunt clare dar firma e necunoscută → coordonatele adresei stradale exacte
+     e) Ultimă opțiune: centrul orașului/zonei — dar specifică 6 zecimale
+   - Coordonatele trebuie să fie la nivel de CLĂDIRE, nu de oraș. Diferența contează pentru șoferi (intrare fabrică vs centru oraș pot fi km distanță)
+   - Format: "lat, lng" cu 6 zecimale (ex: "49.471823, 17.118945")
+   - Nu lăsa coordonatele goale dacă ai orice informație despre adresă`;
 
     const response = await client.messages.create({
       model: 'claude-opus-4-5',
-      max_tokens: 1024,
+      max_tokens: 2048,
       messages: [
         {
           role: 'user',
