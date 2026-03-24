@@ -621,11 +621,8 @@ function Curse({ user }) {
                 </th>
                 <th style={{ padding: '10px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '28px' }}>
                 </th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '140px' }}>
+                <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '180px' }}>
                   CLIENT
-                </th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '130px' }}>
-                  NR. COMANDĂ
                 </th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)' }}>
                   CAMION
@@ -1001,21 +998,20 @@ function Curse({ user }) {
                         )}
                       </div>
                     </td>
-                    <td style={{ padding: '16px', fontSize: '14px', color: cellColor, width: '140px', fontWeight: 500, verticalAlign: 'middle' }}>
-                      {trip.client}
-                    </td>
-                    <td style={{ padding: '16px', width: '130px', verticalAlign: 'middle' }}>
-                      <div style={{ fontSize: '14px', color: cellColor }}>{trip.order_number}</div>
-                      {trip.completed ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '4px' }}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <td style={{ padding: '16px', width: '180px', verticalAlign: 'middle' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        {trip.completed && (
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                             <polyline points="20 6 9 17 4 12"/>
                           </svg>
-                          <span style={{ fontSize: '10px', color: '#16a34a', fontWeight: 600, letterSpacing: '0.04em' }}>
-                            Completată
-                          </span>
+                        )}
+                        <span style={{ fontSize: '14px', color: cellColor, fontWeight: 500 }}>{trip.client}</span>
+                      </div>
+                      {trip.order_number && (
+                        <div style={{ fontSize: '12px', color: 'var(--gray-4)', marginTop: '2px', paddingLeft: trip.completed ? '18px' : '0' }}>
+                          {trip.order_number}
                         </div>
-                      ) : null}
+                      )}
                     </td>
                     <td style={{ padding: '16px', width: '125px', verticalAlign: 'middle' }}>
                       <div style={{ fontSize: '14px', color: cellColor, fontWeight: 600 }}>
