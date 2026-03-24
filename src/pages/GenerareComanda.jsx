@@ -106,7 +106,7 @@ export default function GenerareComanda({ user }) {
     reader.onload = async (e) => {
       try {
         const base64 = e.target.result.split(',')[1];
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('authToken');
         const res = await fetch('/api/extract-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
