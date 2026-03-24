@@ -1921,7 +1921,7 @@ Analizează documentul PDF și extrage EXACT următoarele câmpuri, returnând U
   "load_company": "numele firmei/depozitului de la locul de ÎNCĂRCARE (Loading Address)",
   "load_street": "strada, numărul sau zona industrială de la locul de ÎNCĂRCARE",
   "load_city": "țara (2 litere ISO) + cod poștal + oraș, fără virgulă, pe un singur rând (ex: \"CZ 796 01 PROSTEJOV\", \"DE 79669 ZELL\", \"NL 1234 AB ROTTERDAM\", \"ES 08450 BARCELONA\")",
-  "load_details": "detalii marfă/încărcare (tip marfă, greutate, paleți, etc.)",
+  "load_details": "DOAR numărul de paleți și greutatea/tonajul mărfii (ex: \"18 paleți, 5079 kg\" sau \"24 PLT, 12.5T\") — ignoră alte informații precum dimensiuni, coduri de produs, condiții de echipament etc.",
   "load_ref": "referința/numărul de referință de încărcare dacă există",
   "unload_date": "data descărcării în format DD.MM.YYYY",
   "unload_time": "ora descărcării în format HH:MM",

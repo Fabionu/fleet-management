@@ -93,6 +93,8 @@ export default function GenerareComanda({ user }) {
   const [copied, setCopied] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [fileName, setFileName] = useState('');
+  const [pdfDataUrl, setPdfDataUrl] = useState('');
+  const [showPdfModal, setShowPdfModal] = useState(false);
   const fileRef = useRef();
 
   const set = (key) => (val) => setFields(f => ({ ...f, [key]: val }));
@@ -108,6 +110,7 @@ export default function GenerareComanda({ user }) {
 
     const reader = new FileReader();
     reader.onload = async (e) => {
+      setPdfDataUrl(e.target.result);
       try {
         const base64 = e.target.result.split(',')[1];
         const token = localStorage.getItem('authToken');
@@ -147,12 +150,42 @@ export default function GenerareComanda({ user }) {
     });
   };
 
-  const handleReset = () => { setFields(EMPTY); setFileName(''); setError(''); };
+  const handleReset = () => { setFields(EMPTY); setFileName(''); setError(''); setPdfDataUrl(''); setShowPdfModal(false); };
 
   const previewLines = buildWhatsApp(fields).split('\n');
 
   return (
     <div style={{ paddingTop: '28px', fontFamily: FONT }}>
+
+      {/* Modal PDF preview */}
+      {showPdfModal && (
+        <div onClick={() => setShowPdfModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ background: 'var(--surface)', borderRadius: '14px', overflow: 'hidden', width: '90vw', height: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 20px 60px rgba(0,0,0,0.4)' }}>
+            {/* Header modal */}
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--black)', fontFamily: FONT }}>{fileName}</span>
+              </div>
+              <button onClick={() => setShowPdfModal(false)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: '4px', display: 'flex', alignItems: 'center', borderRadius: '6px', transition: 'all 0.12s' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            {/* iframe PDF */}
+            <iframe src={pdfDataUrl} style={{ flex: 1, border: 'none', width: '100%' }} title="PDF Preview" />
+          </div>
+        </div>
+      )}
 
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
@@ -216,6 +249,22 @@ export default function GenerareComanda({ user }) {
               </div>
             )}
           </div>
+
+          {/* Buton preview PDF */}
+          {pdfDataUrl && !loading && (
+            <button onClick={() => setShowPdfModal(true)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', width: '100%', padding: '9px 14px', border: '1px solid var(--gray-3)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--black)', fontFamily: FONT, fontWeight: 500, transition: 'all 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <path d="M10 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/>
+                <path d="M2 12s3-5 10-5 10 5 10 5-3 5-10 5-10-5-10-5z"/>
+              </svg>
+              Previzualizează PDF original
+            </button>
+          )}
 
           {error && (
             <div style={{ padding: '10px 14px', background: 'var(--red-light)', border: '1px solid var(--red)', borderRadius: '8px', fontSize: '13px', color: 'var(--red)' }}>
