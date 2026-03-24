@@ -999,16 +999,17 @@ function Curse({ user }) {
                       </div>
                     </td>
                     <td style={{ padding: '16px', width: '180px', verticalAlign: 'middle' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '14px', color: cellColor, fontWeight: 500 }}>{trip.client}</span>
                         {!!trip.completed && (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                            <polyline points="20 6 9 17 4 12"/>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.9 }}>
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="8 12 11 15 16 9"/>
                           </svg>
                         )}
-                        <span style={{ fontSize: '14px', color: cellColor, fontWeight: 500 }}>{trip.client}</span>
                       </div>
                       {trip.order_number && (
-                        <div style={{ fontSize: '12px', color: 'var(--gray-4)', marginTop: '2px', paddingLeft: !!trip.completed ? '18px' : '0' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--gray-4)', marginTop: '2px' }}>
                           {trip.order_number}
                         </div>
                       )}
