@@ -229,38 +229,46 @@ export default function GenerareComanda({ user }) {
               <Field label="Client" value={fields.client} onChange={set('client')} />
             </div>
 
-            {/* Încărcare | Descărcare — 2 coloane */}
-            <div style={{ borderTop: '1px solid var(--gray-1)', paddingTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {/* Încărcare | Descărcare — flat CSS grid, fiecare rând se aliniază automat */}
+            <div style={{ borderTop: '1px solid var(--gray-1)', paddingTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
 
-              {/* STÂNGA — Încărcare */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>Încărcare</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <Field label="Dată" value={fields.load_date} onChange={set('load_date')} placeholder="DD.MM.YYYY" />
-                  <Field label="Oră" value={fields.load_time} onChange={set('load_time')} placeholder="HH:MM" />
-                </div>
-                <Field label="Nume firmă" value={fields.load_company} onChange={set('load_company')} placeholder="ex: MUBEA PROSTEJOV" />
-                <Field label="Stradă / Nr. / Zonă industrială" value={fields.load_street} onChange={set('load_street')} placeholder="ex: ROVNA 4708" />
-                <Field label="Țară, Cod poștal, Oraș" value={fields.load_city} onChange={set('load_city')} placeholder="ex: CZ, 796 01 PROSTEJOV" />
-                <Field label="Coordonate (Lat, Long)" value={fields.load_coords} onChange={set('load_coords')} placeholder="47.123456, 27.123456" />
-                <Field label="Detalii marfă / Tonaj" value={fields.load_details} onChange={set('load_details')} multiline />
-                <Field label="Referință încărcare" value={fields.load_ref} onChange={set('load_ref')} />
+              {/* Rând 1 — etichete secțiuni */}
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Încărcare</div>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Descărcare</div>
+
+              {/* Rând 2 — Dată + Oră */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <Field label="Dată" value={fields.load_date} onChange={set('load_date')} placeholder="DD.MM.YYYY" />
+                <Field label="Oră" value={fields.load_time} onChange={set('load_time')} placeholder="HH:MM" />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <Field label="Dată" value={fields.unload_date} onChange={set('unload_date')} placeholder="DD.MM.YYYY" />
+                <Field label="Oră" value={fields.unload_time} onChange={set('unload_time')} placeholder="HH:MM" />
               </div>
 
-              {/* DREAPTA — Descărcare */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>Descărcare</div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                  <Field label="Dată" value={fields.unload_date} onChange={set('unload_date')} placeholder="DD.MM.YYYY" />
-                  <Field label="Oră" value={fields.unload_time} onChange={set('unload_time')} placeholder="HH:MM" />
-                </div>
-                <Field label="Nume firmă" value={fields.unload_company} onChange={set('unload_company')} placeholder="ex: ILN MIOVENI" />
-                <Field label="Stradă / Nr. / Zonă industrială" value={fields.unload_street} onChange={set('unload_street')} placeholder="ex: 148 BLD DACIA NR" />
-                <Field label="Țară, Cod poștal, Oraș" value={fields.unload_city} onChange={set('unload_city')} placeholder="ex: RO, 115400 MIOVENI" />
-                <Field label="Coordonate (Lat, Long)" value={fields.unload_coords} onChange={set('unload_coords')} placeholder="47.123456, 27.123456" />
-                <div style={{ height: '56px' }} />{/* spacer pentru aliniere cu detalii marfă */}
-                <Field label="Referință descărcare" value={fields.unload_ref} onChange={set('unload_ref')} />
-              </div>
+              {/* Rând 3 — Nume firmă */}
+              <Field label="Nume firmă" value={fields.load_company} onChange={set('load_company')} placeholder="ex: MUBEA PROSTEJOV" />
+              <Field label="Nume firmă" value={fields.unload_company} onChange={set('unload_company')} placeholder="ex: ILN MIOVENI" />
+
+              {/* Rând 4 — Stradă */}
+              <Field label="Stradă / Nr. / Zonă industrială" value={fields.load_street} onChange={set('load_street')} placeholder="ex: ROVNA 4708" />
+              <Field label="Stradă / Nr. / Zonă industrială" value={fields.unload_street} onChange={set('unload_street')} placeholder="ex: 148 BLD DACIA NR" />
+
+              {/* Rând 5 — Țară, cod, oraș */}
+              <Field label="Țară, Cod poștal, Oraș" value={fields.load_city} onChange={set('load_city')} placeholder="ex: CZ, 796 01 PROSTEJOV" />
+              <Field label="Țară, Cod poștal, Oraș" value={fields.unload_city} onChange={set('unload_city')} placeholder="ex: RO, 115400 MIOVENI" />
+
+              {/* Rând 6 — Coordonate */}
+              <Field label="Coordonate (Lat, Long)" value={fields.load_coords} onChange={set('load_coords')} placeholder="47.123456, 27.123456" />
+              <Field label="Coordonate (Lat, Long)" value={fields.unload_coords} onChange={set('unload_coords')} placeholder="47.123456, 27.123456" />
+
+              {/* Rând 7 — Detalii marfă (stânga) / gol dreapta — rândul se înalță automat cu textarea */}
+              <Field label="Detalii marfă / Tonaj" value={fields.load_details} onChange={set('load_details')} multiline />
+              <div />
+
+              {/* Rând 8 — Referință (aliniate perfect datorită CSS grid) */}
+              <Field label="Referință încărcare" value={fields.load_ref} onChange={set('load_ref')} />
+              <Field label="Referință descărcare" value={fields.unload_ref} onChange={set('unload_ref')} />
 
             </div>
 
@@ -295,18 +303,14 @@ export default function GenerareComanda({ user }) {
             <div style={{ padding: '20px 24px', background: 'var(--surface)', minHeight: '200px' }}>
               {previewLines.map((line, i) => {
                 if (line === '') return <div key={i} style={{ height: '0.8em' }} />;
-                const isBoldLine = line.startsWith('*•') && line.endsWith('*') && !line.slice(2, -1).includes('*');
-                const isBoldInline = line.startsWith('*•') && line.includes(':*');
-                if (isBoldLine) {
-                  return <div key={i} style={{ fontSize: '13px', fontWeight: 700, color: 'var(--black)', fontFamily: "'DM Mono', monospace", lineHeight: 1.6 }}>{line.replace(/\*/g, '')}</div>;
-                }
-                if (isBoldInline) {
-                  const colonIdx = line.indexOf(':*');
-                  const boldPart = line.slice(0, colonIdx + 1).replace(/\*/g, '');
-                  const rest = line.slice(colonIdx + 2);
+                // Orice linie care începe cu *• este bold (label sau label + valoare)
+                const boldMatch = line.match(/^\*•(.*?)\*(.*)$/);
+                if (boldMatch) {
+                  const label = '•' + boldMatch[1];
+                  const rest = boldMatch[2].trim();
                   return (
                     <div key={i} style={{ fontSize: '13px', color: 'var(--black)', fontFamily: "'DM Mono', monospace", lineHeight: 1.6 }}>
-                      <strong>{boldPart}</strong>{rest}
+                      <strong>{label}</strong>{rest ? ' ' + rest : ''}
                     </div>
                   );
                 }

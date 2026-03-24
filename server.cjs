@@ -1933,13 +1933,22 @@ Analizează documentul PDF și extrage EXACT următoarele câmpuri, returnând U
   "unload_ref": "referința/numărul de referință de descărcare dacă există"
 }
 
-Reguli CRITICE:
-- ATENȚIE MAXIMĂ la distincția Loading Address (încărcare) vs Delivery Address (descărcare) — NU le inversa!
-- Loading Address = locul de unde se ridică marfa; Delivery Address = locul unde se livrează marfa
-- Returnează DOAR JSON-ul, fără text suplimentar, fără markdown
-- Dacă un câmp nu există în document, lasă-l string gol ""
-- Datele să fie în formatul specificat (DD.MM.YYYY pentru date, HH:MM pentru ore)
-- Pentru coordonate GPS: dacă sunt scrise explicit în PDF folosește-le, altfel DEDUCE-LE din adresă folosind cunoștințele tale geografice. Folosește coordonate precise pentru orașul/strada respectivă (6 zecimale, format \"lat, lng\"). Nu lăsa coordonatele goale dacă ai adresa.`;
+REGULI CRITICE — citește cu mare atenție:
+
+1. IDENTIFICAREA CORECTĂ A COLOANELOR:
+   - Documentele de transport au două coloane/secțiuni de adresă
+   - Coloana/secțiunea marcată "Loading Address", "Chargement", "Încărcare", "Pickup", "Collection", "From" = ÎNCĂRCARE → câmpurile load_*
+   - Coloana/secțiunea marcată "Delivery Address", "Livraison", "Descărcare", "Delivery", "Unloading", "To" = DESCĂRCARE → câmpurile unload_*
+   - De obicei Loading Address este în STÂNGA și Delivery Address în DREAPTA. NU le inversa NICIODATĂ.
+   - Data/ora asociată Loading Address merge la load_date/load_time; data/ora Delivery Address merge la unload_date/unload_time.
+
+2. Returnează DOAR JSON-ul, fără text suplimentar, fără markdown, fără \`\`\`
+
+3. Dacă un câmp nu există în document, lasă-l string gol ""
+
+4. Datele să fie în formatul specificat (DD.MM.YYYY pentru date, HH:MM pentru ore)
+
+5. Pentru coordonate GPS: dacă sunt scrise explicit în PDF folosește-le, altfel DEDUCE-LE din adresă folosind cunoștințele tale geografice. Folosește coordonate precise pentru orașul/strada respectivă (6 zecimale, format \"lat, lng\"). Nu lăsa coordonatele goale dacă ai adresa.`;
 
     const response = await client.messages.create({
       model: 'claude-opus-4-5',
