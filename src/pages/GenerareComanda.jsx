@@ -152,7 +152,7 @@ export default function GenerareComanda({ user }) {
   const previewLines = buildWhatsApp(fields).split('\n');
 
   return (
-    <div style={{ paddingTop: '28px', maxWidth: '1200px', margin: '0 auto', fontFamily: FONT }}>
+    <div style={{ paddingTop: '28px', fontFamily: FONT }}>
 
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>

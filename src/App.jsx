@@ -191,7 +191,7 @@ function App() {
         background: 'var(--bg-page)',
         border: '1px solid var(--gray-2)',
         borderRadius: currentPage === 'chat' ? '16px 16px 0 0' : '16px',
-        padding: currentPage === 'chat' ? '32px 32px 0 32px' : '32px',
+        padding: currentPage === 'chat' ? '32px 32px 0 32px' : currentPage === 'generare' ? '32px 20px' : '32px',
         boxShadow: '0 8px 30px var(--shadow)',
         position: 'relative',
       }}>
