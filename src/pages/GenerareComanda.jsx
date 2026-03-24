@@ -10,6 +10,12 @@ const EMPTY = {
   unload_coords: '', unload_ref: '',
 };
 
+const DIRECT_RE = /^(asap|direct|directly)$/i;
+function fmtTime(t) {
+  if (!t || DIRECT_RE.test(t.trim())) return 'Direct';
+  return `LA ORA ${t}`;
+}
+
 function buildWhatsApp(f) {
   const coordInc   = f.load_coords   ? `NORD - EST ${f.load_coords}`   : 'NORD - EST __________, __________';
   const coordDesc  = f.unload_coords ? `NORD - EST ${f.unload_coords}` : 'NORD - EST __________, __________';
@@ -21,7 +27,7 @@ function buildWhatsApp(f) {
     `*•NUMĂR COMANDĂ:* ${f.order_number || '___________'}`,
     `*•NUME CLIENT:* ${f.client || '___________'}`,
     ``,
-    `*•ÎNCĂRCARE ${f.load_date || '___'}, LA ORA ${f.load_time || '___'}, LA ADRESA:*`,
+    `*•ÎNCĂRCARE ${f.load_date || '___'}, ${fmtTime(f.load_time)}, LA ADRESA:*`,
     ``,
     loadAddr,
     ``,
@@ -31,7 +37,7 @@ function buildWhatsApp(f) {
     `*•DETALII INCARCARE:*${f.load_details ? ' ' + f.load_details : ''}`,
     f.load_ref ? `*•REFERINTA:* ${f.load_ref}` : null,
     ``,
-    `*•DESCARCARE ${f.unload_date || '___'}, LA ORA ${f.unload_time || '___'}, LA ADRESA:*`,
+    `*•DESCARCARE ${f.unload_date || '___'}, ${fmtTime(f.unload_time)}, LA ADRESA:*`,
     ``,
     unloadAddr,
     ``,
@@ -95,9 +101,22 @@ export default function GenerareComanda({ user }) {
   const [fileName, setFileName] = useState('');
   const [pdfDataUrl, setPdfDataUrl] = useState('');
   const [showPdfModal, setShowPdfModal] = useState(false);
+  const [copiedAddr, setCopiedAddr] = useState(''); // 'load' | 'unload' | ''
   const fileRef = useRef();
 
   const set = (key) => (val) => setFields(f => ({ ...f, [key]: val }));
+
+  const copyAddress = (type) => {
+    const c = type === 'load'
+      ? [fields.load_company, fields.load_street, fields.load_city]
+      : [fields.unload_company, fields.unload_street, fields.unload_city];
+    const addr = c.filter(Boolean).join(', ');
+    if (!addr) return;
+    navigator.clipboard.writeText(addr).then(() => {
+      setCopiedAddr(type);
+      setTimeout(() => setCopiedAddr(''), 2000);
+    });
+  };
 
   const processFile = useCallback(async (file) => {
     if (!file || file.type !== 'application/pdf') {
@@ -285,8 +304,30 @@ export default function GenerareComanda({ user }) {
             <div style={{ borderTop: '1px solid var(--gray-2)', paddingTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
 
               {/* Rând 1 — etichete secțiuni */}
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>Încărcare</div>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>Descărcare</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>Încărcare</span>
+                <button onClick={() => copyAddress('load')} title="Copiază adresa pentru Maps"
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', border: `1px solid ${copiedAddr === 'load' ? 'var(--green)' : 'var(--gray-3)'}`, borderRadius: '6px', background: copiedAddr === 'load' ? 'var(--green)' : 'transparent', cursor: 'pointer', fontSize: '11px', fontWeight: 500, color: copiedAddr === 'load' ? 'white' : 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
+                  onMouseEnter={e => { if (copiedAddr !== 'load') { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
+                  onMouseLeave={e => { if (copiedAddr !== 'load') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; } }}>
+                  {copiedAddr === 'load'
+                    ? <><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiat!</>
+                    : <><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiază adresa</>
+                  }
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>Descărcare</span>
+                <button onClick={() => copyAddress('unload')} title="Copiază adresa pentru Maps"
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', border: `1px solid ${copiedAddr === 'unload' ? 'var(--green)' : 'var(--gray-3)'}`, borderRadius: '6px', background: copiedAddr === 'unload' ? 'var(--green)' : 'transparent', cursor: 'pointer', fontSize: '11px', fontWeight: 500, color: copiedAddr === 'unload' ? 'white' : 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
+                  onMouseEnter={e => { if (copiedAddr !== 'unload') { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
+                  onMouseLeave={e => { if (copiedAddr !== 'unload') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; } }}>
+                  {copiedAddr === 'unload'
+                    ? <><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiat!</>
+                    : <><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiază adresa</>
+                  }
+                </button>
+              </div>
 
               {/* Rând 2 — Dată + Oră */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
