@@ -621,10 +621,10 @@ function Curse({ user }) {
                 </th>
                 <th style={{ padding: '10px 8px', textAlign: 'center', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '28px' }}>
                 </th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '180px' }}>
+                <th style={{ padding: '16px 8px 16px 16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '180px' }}>
                   CLIENT
                 </th>
-                <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)' }}>
+                <th style={{ padding: '16px 16px 16px 8px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)' }}>
                   CAMION
                 </th>
                 <th style={{ padding: '16px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)', width: '185px' }}>
@@ -998,7 +998,7 @@ function Curse({ user }) {
                         )}
                       </div>
                     </td>
-                    <td style={{ padding: '16px', width: '180px', verticalAlign: 'middle' }}>
+                    <td style={{ padding: '16px 8px 16px 16px', width: '180px', verticalAlign: 'middle' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '14px', color: cellColor, fontWeight: 500 }}>{trip.client}</span>
                         {!!trip.completed && (
@@ -1014,7 +1014,7 @@ function Curse({ user }) {
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: '16px', width: '125px', verticalAlign: 'middle' }}>
+                    <td style={{ padding: '16px 16px 16px 8px', width: '125px', verticalAlign: 'middle' }}>
                       <div style={{ fontSize: '14px', color: cellColor, fontWeight: 600 }}>
                         {trip.truck_number}
                       </div>
