@@ -43,18 +43,21 @@ function buildWhatsApp(f) {
   return lines.join('\n');
 }
 
+const FONT = "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif";
+
 const inputStyle = {
   width: '100%', boxSizing: 'border-box',
-  padding: '8px 10px', fontSize: '13px',
+  padding: '10px 12px', fontSize: '14px',
   border: '1px solid var(--gray-2)', borderRadius: '8px',
   background: 'var(--gray-1)', color: 'var(--black)',
-  outline: 'none', fontFamily: 'inherit', transition: 'border-color 0.15s',
+  outline: 'none', fontFamily: FONT, transition: 'border-color 0.15s',
 };
 
 const labelStyle = {
   fontSize: '11px', fontWeight: 600,
   color: 'var(--gray-4)', textTransform: 'uppercase',
-  letterSpacing: '0.06em', marginBottom: '4px', display: 'block',
+  letterSpacing: '0.07em', marginBottom: '6px', display: 'block',
+  fontFamily: FONT,
 };
 
 function Field({ label, value, onChange, placeholder, multiline }) {
@@ -149,22 +152,22 @@ export default function GenerareComanda({ user }) {
   const previewLines = buildWhatsApp(fields).split('\n');
 
   return (
-    <div style={{ paddingTop: '24px', maxWidth: '1100px', margin: '0 auto' }}>
+    <div style={{ paddingTop: '28px', maxWidth: '1200px', margin: '0 auto', fontFamily: FONT }}>
 
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--black)', margin: 0, letterSpacing: '-0.02em' }}>
+      <div style={{ marginBottom: '28px' }}>
+        <h2 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--black)', margin: 0, letterSpacing: '-0.02em', fontFamily: FONT }}>
           Generare Comandă
         </h2>
-        <p style={{ fontSize: '13px', color: 'var(--gray-4)', marginTop: '4px' }}>
+        <p style={{ fontSize: '13px', color: 'var(--gray-4)', marginTop: '5px', fontFamily: FONT }}>
           Încarcă un PDF cu comanda de transport și AI-ul va completa automat câmpurile.
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '20px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '24px', alignItems: 'start' }}>
 
         {/* LEFT — Upload + Fields */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* Drop zone */}
           <div
@@ -221,27 +224,27 @@ export default function GenerareComanda({ user }) {
           )}
 
           {/* Fields */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', padding: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '14px', padding: '24px' }}>
 
             {/* Număr comandă + Client */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
               <Field label="Număr comandă" value={fields.order_number} onChange={set('order_number')} />
               <Field label="Client" value={fields.client} onChange={set('client')} />
             </div>
 
             {/* Încărcare | Descărcare — flat CSS grid, fiecare rând se aliniază automat */}
-            <div style={{ borderTop: '1px solid var(--gray-1)', paddingTop: '12px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px' }}>
+            <div style={{ borderTop: '1px solid var(--gray-2)', paddingTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
 
               {/* Rând 1 — etichete secțiuni */}
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Încărcare</div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Descărcare</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>Încărcare</div>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: '#ff7a3d', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>Descărcare</div>
 
               {/* Rând 2 — Dată + Oră */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <Field label="Dată" value={fields.load_date} onChange={set('load_date')} placeholder="DD.MM.YYYY" />
                 <Field label="Oră" value={fields.load_time} onChange={set('load_time')} placeholder="HH:MM" />
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <Field label="Dată" value={fields.unload_date} onChange={set('unload_date')} placeholder="DD.MM.YYYY" />
                 <Field label="Oră" value={fields.unload_time} onChange={set('unload_time')} placeholder="HH:MM" />
               </div>
@@ -272,9 +275,9 @@ export default function GenerareComanda({ user }) {
 
             </div>
 
-            <div style={{ display: 'flex', gap: '8px', paddingTop: '4px' }}>
+            <div style={{ display: 'flex', gap: '8px', paddingTop: '8px', borderTop: '1px solid var(--gray-2)' }}>
               <button onClick={handleReset}
-                style={{ flex: 1, padding: '9px', border: '1px solid var(--gray-3)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--gray-4)', fontFamily: 'inherit', transition: 'all 0.15s' }}
+                style={{ flex: 1, padding: '10px', border: '1px solid var(--gray-3)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
                 Resetează
@@ -284,13 +287,13 @@ export default function GenerareComanda({ user }) {
         </div>
 
         {/* RIGHT — Preview */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', position: 'sticky', top: '20px' }}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '20px' }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '14px', overflow: 'hidden' }}>
 
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--black)' }}>Preview comandă</span>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--black)', fontFamily: FONT }}>Preview comandă</span>
               <button onClick={handleCopy}
-                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 12px', border: '1px solid var(--gray-3)', borderRadius: '6px', background: copied ? 'var(--green)' : 'transparent', cursor: 'pointer', fontSize: '12px', color: copied ? 'white' : 'var(--black)', fontFamily: 'inherit', transition: 'all 0.15s', fontWeight: 500 }}>
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 14px', border: '1px solid var(--gray-3)', borderRadius: '7px', background: copied ? 'var(--green)' : 'transparent', cursor: 'pointer', fontSize: '13px', color: copied ? 'white' : 'var(--black)', fontFamily: FONT, transition: 'all 0.15s', fontWeight: 500 }}>
                 {copied ? (
                   <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiat!</>
                 ) : (
@@ -300,7 +303,7 @@ export default function GenerareComanda({ user }) {
             </div>
 
             {/* Preview text */}
-            <div style={{ padding: '20px 24px', background: 'var(--surface)', minHeight: '200px' }}>
+            <div style={{ padding: '20px 24px', background: 'var(--surface)', minHeight: '220px' }}>
               {previewLines.map((line, i) => {
                 if (line === '') return <div key={i} style={{ height: '0.8em' }} />;
                 // Orice linie care începe cu *• este bold (label sau label + valoare)
@@ -309,17 +312,17 @@ export default function GenerareComanda({ user }) {
                   const label = '•' + boldMatch[1];
                   const rest = boldMatch[2].trim();
                   return (
-                    <div key={i} style={{ fontSize: '13px', color: 'var(--black)', fontFamily: "'DM Mono', monospace", lineHeight: 1.6 }}>
+                    <div key={i} style={{ fontSize: '13px', color: 'var(--black)', fontFamily: "'SF Mono', 'Fira Code', monospace", lineHeight: 1.7 }}>
                       <strong>{label}</strong>{rest ? ' ' + rest : ''}
                     </div>
                   );
                 }
-                return <div key={i} style={{ fontSize: '13px', color: 'var(--gray-4)', fontFamily: "'DM Mono', monospace", lineHeight: 1.6 }}>{line}</div>;
+                return <div key={i} style={{ fontSize: '13px', color: 'var(--gray-4)', fontFamily: "'SF Mono', 'Fira Code', monospace", lineHeight: 1.7 }}>{line}</div>;
               })}
             </div>
           </div>
 
-          <div style={{ padding: '12px 14px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '10px', fontSize: '12px', color: 'var(--gray-4)', lineHeight: 1.6 }}>
+          <div style={{ padding: '14px 18px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '12px', fontSize: '13px', color: 'var(--gray-4)', lineHeight: 1.7, fontFamily: FONT }}>
             <strong style={{ color: 'var(--black)', fontWeight: 600 }}>Cum funcționează:</strong><br/>
             1. Încarcă PDF-ul comenzii de transport<br/>
             2. AI-ul extrage automat câmpurile<br/>
