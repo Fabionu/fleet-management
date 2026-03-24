@@ -1935,6 +1935,12 @@ Analizează documentul PDF și extrage EXACT următoarele câmpuri, returnând U
 
 REGULI CRITICE — citește cu mare atenție:
 
+0. COMENZI FERCAM — REGULĂ SPECIALĂ:
+   - Dacă documentul este o comandă emisă de FERCAM (clientul este FERCAM), numărul comenzii NU este numărul general al documentului
+   - Caută pe PRIMA PAGINĂ linia care conține exact textul "POSITION FERCAM:" urmată de un cod de forma KA-XXX-XXXXX
+   - Exemplu: "POSITION FERCAM: KA-123-45678" → order_number = "KA-123-45678"
+   - Acest cod FERCAM are prioritate față de orice alt număr de comandă găsit în document
+
 1. IDENTIFICAREA CORECTĂ A COLOANELOR:
    - Documentele de transport au două coloane/secțiuni de adresă
    - Coloana/secțiunea marcată "Loading Address", "Chargement", "Încărcare", "Pickup", "Collection", "From" = ÎNCĂRCARE → câmpurile load_*
