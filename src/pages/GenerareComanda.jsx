@@ -16,9 +16,22 @@ function fmtTime(t) {
   return `LA ORA ${t}`;
 }
 
+function fmtCoord(coords) {
+  if (!coords) return 'NORD - EST __________, __________';
+  const match = coords.match(/^\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*$/);
+  if (!match) return `NORD - EST ${coords}`;
+  const latStr = match[1];
+  const lngStr = match[2];
+  const latDir = latStr.startsWith('-') ? 'SUD' : 'NORD';
+  const lngDir = lngStr.startsWith('-') ? 'VEST' : 'EST';
+  const latAbs = latStr.startsWith('-') ? latStr.slice(1) : latStr;
+  const lngAbs = lngStr.startsWith('-') ? lngStr.slice(1) : lngStr;
+  return `${latDir} - ${lngDir} ${latAbs}, ${lngAbs}`;
+}
+
 function buildWhatsApp(f) {
-  const coordInc   = f.load_coords   ? `NORD - EST ${f.load_coords}`   : 'NORD - EST __________, __________';
-  const coordDesc  = f.unload_coords ? `NORD - EST ${f.unload_coords}` : 'NORD - EST __________, __________';
+  const coordInc  = fmtCoord(f.load_coords);
+  const coordDesc = fmtCoord(f.unload_coords);
 
   const loadAddr   = [f.load_company,   f.load_street,   f.load_city  ].filter(Boolean).join('\n') || '___________';
   const unloadAddr = [f.unload_company, f.unload_street, f.unload_city].filter(Boolean).join('\n') || '___________';
