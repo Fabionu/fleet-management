@@ -1898,6 +1898,80 @@ app.get('/api/dashboard/stats', authMiddleware, async (req, res) => {
   }
 });
 
+// ── GENERARE COMANDĂ — extragere AI din PDF ─────────────────
+app.post('/api/extract-order', authMiddleware, async (req, res) => {
+  try {
+    const { pdfBase64 } = req.body;
+    if (!pdfBase64) return res.status(400).json({ error: 'Lipsește PDF-ul' });
+
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY lipsește din .env' });
+
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic.default({ apiKey });
+
+    const prompt = `Ești un asistent care extrage informații dintr-o comandă de transport.
+Analizează documentul PDF și extrage EXACT următoarele câmpuri, returnând UN SINGUR OBIECT JSON valid:
+
+{
+  "order_number": "numărul comenzii",
+  "client": "numele clientului/firmei",
+  "load_date": "data încărcării în format DD.MM.YYYY",
+  "load_time": "ora încărcării în format HH:MM",
+  "load_address": "adresa completă de încărcare",
+  "load_lat": "latitudine GPS dacă există, altfel gol",
+  "load_lng": "longitudine GPS dacă există, altfel gol",
+  "load_details": "detalii marfă/încărcare (tip marfă, greutate, paleți, etc.)",
+  "load_ref": "referința/numărul de referință de încărcare dacă există",
+  "unload_date": "data descărcării în format DD.MM.YYYY",
+  "unload_time": "ora descărcării în format HH:MM",
+  "unload_address": "adresa completă de descărcare",
+  "unload_lat": "latitudine GPS dacă există, altfel gol",
+  "unload_lng": "longitudine GPS dacă există, altfel gol",
+  "unload_ref": "referința/numărul de referință de descărcare dacă există"
+}
+
+Reguli:
+- Returnează DOAR JSON-ul, fără text suplimentar, fără markdown
+- Dacă un câmp nu există în document, lasă-l string gol ""
+- Datele să fie în formatul specificat (DD.MM.YYYY pentru date, HH:MM pentru ore)
+- Pentru coordonate, dacă nu există în document, lasă gol`;
+
+    const response = await client.messages.create({
+      model: 'claude-opus-4-5',
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'document',
+              source: {
+                type: 'base64',
+                media_type: 'application/pdf',
+                data: pdfBase64,
+              },
+            },
+            {
+              type: 'text',
+              text: prompt,
+            },
+          ],
+        },
+      ],
+    });
+
+    const raw = response.content[0].text.trim();
+    // Curăță markdown dacă modelul a pus ```json
+    const cleaned = raw.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
+    const data = JSON.parse(cleaned);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error('❌ extract-order error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── SPA fallback (React Router) ─────────────────────────────
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));

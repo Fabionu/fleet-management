@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.80.0",
     "axios": "^1.13.5",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.6.2",

@@ -5,6 +5,7 @@ import Admin from './pages/Admin';
 import Curse from './pages/Curse';
 import Dashboard from './pages/Dashboard';
 import ChatPanel from './components/ChatPanel';
+import GenerareComanda from './pages/GenerareComanda';
 import { connectSocket, disconnectSocket, getSocket } from './services/socket';
 import { api } from './services/api';
 
@@ -503,6 +504,34 @@ function App() {
               Registru
             </button>
             )}
+            {(user.role === 'admin' || user.permissions?.viewGenerare !== false) && (
+            <button
+              onClick={() => changePage('generare')}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                borderBottom: `2px solid ${currentPage === 'generare' ? '#ff7a3d' : 'transparent'}`,
+                padding: '12px 20px',
+                fontSize: '14px',
+                fontWeight: 600,
+                color: currentPage === 'generare' ? '#ff7a3d' : 'var(--gray-4)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                marginBottom: '-2px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '7px',
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <line x1="9" y1="15" x2="15" y2="15"/>
+              </svg>
+              Generare
+            </button>
+            )}
             {(user.role === 'admin' || user.permissions?.viewChat !== false) && (
             <button
               onClick={() => changePage('chat')}
@@ -570,6 +599,7 @@ function App() {
         </div>
 
         {/* Page Content */}
+        {currentPage === 'generare' && (user.role === 'admin' || user.permissions?.viewGenerare !== false) && <GenerareComanda user={user} />}
         {currentPage === 'tracking' && (user.role === 'admin' || user.permissions?.viewTracking !== false) && <Tracking user={user} viewMode={trackingView} />}
         {currentPage === 'curse'    && (user.role === 'admin' || user.permissions?.viewRegistru !== false)  && <Curse user={user} />}
         {currentPage === 'rapoarte' && (user.role === 'admin' || user.permissions?.viewReports)             && <Dashboard user={user} />}
