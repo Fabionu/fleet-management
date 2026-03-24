@@ -652,6 +652,9 @@ export default function ChatPanel({ user, currentPage }) {
   const [deleteConfirm, setDeleteConfirm]   = useState(null); // mesajul pending ștergere
   const [chatToast, setChatToast]           = useState(null); // { message, type }
   const [lightboxSrc, setLightboxSrc]       = useState(null); // src imagine full-screen
+  const [chatFontSize, setChatFontSize]     = useState(() => parseInt(localStorage.getItem('chat_font_size') || '14', 10));
+  const [showChatSettings, setShowChatSettings] = useState(false);
+  const chatSettingsRef                     = useRef(null);
   const fileInputRef                        = useRef(null);
   const searchInputRef                      = useRef(null);
   const EDIT_LIMIT_MS = 5 * 60 * 1000;
@@ -788,6 +791,22 @@ export default function ChatPanel({ user, currentPage }) {
     }, 400);
   };
 
+  // ── Cerere permisiune notificări browser ──────────────────
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // ── Trimitere notificare browser ──────────────────────────
+  const sendBrowserNotif = (title, body, icon) => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+    if (!document.hidden) return; // doar când tabul e în fundal
+    const n = new Notification(title, { body, icon: icon || '/favicon.ico', silent: false });
+    n.onclick = () => { window.focus(); n.close(); };
+  };
+
   // ── Load initial data + socket listeners ──────────────────
   useEffect(() => {
     const load = async () => {
@@ -843,6 +862,10 @@ export default function ChatPanel({ user, currentPage }) {
           isTripOrderMsg(msg) ? playTripOrderReceived() : playReceived();
           setUnreadCounts(prev => ({ ...prev, [peerOfMsg]: (prev[peerOfMsg] || 0) + 1 }));
         }
+        if (!isMuted) {
+          const preview = isTripOrderMsg(msg) ? '📦 Comandă de transport' : (msg.message?.slice(0, 80) || '');
+          sendBrowserNotif(`Mesaj de la ${peerOfMsg}`, preview);
+        }
       }
     };
 
@@ -859,6 +882,11 @@ export default function ChatPanel({ user, currentPage }) {
       if (!isActive && msg.username !== user.username && msg.message_type !== 'system' && !isMuted) {
         isTripOrderMsg(msg) ? playTripOrderReceived() : playReceived();
         setGroupUnread(prev => ({ ...prev, [gId]: (prev[gId] || 0) + 1 }));
+      }
+      if (msg.username !== user.username && msg.message_type !== 'system' && !isMuted) {
+        const grpName = groups.find(g => g.id === gId)?.name || 'Grup';
+        const preview = isTripOrderMsg(msg) ? '📦 Comandă de transport' : (msg.message?.slice(0, 80) || '');
+        sendBrowserNotif(`${msg.username} în ${grpName}`, preview);
       }
       if (isActive) {
         axios.put(`/api/chat/groups/${gId}/read`, {}, { headers }).catch(() => {});
@@ -1082,6 +1110,17 @@ export default function ChatPanel({ user, currentPage }) {
     if (view === 'contacts') requestAnimationFrame(() => searchRef.current?.focus());
     if (view === 'create-group') requestAnimationFrame(() => newGroupNameRef.current?.focus());
   }, [view, peer?.username, activeGroup?.id]);
+
+  // ── Închide dropdown setări la click în afară ─────────────
+  useEffect(() => {
+    const handleOutside = (e) => {
+      if (chatSettingsRef.current && !chatSettingsRef.current.contains(e.target)) {
+        setShowChatSettings(false);
+      }
+    };
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
 
   // ── Mute helpers ──────────────────────────────────────────
   const toggleMuteDm = (username) => {
@@ -1390,6 +1429,14 @@ export default function ChatPanel({ user, currentPage }) {
     setTimeout(() => setChatToast(null), 3000);
   };
 
+  const changeFontSize = (delta) => {
+    setChatFontSize(prev => {
+      const next = Math.max(11, Math.min(20, prev + delta));
+      localStorage.setItem('chat_font_size', String(next));
+      return next;
+    });
+  };
+
   const deleteMsg = (msg) => {
     setDeleteConfirm(msg);
   };
@@ -1652,7 +1699,7 @@ export default function ChatPanel({ user, currentPage }) {
             />
           </div>
         ) : (
-          <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
+          <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: chatFontSize, lineHeight: 1.45, wordBreak: 'break-word' }}>
             {msg.reply_to_id && (
               <div onClick={() => {
                 const el = document.getElementById(`msg-${msg.reply_to_id}`);
@@ -2097,6 +2144,48 @@ export default function ChatPanel({ user, currentPage }) {
                   onMouseLeave={e => { e.currentTarget.style.background = showSearch ? 'var(--gray-2)' : 'transparent'; e.currentTarget.style.color = showSearch ? 'var(--black)' : 'var(--gray-4)'; }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </button>
+                {/* Setări chat */}
+                <div ref={chatSettingsRef} style={{ position: 'relative' }}>
+                  <button onClick={() => setShowChatSettings(s => !s)} title="Opțiuni chat"
+                    style={{ background: showChatSettings ? 'var(--gray-2)' : 'transparent', border: 'none', cursor: 'pointer', padding: '6px 8px', color: showChatSettings ? 'var(--black)' : 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'all 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = showChatSettings ? 'var(--gray-2)' : 'transparent'; e.currentTarget.style.color = showChatSettings ? 'var(--black)' : 'var(--gray-4)'; }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="4" y1="6" x2="20" y2="6"/><circle cx="8" cy="6" r="2.2" fill="currentColor" stroke="none"/>
+                      <line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2.2" fill="currentColor" stroke="none"/>
+                      <line x1="4" y1="18" x2="20" y2="18"/><circle cx="10" cy="18" r="2.2" fill="currentColor" stroke="none"/>
+                    </svg>
+                  </button>
+                  {showChatSettings && (
+                    <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.12)', zIndex: 100, padding: '14px 16px', minWidth: 180 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--gray-4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Opțiuni chat</div>
+                      <div style={{ fontSize: 12, color: 'var(--black)', marginBottom: 8, fontWeight: 500 }}>Mărime text</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <button onClick={() => changeFontSize(-1)} disabled={chatFontSize <= 11}
+                          style={{ width: 30, height: 30, border: '1px solid var(--gray-3)', borderRadius: 7, background: 'var(--gray-1)', cursor: chatFontSize <= 11 ? 'default' : 'pointer', color: chatFontSize <= 11 ? 'var(--gray-3)' : 'var(--black)', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.12s' }}
+                          onMouseEnter={e => { if (chatFontSize > 11) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
+                          <span style={{ fontSize: 18, lineHeight: 1, marginTop: -1 }}>−</span>
+                        </button>
+                        <div style={{ flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 600, color: 'var(--black)' }}>{chatFontSize}px</div>
+                        <button onClick={() => changeFontSize(1)} disabled={chatFontSize >= 20}
+                          style={{ width: 30, height: 30, border: '1px solid var(--gray-3)', borderRadius: 7, background: 'var(--gray-1)', cursor: chatFontSize >= 20 ? 'default' : 'pointer', color: chatFontSize >= 20 ? 'var(--gray-3)' : 'var(--black)', fontSize: 16, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.12s' }}
+                          onMouseEnter={e => { if (chatFontSize < 20) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
+                          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
+                        </button>
+                      </div>
+                      {chatFontSize !== 14 && (
+                        <button onClick={() => { setChatFontSize(14); localStorage.setItem('chat_font_size', '14'); }}
+                          style={{ marginTop: 10, width: '100%', padding: '5px 0', border: '1px solid var(--gray-3)', borderRadius: 7, background: 'transparent', cursor: 'pointer', color: 'var(--gray-4)', fontSize: 11, fontWeight: 500, transition: 'all 0.12s' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+                          Resetează (14px)
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               {/* Search bar */}
               {showSearch && (
@@ -2591,6 +2680,46 @@ export default function ChatPanel({ user, currentPage }) {
                   onMouseLeave={e => { e.currentTarget.style.background = showSearch ? 'var(--gray-2)' : 'transparent'; e.currentTarget.style.color = showSearch ? 'var(--black)' : 'var(--gray-4)'; }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </button>
+                {/* Setări chat mini-panel */}
+                <div ref={chatSettingsRef} style={{ position: 'relative' }}>
+                  <button onClick={() => setShowChatSettings(s => !s)} title="Opțiuni chat"
+                    style={{ background: showChatSettings ? 'var(--gray-2)' : 'transparent', border: 'none', cursor: 'pointer', padding: '4px 6px', color: showChatSettings ? 'var(--black)' : 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'all 0.15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = showChatSettings ? 'var(--gray-2)' : 'transparent'; e.currentTarget.style.color = showChatSettings ? 'var(--black)' : 'var(--gray-4)'; }}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                  </button>
+                  {showChatSettings && (
+                    <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 6, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 20px rgba(0,0,0,0.12)', zIndex: 100, padding: '14px 16px', minWidth: 180 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--gray-4)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Opțiuni chat</div>
+                      <div style={{ fontSize: 12, color: 'var(--black)', marginBottom: 8, fontWeight: 500 }}>Mărime text</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <button onClick={() => changeFontSize(-1)} disabled={chatFontSize <= 11}
+                          style={{ width: 30, height: 30, border: '1px solid var(--gray-3)', borderRadius: 7, background: 'var(--gray-1)', cursor: chatFontSize <= 11 ? 'default' : 'pointer', color: chatFontSize <= 11 ? 'var(--gray-3)' : 'var(--black)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.12s' }}
+                          onMouseEnter={e => { if (chatFontSize > 11) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
+                          <span style={{ fontSize: 18, lineHeight: 1, marginTop: -1 }}>−</span>
+                        </button>
+                        <div style={{ flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 600, color: 'var(--black)' }}>{chatFontSize}px</div>
+                        <button onClick={() => changeFontSize(1)} disabled={chatFontSize >= 20}
+                          style={{ width: 30, height: 30, border: '1px solid var(--gray-3)', borderRadius: 7, background: 'var(--gray-1)', cursor: chatFontSize >= 20 ? 'default' : 'pointer', color: chatFontSize >= 20 ? 'var(--gray-3)' : 'var(--black)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.12s' }}
+                          onMouseEnter={e => { if (chatFontSize < 20) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
+                          <span style={{ fontSize: 16, lineHeight: 1 }}>+</span>
+                        </button>
+                      </div>
+                      {chatFontSize !== 14 && (
+                        <button onClick={() => { setChatFontSize(14); localStorage.setItem('chat_font_size', '14'); }}
+                          style={{ marginTop: 10, width: '100%', padding: '5px 0', border: '1px solid var(--gray-3)', borderRadius: 7, background: 'transparent', cursor: 'pointer', color: 'var(--gray-4)', fontSize: 11, fontWeight: 500, transition: 'all 0.12s' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+                          Resetează (14px)
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <CloseBtn onClick={handleClose} />
               </div>
               {showSearch && (
@@ -2980,7 +3109,7 @@ export default function ChatPanel({ user, currentPage }) {
                                   style={{ display: 'block', maxWidth: 280, maxHeight: 240, borderRadius: 10, objectFit: 'cover' }} />
                               </div>
                             ) : (
-                              <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
+                              <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: chatFontSize, lineHeight: 1.45, wordBreak: 'break-word' }}>
                                 {msg.reply_to_id && (
                                   <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                     <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {sanitizeReplyText(msg.reply_to_text)}
@@ -3161,7 +3290,7 @@ export default function ChatPanel({ user, currentPage }) {
                                   style={{ display: 'block', maxWidth: 320, maxHeight: 280, borderRadius: 10, objectFit: 'cover' }} />
                               </div>
                             ) : (
-                              <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: 14, lineHeight: 1.45, wordBreak: 'break-word' }}>
+                              <div style={{ padding: '8px 12px', borderRadius: isMe ? '14px 14px 3px 14px' : '14px 14px 14px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: chatFontSize, lineHeight: 1.45, wordBreak: 'break-word' }}>
                                 {msg.reply_to_id && (
                                   <div style={{ fontSize: 11, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', paddingLeft: 6, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.85 }}>
                                     <span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {sanitizeReplyText(msg.reply_to_text)}
