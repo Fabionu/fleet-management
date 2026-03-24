@@ -1920,16 +1920,14 @@ Analizează documentul PDF și extrage EXACT următoarele câmpuri, returnând U
   "load_time": "ora încărcării în format HH:MM",
   "load_company": "numele firmei/depozitului de la locul de ÎNCĂRCARE (Loading Address)",
   "load_street": "strada, numărul sau zona industrială de la locul de ÎNCĂRCARE",
-  "load_city": "țara (abreviere ISO), codul poștal și orașul de la locul de ÎNCĂRCARE (ex: CZ, 796 01 PROSTEJOV)",
-  "load_coords": "coordonate GPS încărcare în format \"lat, lng\" cu 6 zecimale (ex: 49.472345, 17.121456)",
+  "load_city": "țara (2 litere ISO) + cod poștal + oraș, fără virgulă, pe un singur rând (ex: \"CZ 796 01 PROSTEJOV\", \"DE 79669 ZELL\", \"NL 1234 AB ROTTERDAM\", \"ES 08450 BARCELONA\")",
   "load_details": "detalii marfă/încărcare (tip marfă, greutate, paleți, etc.)",
   "load_ref": "referința/numărul de referință de încărcare dacă există",
   "unload_date": "data descărcării în format DD.MM.YYYY",
   "unload_time": "ora descărcării în format HH:MM",
   "unload_company": "numele firmei/depozitului de la locul de DESCĂRCARE (Delivery Address)",
   "unload_street": "strada, numărul sau zona industrială de la locul de DESCĂRCARE",
-  "unload_city": "țara (abreviere ISO), codul poștal și orașul de la locul de DESCĂRCARE (ex: RO, 115400 MIOVENI)",
-  "unload_coords": "coordonate GPS descărcare în format \"lat, lng\" cu 6 zecimale (ex: 44.923456, 24.873456)",
+  "unload_city": "țara (2 litere ISO) + cod poștal + oraș, fără virgulă, pe un singur rând (ex: \"RO 115400 MIOVENI\", \"FR 59000 LILLE\", \"PL 61-131 POZNAN\")",
   "unload_ref": "referința/numărul de referință de descărcare dacă există"
 }
 
@@ -1954,17 +1952,7 @@ REGULI CRITICE — citește cu mare atenție:
 
 4. Datele să fie în formatul specificat (DD.MM.YYYY pentru date, HH:MM pentru ore)
 
-5. COORDONATE GPS — precizie maximă la nivel de clădire/fabrică:
-   - Dacă coordonatele sunt scrise explicit în PDF → folosește-le exact
-   - Dacă NU sunt în PDF → urmează această logică în ordine:
-     a) Caută FIRMA (load_company / unload_company) combinată cu STRADA și ORAȘUL — multe fabrici/depozite mari au coordonate cunoscute (ex: "MUBEA Prostejov ROVNA 4708" → localizează fabrica specifică, nu centrul orașului)
-     b) Folosește numărul strazii dacă există — "ROVNA 4708" este mult mai precis decât doar "PROSTEJOV"
-     c) Dacă firma este un producător cunoscut (automotive, logistică, retail) sau un depozit mare, folosește coordonatele INTRĂRII / PORȚII DE MARFĂ ale acelei locații specifice
-     d) Dacă strada și numărul sunt clare dar firma e necunoscută → coordonatele adresei stradale exacte
-     e) Ultimă opțiune: centrul orașului/zonei — dar specifică 6 zecimale
-   - Coordonatele trebuie să fie la nivel de CLĂDIRE, nu de oraș. Diferența contează pentru șoferi (intrare fabrică vs centru oraș pot fi km distanță)
-   - Format: "lat, lng" cu 6 zecimale (ex: "49.471823, 17.118945")
-   - Nu lăsa coordonatele goale dacă ai orice informație despre adresă`;
+5. Nu completa coordonate GPS — acestea vor fi adăugate manual ulterior`;
 
     const response = await client.messages.create({
       model: 'claude-opus-4-5',

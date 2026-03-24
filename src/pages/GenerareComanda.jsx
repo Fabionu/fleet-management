@@ -4,16 +4,13 @@ const EMPTY = {
   order_number: '', client: '',
   load_date: '', load_time: '',
   load_company: '', load_street: '', load_city: '',
-  load_coords: '', load_details: '', load_ref: '',
+  load_details: '', load_ref: '',
   unload_date: '', unload_time: '',
   unload_company: '', unload_street: '', unload_city: '',
-  unload_coords: '', unload_ref: '',
+  unload_ref: '',
 };
 
 function buildWhatsApp(f) {
-  const coordInc   = f.load_coords   ? `NORD - EST ${f.load_coords}`   : 'NORD - EST __________, __________';
-  const coordDesc  = f.unload_coords ? `NORD - EST ${f.unload_coords}` : 'NORD - EST __________, __________';
-
   const loadAddr   = [f.load_company,   f.load_street,   f.load_city  ].filter(Boolean).join('\n') || '___________';
   const unloadAddr = [f.unload_company, f.unload_street, f.unload_city].filter(Boolean).join('\n') || '___________';
 
@@ -26,7 +23,7 @@ function buildWhatsApp(f) {
     loadAddr,
     ``,
     `*•COORDONATE INCARCARE:*`,
-    coordInc,
+    `NORD - EST __________, __________`,
     ``,
     `*•DETALII INCARCARE:*${f.load_details ? ' ' + f.load_details : ''}`,
     f.load_ref ? `*•REFERINTA:* ${f.load_ref}` : null,
@@ -36,7 +33,7 @@ function buildWhatsApp(f) {
     unloadAddr,
     ``,
     `*•COORDONATE DESCARCARE:*`,
-    coordDesc,
+    `NORD - EST __________, __________`,
     f.unload_ref ? `\n*•REFERINTA:* ${f.unload_ref}` : null,
   ].filter(l => l !== null);
 
@@ -258,12 +255,9 @@ export default function GenerareComanda({ user }) {
               <Field label="Stradă / Nr. / Zonă industrială" value={fields.unload_street} onChange={set('unload_street')} placeholder="ex: 148 BLD DACIA NR" />
 
               {/* Rând 5 — Țară, cod, oraș */}
-              <Field label="Țară, Cod poștal, Oraș" value={fields.load_city} onChange={set('load_city')} placeholder="ex: CZ, 796 01 PROSTEJOV" />
-              <Field label="Țară, Cod poștal, Oraș" value={fields.unload_city} onChange={set('unload_city')} placeholder="ex: RO, 115400 MIOVENI" />
+              <Field label="Țară, Cod poștal, Oraș" value={fields.load_city} onChange={set('load_city')} placeholder="ex: CZ 796 01 PROSTEJOV" />
+              <Field label="Țară, Cod poștal, Oraș" value={fields.unload_city} onChange={set('unload_city')} placeholder="ex: RO 115400 MIOVENI" />
 
-              {/* Rând 6 — Coordonate */}
-              <Field label="Coordonate (Lat, Long)" value={fields.load_coords} onChange={set('load_coords')} placeholder="47.123456, 27.123456" />
-              <Field label="Coordonate (Lat, Long)" value={fields.unload_coords} onChange={set('unload_coords')} placeholder="47.123456, 27.123456" />
 
               {/* Rând 7 — Detalii marfă (stânga) / gol dreapta — rândul se înalță automat cu textarea */}
               <Field label="Detalii marfă / Tonaj" value={fields.load_details} onChange={set('load_details')} multiline />
