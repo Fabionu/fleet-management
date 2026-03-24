@@ -722,7 +722,7 @@ function Curse({ user }) {
     )}
   </div>
 </td>
-                    <td style={{ padding: '10px 4px', verticalAlign: 'middle', width: '40px' }}>
+                    <td style={{ padding: '10px 4px', verticalAlign: 'middle', width: '30px' }}>
                       <div style={{ position: 'relative' }}>
                         <button
                           onClick={(e) => {
