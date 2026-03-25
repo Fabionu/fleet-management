@@ -17,7 +17,15 @@ function WeekendHistoryModal({ truck, onClose, onSave }) {
         ? JSON.parse(truck.weekend_history)
         : (Array.isArray(truck.weekend_history) ? truck.weekend_history : []);
       // Exclude săptămâna curentă — aceasta se editează din butonul principal
-      return h.filter(e => e.week !== currentWeek);
+      const filtered = h.filter(e => e.week !== currentWeek);
+      // Asigură că ultimele 3 săptămâni anterioare sunt mereu prezente
+      const currentWeekNum = getWeekNumber();
+      const last3 = [1, 2, 3].map(i => `W${currentWeekNum - i}`);
+      const existingWeeks = new Set(filtered.map(e => e.week));
+      const toAdd = last3.filter(w => !existingWeeks.has(w)).map(w => ({ week: w, duration: '45H' }));
+      const merged = [...filtered, ...toAdd];
+      merged.sort((a, b) => parseInt(a.week.slice(1)) - parseInt(b.week.slice(1)));
+      return merged;
     } catch { return []; }
   };
 
