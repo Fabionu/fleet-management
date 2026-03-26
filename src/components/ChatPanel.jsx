@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { getSocket } from '../services/socket';
 import { playReceived, playSent, playTripOrderReceived, playTripOrderAccepted, playTripOrderRejected } from '../services/sounds';
 import axios from 'axios';
@@ -2612,7 +2613,7 @@ export default function ChatPanel({ user, currentPage }) {
               return (
                 <div key={u.username} onClick={() => openConversation(u)}
                   className="chat-avatar-item"
-                  onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setAvatarTooltip({ name: dn(u.username), top: r.top + r.height / 2 }); }}
+                  onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setAvatarTooltip({ name: dn(u.username), top: r.top + r.height / 2, rightEdge: window.innerWidth - r.left + 8 }); }}
                   onMouseLeave={() => setAvatarTooltip(null)}
                   style={{ position: 'relative', cursor: 'pointer', padding: '4px 0', width: '100%', display: 'flex', justifyContent: 'center' }}>
                   <div className="chat-avatar-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: avatarColor(u.username), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 14 }}>
@@ -2628,7 +2629,7 @@ export default function ChatPanel({ user, currentPage }) {
               return (
                 <div key={g.id} onClick={() => openGroupConversation(g)}
                   className="chat-avatar-item"
-                  onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setAvatarTooltip({ name: g.name, top: r.top + r.height / 2 }); }}
+                  onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setAvatarTooltip({ name: g.name, top: r.top + r.height / 2, rightEdge: window.innerWidth - r.left + 8 }); }}
                   onMouseLeave={() => setAvatarTooltip(null)}
                   style={{ position: 'relative', cursor: 'pointer', padding: '4px 0', width: '100%', display: 'flex', justifyContent: 'center' }}>
                   <div className="chat-avatar-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: groupColor(g.name), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -3126,11 +3127,11 @@ export default function ChatPanel({ user, currentPage }) {
         );
       })}
 
-      {/* ── Tooltip avatar collapsed sidebar ───────────────── */}
-      {avatarTooltip && (
+      {/* ── Tooltip avatar collapsed sidebar — portal pe body ── */}
+      {avatarTooltip && createPortal(
         <div style={{
           position: 'fixed',
-          right: SW + 10,
+          right: avatarTooltip.rightEdge,
           top: avatarTooltip.top,
           transform: 'translateY(-50%)',
           background: 'rgba(18,18,16,0.92)',
@@ -3145,7 +3146,8 @@ export default function ChatPanel({ user, currentPage }) {
           boxShadow: '0 2px 8px rgba(0,0,0,0.28)',
         }}>
           {avatarTooltip.name}
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Modals ─────────────────────────────────────────── */}
