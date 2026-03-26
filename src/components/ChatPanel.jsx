@@ -652,6 +652,7 @@ export default function ChatPanel({ user, currentPage }) {
   const [deleteConfirm, setDeleteConfirm]   = useState(null); // mesajul pending ștergere
   const [chatToast, setChatToast]           = useState(null); // { message, type }
   const [lightboxSrc, setLightboxSrc]       = useState(null); // src imagine full-screen
+  const [avatarTooltip, setAvatarTooltip]   = useState(null); // { name, top } — tooltip collapsed sidebar
   const [chatFontSize, setChatFontSize]     = useState(() => parseInt(localStorage.getItem('chat_font_size') || '14', 10));
   const [showChatSettings, setShowChatSettings] = useState(false);
   const chatSettingsRef                     = useRef(null);
@@ -2609,8 +2610,10 @@ export default function ChatPanel({ user, currentPage }) {
               const unread = unreadCounts[u.username] || 0;
               const online = isOnline(u.username);
               return (
-                <div key={u.username} onClick={() => openConversation(u)} data-tooltip={dn(u.username)}
+                <div key={u.username} onClick={() => openConversation(u)}
                   className="chat-avatar-item"
+                  onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setAvatarTooltip({ name: dn(u.username), top: r.top + r.height / 2 }); }}
+                  onMouseLeave={() => setAvatarTooltip(null)}
                   style={{ position: 'relative', cursor: 'pointer', padding: '4px 0', width: '100%', display: 'flex', justifyContent: 'center' }}>
                   <div className="chat-avatar-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: avatarColor(u.username), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 14 }}>
                     {(u.first_name || u.username).charAt(0).toUpperCase()}
@@ -2623,8 +2626,10 @@ export default function ChatPanel({ user, currentPage }) {
             {groups.map(g => {
               const unread = groupUnread[g.id] || 0;
               return (
-                <div key={g.id} onClick={() => openGroupConversation(g)} data-tooltip={g.name}
+                <div key={g.id} onClick={() => openGroupConversation(g)}
                   className="chat-avatar-item"
+                  onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setAvatarTooltip({ name: g.name, top: r.top + r.height / 2 }); }}
+                  onMouseLeave={() => setAvatarTooltip(null)}
                   style={{ position: 'relative', cursor: 'pointer', padding: '4px 0', width: '100%', display: 'flex', justifyContent: 'center' }}>
                   <div className="chat-avatar-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: groupColor(g.name), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <GroupIcon size={16} color="white"/>
@@ -3120,6 +3125,28 @@ export default function ChatPanel({ user, currentPage }) {
           </div>
         );
       })}
+
+      {/* ── Tooltip avatar collapsed sidebar ───────────────── */}
+      {avatarTooltip && (
+        <div style={{
+          position: 'fixed',
+          right: SW + 10,
+          top: avatarTooltip.top,
+          transform: 'translateY(-50%)',
+          background: 'rgba(18,18,16,0.92)',
+          color: '#fff',
+          padding: '4px 10px',
+          borderRadius: 6,
+          fontSize: 12,
+          fontWeight: 500,
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+          zIndex: 99999,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.28)',
+        }}>
+          {avatarTooltip.name}
+        </div>
+      )}
 
       {/* ── Modals ─────────────────────────────────────────── */}
       {tripOrderModal && (
