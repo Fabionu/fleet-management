@@ -2613,7 +2613,8 @@ export default function ChatPanel({ user, currentPage }) {
               return (
                 <div key={u.username} onClick={() => openConversation(u)}
                   className="chat-avatar-item"
-                  onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setAvatarTooltip({ name: dn(u.username), top: r.top + r.height / 2, rightEdge: window.innerWidth - r.left + 8 }); }}
+                  onMouseEnter={e => setAvatarTooltip({ name: dn(u.username), x: e.clientX, y: e.clientY })}
+                  onMouseMove={e => setAvatarTooltip(p => p ? { ...p, x: e.clientX, y: e.clientY } : null)}
                   onMouseLeave={() => setAvatarTooltip(null)}
                   style={{ position: 'relative', cursor: 'pointer', padding: '4px 0', width: '100%', display: 'flex', justifyContent: 'center' }}>
                   <div className="chat-avatar-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: avatarColor(u.username), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 14 }}>
@@ -2629,7 +2630,8 @@ export default function ChatPanel({ user, currentPage }) {
               return (
                 <div key={g.id} onClick={() => openGroupConversation(g)}
                   className="chat-avatar-item"
-                  onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setAvatarTooltip({ name: g.name, top: r.top + r.height / 2, rightEdge: window.innerWidth - r.left + 8 }); }}
+                  onMouseEnter={e => setAvatarTooltip({ name: g.name, x: e.clientX, y: e.clientY })}
+                  onMouseMove={e => setAvatarTooltip(p => p ? { ...p, x: e.clientX, y: e.clientY } : null)}
                   onMouseLeave={() => setAvatarTooltip(null)}
                   style={{ position: 'relative', cursor: 'pointer', padding: '4px 0', width: '100%', display: 'flex', justifyContent: 'center' }}>
                   <div className="chat-avatar-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: groupColor(g.name), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -3131,8 +3133,8 @@ export default function ChatPanel({ user, currentPage }) {
       {avatarTooltip && createPortal(
         <div style={{
           position: 'fixed',
-          right: avatarTooltip.rightEdge,
-          top: avatarTooltip.top,
+          right: window.innerWidth - avatarTooltip.x + 10,
+          top: avatarTooltip.y,
           transform: 'translateY(-50%)',
           background: 'rgba(18,18,16,0.92)',
           color: '#fff',
