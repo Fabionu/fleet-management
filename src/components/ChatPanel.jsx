@@ -2586,8 +2586,9 @@ export default function ChatPanel({ user, currentPage }) {
               const online = isOnline(u.username);
               return (
                 <div key={u.username} onClick={() => openConversation(u)} title={dn(u.username)}
+                  className="chat-avatar-item"
                   style={{ position: 'relative', cursor: 'pointer', padding: '4px 0', width: '100%', display: 'flex', justifyContent: 'center' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: avatarColor(u.username), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 14 }}>
+                  <div className="chat-avatar-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: avatarColor(u.username), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 14 }}>
                     {(u.first_name || u.username).charAt(0).toUpperCase()}
                   </div>
                   <div style={{ position: 'absolute', bottom: 4, right: 6, width: 9, height: 9, borderRadius: '50%', background: online ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--surface)' }}/>
@@ -2599,8 +2600,9 @@ export default function ChatPanel({ user, currentPage }) {
               const unread = groupUnread[g.id] || 0;
               return (
                 <div key={g.id} onClick={() => openGroupConversation(g)} title={g.name}
+                  className="chat-avatar-item"
                   style={{ position: 'relative', cursor: 'pointer', padding: '4px 0', width: '100%', display: 'flex', justifyContent: 'center' }}>
-                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: groupColor(g.name), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div className="chat-avatar-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: groupColor(g.name), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <GroupIcon size={16} color="white"/>
                   </div>
                   {unread > 0 && <div style={{ position: 'absolute', top: 2, right: 4, background: '#ff7a3d', color: 'white', borderRadius: '50%', minWidth: 14, height: 14, fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 2px', boxSizing: 'border-box' }}>{unread > 9 ? '9+' : unread}</div>}
@@ -2858,15 +2860,15 @@ export default function ChatPanel({ user, currentPage }) {
                 <div style={{ background: '#ff7a3d', color: 'white', borderRadius: 10, minWidth: 18, height: 18, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', flexShrink: 0 }}>{cardUnread > 9 ? '9+' : cardUnread}</div>
               )}
               <button onClick={e => { e.stopPropagation(); minimizeCard(card.key); }} title={card.minimized ? 'Extinde' : 'Minimizează'}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 5, transition: 'background 0.12s', flexShrink: 0 }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 8px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'background 0.12s', flexShrink: 0 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
               <button onClick={e => { e.stopPropagation(); closeCard(card.key); }} title="Închide"
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 5, transition: 'background 0.12s, color 0.12s', flexShrink: 0 }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 8px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'background 0.12s, color 0.12s', flexShrink: 0 }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--red)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
 
@@ -2895,7 +2897,7 @@ export default function ChatPanel({ user, currentPage }) {
                       <button onClick={e => { e.stopPropagation(); handleUnpin(pinnedMsg); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 2, display: 'flex', alignItems: 'center', flexShrink: 0 }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                     </div>
                   )}
-                  <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 3 }} onScroll={handleMsgsScroll}>
+                  <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 3 }} onScroll={handleMsgsScroll}>
                     {card.type === 'dm' ? (
                       messages.length === 0
                         ? <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 13, marginTop: 50, lineHeight: 1.8 }}>Niciun mesaj cu {dn(peer?.username)}.<br/><span style={{ fontSize: 20 }}>👋</span></div>
