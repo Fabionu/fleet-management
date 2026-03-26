@@ -2840,26 +2840,32 @@ export default function ChatPanel({ user, currentPage }) {
                   minimizeCard(card.key);
                 }
               }}
-              style={{ height: 48, padding: '0 8px 0 12px', display: 'flex', alignItems: 'center', gap: 8, background: isActive ? 'var(--gray-1)' : 'var(--surface)', borderBottom: card.minimized ? 'none' : '1px solid var(--gray-2)', cursor: 'pointer', flexShrink: 0, userSelect: 'none' }}>
+              style={{ height: 52, padding: '0 8px 0 12px', display: 'flex', alignItems: 'center', gap: 10, background: isActive ? 'var(--gray-1)' : 'var(--surface)', borderBottom: card.minimized ? 'none' : '1px solid var(--gray-2)', cursor: 'pointer', flexShrink: 0, userSelect: 'none' }}>
               {card.type === 'dm' ? (
                 <div style={{ position: 'relative', flexShrink: 0 }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: avatarColor(card.peer?.username || ''), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 12 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: '50%', background: avatarColor(card.peer?.username || ''), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 700, fontSize: 14 }}>
                     {(card.peer?.first_name || card.peer?.username || '').charAt(0).toUpperCase()}
                   </div>
-                  <div style={{ position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: '50%', background: isOnline(card.peer?.username) ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--surface)' }}/>
+                  <div style={{ position: 'absolute', bottom: 1, right: 1, width: 10, height: 10, borderRadius: '50%', background: isOnline(card.peer?.username) ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--surface)' }}/>
                 </div>
               ) : (
-                <div style={{ width: 28, height: 28, borderRadius: '50%', background: groupColor(card.group?.name || ''), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <GroupIcon size={13} color="white"/>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: groupColor(card.group?.name || ''), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <GroupIcon size={16} color="white"/>
                 </div>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {card.type === 'dm' ? dn(card.peer?.username) : card.group?.name}
                 </div>
                 {card.type === 'dm' && !card.minimized && (
-                  <div style={{ fontSize: 10, color: isOnline(card.peer?.username) ? '#22c55e' : 'var(--gray-4)' }}>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: isOnline(card.peer?.username) ? '#22c55e' : 'var(--gray-4)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: isOnline(card.peer?.username) ? '#22c55e' : 'var(--gray-3)', flexShrink: 0 }}/>
                     {isOnline(card.peer?.username) ? 'online' : 'offline'}
+                  </div>
+                )}
+                {card.type === 'group' && !card.minimized && (
+                  <div style={{ fontSize: 12, color: 'var(--gray-4)', marginTop: 1 }}>
+                    {card.group?.members?.length || 0} membri
                   </div>
                 )}
               </div>
