@@ -2885,11 +2885,14 @@ export default function ChatPanel({ user, currentPage }) {
               </button>
             </div>
 
-            {/* Card Body */}
-            {!card.minimized && (
-              isActive ? (
+            {/* Card Body — mesajele se afișează mereu; inputul doar la cardul activ */}
+            {!card.minimized && (() => {
+              const cardDmMsgs  = card.type === 'dm'    ? (conversations[card.peer?.username] || []) : [];
+              const cardGrpMsgs = card.type === 'group' ? (groupMessages[card.group?.id]    || []) : [];
+              return (
                 <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
-                  {showSearch && (
+                  {/* Search bar — doar la cardul activ */}
+                  {isActive && showSearch && (
                     <div style={{ padding: '5px 10px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-page)', flexShrink: 0 }}>
                       <div style={{ position: 'relative', flex: 1 }}>
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--gray-4)" strokeWidth="2" style={{ position: 'absolute', left: 7, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -2903,48 +2906,50 @@ export default function ChatPanel({ user, currentPage }) {
                       <button onClick={toggleSearch} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 3, display: 'flex', alignItems: 'center', borderRadius: 4 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                     </div>
                   )}
-                  {pinnedMsg && (
+                  {/* Pinned — doar la cardul activ */}
+                  {isActive && pinnedMsg && (
                     <div onClick={scrollToPinned} style={{ padding: '5px 10px', borderBottom: '1px solid var(--gray-2)', background: 'var(--gray-1)', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, cursor: 'pointer', transition: 'background 0.15s' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'} onMouseLeave={e => e.currentTarget.style.background = 'var(--gray-1)'}>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
                       <div style={{ flex: 1, fontSize: 11, color: 'var(--gray-4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><span style={{ fontWeight: 600, color: 'var(--black)' }}>{pinnedMsg.username}</span>: {pinnedMsg.message}</div>
                       <button onClick={e => { e.stopPropagation(); handleUnpin(pinnedMsg); }} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: 2, display: 'flex', alignItems: 'center', flexShrink: 0 }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
                     </div>
                   )}
-                  <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 3 }} onScroll={handleMsgsScroll}>
+                  {/* Mesaje — mereu vizibile, din datele proprii ale cardului */}
+                  <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 3 }} onScroll={isActive ? handleMsgsScroll : undefined}>
                     {card.type === 'dm' ? (
-                      messages.length === 0
-                        ? <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 13, marginTop: 50, lineHeight: 1.8 }}>Niciun mesaj cu {dn(peer?.username)}.<br/><span style={{ fontSize: 20 }}>👋</span></div>
-                        : messages.map((msg, i) => {
+                      cardDmMsgs.length === 0
+                        ? <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 13, marginTop: 50, lineHeight: 1.8 }}>Niciun mesaj cu {dn(card.peer?.username)}.<br/><span style={{ fontSize: 20 }}>👋</span></div>
+                        : cardDmMsgs.map((msg, i) => {
                           if (msg.message_type === 'system') return <div key={msg.id || `s${i}`} style={{ textAlign: 'center', padding: '4px 10px' }}><span style={{ fontSize: 11, color: 'var(--gray-4)', fontStyle: 'italic', background: 'var(--gray-1)', borderRadius: 10, padding: '2px 8px' }}>{msg.message}</span></div>;
                           const isMe = msg.username === user.username;
-                          const nextSame = i < messages.length - 1 && messages[i+1].username === msg.username && messages[i+1].message_type !== 'system';
-                          const isHovered = hoveredMsgId === msg.id;
-                          const isEditing = editingMsgId === msg.id;
-                          const isSearchMatch = searchQuery.trim() && !msg.is_deleted && !isTripOrderMsg(msg) && msg.message?.toLowerCase().includes(searchQuery.toLowerCase());
+                          const nextSame = i < cardDmMsgs.length - 1 && cardDmMsgs[i+1].username === msg.username && cardDmMsgs[i+1].message_type !== 'system';
+                          const isHovered = isActive && hoveredMsgId === msg.id;
+                          const isEditing = isActive && editingMsgId === msg.id;
+                          const isSearchMatch = isActive && searchQuery.trim() && !msg.is_deleted && !isTripOrderMsg(msg) && msg.message?.toLowerCase().includes(searchQuery.toLowerCase());
                           const isCurrentSearchMatch = isSearchMatch && searchMatches[searchIdx] === i;
                           if (isTripOrderMsg(msg)) return (
                             <div key={msg.id} id={`msg-${msg.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, padding: '1px 2px' }}>
-                              <TripOrderCard msg={msg} currentUser={user.username} onRespond={(status) => handleTripOrderRespond(msg, status)}/>
+                              <TripOrderCard msg={msg} currentUser={user.username} onRespond={isActive ? (status) => handleTripOrderRespond(msg, status) : undefined}/>
                               {!nextSame && <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 2, flexDirection: isMe ? 'row-reverse' : 'row' }}><span style={{ fontSize: 10, color: 'var(--gray-4)' }}>{formatTime(msg.created_at)}</span>{isMe && <span title={isRead(msg) ? 'Văzut' : 'Trimis'}>{isRead(msg) ? <SeenIcon/> : <SentIcon/>}</span>}</div>}
                             </div>
                           );
                           return (
                             <div key={msg.id}>
-                              {msg.id === firstUnreadId && <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '6px 0' }}><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/><span style={{ fontSize: 10, fontWeight: 600, color: '#ff7a3d', whiteSpace: 'nowrap' }}>MESAJE NOI</span><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/></div>}
-                              <div id={`msg-${msg.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, borderRadius: 8, animation: highlightedMsgId === msg.id ? 'msgHighlight 1.6s ease forwards' : 'none', padding: '1px 2px', outline: isCurrentSearchMatch ? '2px solid #ff7a3d' : isSearchMatch ? '1px solid rgba(255,122,61,0.4)' : 'none', outlineOffset: 2 }}
-                                onMouseEnter={() => setHoveredMsgId(msg.id)} onMouseLeave={() => setHoveredMsgId(null)}>
+                              {isActive && msg.id === firstUnreadId && <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '6px 0' }}><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/><span style={{ fontSize: 10, fontWeight: 600, color: '#ff7a3d', whiteSpace: 'nowrap' }}>MESAJE NOI</span><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/></div>}
+                              <div id={`msg-${msg.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, borderRadius: 8, animation: isActive && highlightedMsgId === msg.id ? 'msgHighlight 1.6s ease forwards' : 'none', padding: '1px 2px', outline: isCurrentSearchMatch ? '2px solid #ff7a3d' : isSearchMatch ? '1px solid rgba(255,122,61,0.4)' : 'none', outlineOffset: 2 }}
+                                onMouseEnter={() => isActive && setHoveredMsgId(msg.id)} onMouseLeave={() => isActive && setHoveredMsgId(null)}>
                                 {msg.is_deleted ? (
                                   <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '5px 9px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
-                                    <div style={{ display: 'flex', gap: 2, opacity: isHovered && !isEditing ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered && !isEditing ? 'auto' : 'none' }}>
+                                    {isActive && <div style={{ display: 'flex', gap: 2, opacity: isHovered && !isEditing ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered && !isEditing ? 'auto' : 'none' }}>
                                       <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })} title="Răspunde" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg></button>
                                       <button onClick={() => handlePin(msg)} title={msg.is_pinned ? 'Desprinde' : 'Prinde'} style={{ background: 'var(--surface)', border: `1px solid ${msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'}`, borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)'; e.currentTarget.style.borderColor = msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></button>
                                       {isMe && <>
                                         {Date.now() - new Date(msg.created_at).getTime() <= EDIT_LIMIT_MS && <button onClick={() => startEdit(msg)} title="Editează" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>}
                                         {canChat('chatDeleteMessage') && <button onClick={() => deleteMsg(msg)} title="Șterge" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>}
                                       </>}
-                                    </div>
+                                    </div>}
                                     {isEditing ? (
                                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                         <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg); } if (e.key === 'Escape') cancelEdit(); }} style={{ resize: 'none', border: '1.5px solid #ff7a3d', borderRadius: 8, padding: '5px 8px', fontSize: 13, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, minWidth: 120 }}/>
@@ -2956,7 +2961,7 @@ export default function ChatPanel({ user, currentPage }) {
                                     ) : isImageMsg(msg) ? (
                                       <div style={{ padding: 3, borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', overflow: 'hidden', cursor: 'pointer' }} onClick={() => setLightboxSrc(`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`)}>
                                         {msg.reply_to_id && <div style={{ fontSize: 10, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', padding: '2px 5px', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', background: 'rgba(255,122,61,0.08)', borderRadius: '0 4px 4px 0' }}><span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {sanitizeReplyText(msg.reply_to_text)}</div>}
-                                        <img src={`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`} alt={msg.message || 'imagine'} style={{ display: 'block', maxWidth: 260, maxHeight: 200, borderRadius: 8, objectFit: 'cover' }}/>
+                                        <img src={`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`} alt={msg.message || 'imagine'} style={{ display: 'block', maxWidth: 300, maxHeight: 200, borderRadius: 8, objectFit: 'cover' }}/>
                                       </div>
                                     ) : (
                                       <div style={{ padding: '7px 11px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: chatFontSize, lineHeight: 1.45, wordBreak: 'break-word' }}>
@@ -2973,44 +2978,44 @@ export default function ChatPanel({ user, currentPage }) {
                           );
                         })
                     ) : (
-                      groupMsgs.length === 0
-                        ? <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 13, marginTop: 50, lineHeight: 1.8 }}>Niciun mesaj în „{activeGroup?.name}".<br/><span style={{ fontSize: 20 }}>💬</span></div>
-                        : groupMsgs.map((msg, i) => {
+                      cardGrpMsgs.length === 0
+                        ? <div style={{ textAlign: 'center', color: 'var(--gray-4)', fontSize: 13, marginTop: 50, lineHeight: 1.8 }}>Niciun mesaj în „{card.group?.name}".<br/><span style={{ fontSize: 20 }}>💬</span></div>
+                        : cardGrpMsgs.map((msg, i) => {
                           if (msg.message_type === 'system') return <div key={msg.id || `sg${i}`} style={{ textAlign: 'center', padding: '4px 10px' }}><span style={{ fontSize: 11, color: 'var(--gray-4)', fontStyle: 'italic', background: 'var(--gray-1)', borderRadius: 10, padding: '2px 8px' }}>{msg.message}</span></div>;
                           const isMe = msg.username === user.username;
-                          const nextMsg = groupMsgs[i+1], prevMsg = groupMsgs[i-1];
+                          const nextMsg = cardGrpMsgs[i+1], prevMsg = cardGrpMsgs[i-1];
                           const nextSame = nextMsg && nextMsg.username === msg.username && nextMsg.message_type !== 'system';
                           const prevSame = prevMsg && prevMsg.username === msg.username && prevMsg.message_type !== 'system';
-                          const seenBy = getSeenBy(i, groupMsgs, memberReads[activeGroup?.id], user.username);
-                          const isHovered = hoveredMsgId === msg.id;
-                          const isEditing = editingMsgId === msg.id;
-                          const isSearchMatch = searchQuery.trim() && !msg.is_deleted && !isTripOrderMsg(msg) && msg.message?.toLowerCase().includes(searchQuery.toLowerCase());
+                          const seenBy = getSeenBy(i, cardGrpMsgs, memberReads[card.group?.id], user.username);
+                          const isHovered = isActive && hoveredMsgId === msg.id;
+                          const isEditing = isActive && editingMsgId === msg.id;
+                          const isSearchMatch = isActive && searchQuery.trim() && !msg.is_deleted && !isTripOrderMsg(msg) && msg.message?.toLowerCase().includes(searchQuery.toLowerCase());
                           const isCurrentSearchMatch = isSearchMatch && searchMatches[searchIdx] === i;
                           if (isTripOrderMsg(msg)) return (
                             <div key={msg.id} id={`msg-${msg.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, padding: '1px 2px' }}>
                               {!isMe && !prevSame && <div style={{ fontSize: 11, color: '#ff7a3d', marginBottom: 2, paddingLeft: 2, fontWeight: 600 }}>{dn(msg.username)}</div>}
-                              <TripOrderCard msg={msg} currentUser={user.username} onRespond={(status) => handleTripOrderRespond(msg, status)}/>
+                              <TripOrderCard msg={msg} currentUser={user.username} onRespond={isActive ? (status) => handleTripOrderRespond(msg, status) : undefined}/>
                               {!nextSame && <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 2, flexDirection: isMe ? 'row-reverse' : 'row' }}><span style={{ fontSize: 10, color: 'var(--gray-4)' }}>{formatTime(msg.created_at)}</span></div>}
                             </div>
                           );
                           return (
                             <div key={msg.id}>
-                              {msg.id === firstUnreadId && <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '6px 0' }}><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/><span style={{ fontSize: 10, fontWeight: 600, color: '#ff7a3d', whiteSpace: 'nowrap' }}>MESAJE NOI</span><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/></div>}
-                              <div id={`msg-${msg.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, borderRadius: 8, animation: highlightedMsgId === msg.id ? 'msgHighlight 1.6s ease forwards' : 'none', padding: '1px 2px', outline: isCurrentSearchMatch ? '2px solid #ff7a3d' : isSearchMatch ? '1px solid rgba(255,122,61,0.4)' : 'none', outlineOffset: 2 }}
-                                onMouseEnter={() => setHoveredMsgId(msg.id)} onMouseLeave={() => setHoveredMsgId(null)}>
+                              {isActive && msg.id === firstUnreadId && <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '6px 0' }}><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/><span style={{ fontSize: 10, fontWeight: 600, color: '#ff7a3d', whiteSpace: 'nowrap' }}>MESAJE NOI</span><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/></div>}
+                              <div id={`msg-${msg.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, borderRadius: 8, animation: isActive && highlightedMsgId === msg.id ? 'msgHighlight 1.6s ease forwards' : 'none', padding: '1px 2px', outline: isCurrentSearchMatch ? '2px solid #ff7a3d' : isSearchMatch ? '1px solid rgba(255,122,61,0.4)' : 'none', outlineOffset: 2 }}
+                                onMouseEnter={() => isActive && setHoveredMsgId(msg.id)} onMouseLeave={() => isActive && setHoveredMsgId(null)}>
                                 {!isMe && !prevSame && !msg.is_deleted && <div style={{ fontSize: 11, color: '#ff7a3d', marginBottom: 2, paddingLeft: 2, fontWeight: 600 }}>{dn(msg.username)}</div>}
                                 {msg.is_deleted ? (
                                   <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '5px 9px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
-                                    <div style={{ display: 'flex', gap: 2, opacity: isHovered && !isEditing ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered && !isEditing ? 'auto' : 'none' }}>
+                                    {isActive && <div style={{ display: 'flex', gap: 2, opacity: isHovered && !isEditing ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered && !isEditing ? 'auto' : 'none' }}>
                                       <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })} title="Răspunde" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg></button>
                                       <button onClick={() => handlePin(msg)} title={msg.is_pinned ? 'Desprinde' : 'Prinde'} style={{ background: 'var(--surface)', border: `1px solid ${msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'}`, borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)'; e.currentTarget.style.borderColor = msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></button>
                                       {isMe && <>
                                         {Date.now() - new Date(msg.created_at).getTime() <= EDIT_LIMIT_MS && <button onClick={() => startEdit(msg)} title="Editează" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>}
                                         {canChat('chatDeleteMessage') && <button onClick={() => deleteMsg(msg)} title="Șterge" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>}
                                       </>}
-                                    </div>
+                                    </div>}
                                     {isEditing ? (
                                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                         <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg); } if (e.key === 'Escape') cancelEdit(); }} style={{ resize: 'none', border: '1.5px solid #ff7a3d', borderRadius: 8, padding: '5px 8px', fontSize: 13, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, minWidth: 120 }}/>
@@ -3022,7 +3027,7 @@ export default function ChatPanel({ user, currentPage }) {
                                     ) : isImageMsg(msg) ? (
                                       <div style={{ padding: 3, borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', overflow: 'hidden', cursor: 'pointer' }} onClick={() => setLightboxSrc(`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`)}>
                                         {msg.reply_to_id && <div style={{ fontSize: 10, color: 'var(--gray-4)', borderLeft: '2px solid #ff7a3d', padding: '2px 5px', marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', background: 'rgba(255,122,61,0.08)', borderRadius: '0 4px 4px 0' }}><span style={{ fontWeight: 600, color: '#ff7a3d' }}>{msg.reply_to_username}</span>: {sanitizeReplyText(msg.reply_to_text)}</div>}
-                                        <img src={`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`} alt={msg.message || 'imagine'} style={{ display: 'block', maxWidth: 260, maxHeight: 200, borderRadius: 8, objectFit: 'cover' }}/>
+                                        <img src={`data:${msg.image_type || 'image/png'};base64,${msg.image_data}`} alt={msg.message || 'imagine'} style={{ display: 'block', maxWidth: 300, maxHeight: 200, borderRadius: 8, objectFit: 'cover' }}/>
                                       </div>
                                     ) : (
                                       <div style={{ padding: '7px 11px', borderRadius: isMe ? '12px 12px 3px 12px' : '12px 12px 12px 3px', background: isMe ? 'var(--chat-sent-bg)' : 'var(--chat-recv-bg)', color: isMe ? 'var(--chat-sent-text)' : 'var(--chat-recv-text)', fontSize: chatFontSize, lineHeight: 1.45, wordBreak: 'break-word' }}>
@@ -3040,27 +3045,28 @@ export default function ChatPanel({ user, currentPage }) {
                           );
                         })
                     )}
-                    {card.type === 'dm' && typingUsers[`dm_${peer?.username}`] && (
+                    {card.type === 'dm' && typingUsers[`dm_${card.peer?.username}`] && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 0', color: 'var(--gray-4)', fontSize: 12 }}>
                         <div style={{ display: 'flex', gap: 2 }}>{[0,1,2].map(i => <div key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--gray-4)', animation: `typingDot 1.2s ease-in-out ${i*0.2}s infinite` }}/>)}</div>
-                        <span>{typingUsers[`dm_${peer?.username}`]} scrie...</span>
+                        <span>{typingUsers[`dm_${card.peer?.username}`]} scrie...</span>
                       </div>
                     )}
-                    {card.type === 'group' && typingUsers[`group_${activeGroup?.id}`] && (
+                    {card.type === 'group' && typingUsers[`group_${card.group?.id}`] && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 0', color: 'var(--gray-4)', fontSize: 12 }}>
                         <div style={{ display: 'flex', gap: 2 }}>{[0,1,2].map(i => <div key={i} style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--gray-4)', animation: `typingDot 1.2s ease-in-out ${i*0.2}s infinite` }}/>)}</div>
-                        <span>{typingUsers[`group_${activeGroup?.id}`]} scrie...</span>
+                        <span>{typingUsers[`group_${card.group?.id}`]} scrie...</span>
                       </div>
                     )}
-                    <div ref={messagesEndRef}/>
+                    {isActive && <div ref={messagesEndRef}/>}
                   </div>
-                  {pinNotification && (
+                  {/* Pin notification + scroll btn — doar activ */}
+                  {isActive && pinNotification && (
                     <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 10, padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 5, boxShadow: '0 2px 12px rgba(0,0,0,0.14)', fontSize: 11, color: 'var(--black)', whiteSpace: 'nowrap', maxWidth: '90%', overflow: 'hidden', textOverflow: 'ellipsis', animation: 'chatItemIn 0.2s ease', zIndex: 2, pointerEvents: 'none' }}>
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
                       <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{pinNotification}</span>
                     </div>
                   )}
-                  {showScrollBtn && (
+                  {isActive && showScrollBtn && (
                     <button onClick={scrollToBottom} style={{ position: 'absolute', bottom: 64, left: '50%', transform: 'translateX(-50%)', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 16, padding: '4px 12px 4px 8px', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', boxShadow: '0 2px 12px rgba(0,0,0,0.14)', color: 'var(--gray-4)', fontSize: 11, fontWeight: 500, whiteSpace: 'nowrap', animation: 'chatItemIn 0.18s ease' }}
                       onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
@@ -3068,24 +3074,33 @@ export default function ChatPanel({ user, currentPage }) {
                       Ultimul mesaj
                     </button>
                   )}
-                  <ChatInput inputRef={inputRef} value={inputVal} onChange={handleInputChange}
-                    onKeyDown={handleKeyDown} onSend={sendMessage}
-                    placeholder={card.type === 'dm' ? `Mesaj pentru ${dn(peer?.username)}...` : `Mesaj în ${activeGroup?.name}...`}
-                    mentionQuery={mentionQuery} mentionUsers={mentionUsers}
-                    onOpenTripOrder={canChat('chatSendTripOrder') ? () => setTripOrderModal(true) : null}
-                    onSendImage={sendImage}
-                    mentionHighlight={mentionHighlight} onMentionSelect={insertMention}
-                    replyTo={replyTo} onCancelReply={() => setReplyTo(null)}
-                  />
+                  {/* Input: mereu vizibil; cardul inactiv are un overlay transparent care activează la click */}
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <ChatInput inputRef={isActive ? inputRef : undefined}
+                      value={isActive ? inputVal : ''}
+                      onChange={isActive ? handleInputChange : undefined}
+                      onKeyDown={isActive ? handleKeyDown : undefined}
+                      onSend={isActive ? sendMessage : undefined}
+                      placeholder={card.type === 'dm' ? `Mesaj pentru ${dn(card.peer?.username)}...` : `Mesaj în ${card.group?.name}...`}
+                      mentionQuery={isActive ? mentionQuery : ''}
+                      mentionUsers={isActive ? mentionUsers : []}
+                      onOpenTripOrder={isActive && canChat('chatSendTripOrder') ? () => setTripOrderModal(true) : null}
+                      onSendImage={isActive ? sendImage : undefined}
+                      mentionHighlight={isActive ? mentionHighlight : -1}
+                      onMentionSelect={isActive ? insertMention : undefined}
+                      replyTo={isActive ? replyTo : null}
+                      onCancelReply={isActive ? () => setReplyTo(null) : undefined}
+                    />
+                    {!isActive && (
+                      <div
+                        onClick={() => { if (card.type === 'dm') openConversation(card.peer); else openGroupConversation(card.group); }}
+                        style={{ position: 'absolute', inset: 0, cursor: 'text', zIndex: 1 }}
+                      />
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gray-4)', fontSize: 13, cursor: 'pointer', flexDirection: 'column', gap: 8 }}
-                  onClick={() => { if (card.type === 'dm') openConversation(card.peer); else openGroupConversation(card.group); }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gray-3)" strokeWidth="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                  <span>Click pentru a activa</span>
-                </div>
-              )
-            )}
+              );
+            })()}
           </div>
         );
       })}
