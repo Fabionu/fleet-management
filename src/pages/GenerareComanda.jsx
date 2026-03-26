@@ -7,7 +7,7 @@ const uid = () => ++_uid;
 
 const newStop = (type) => ({
   id: uid(),
-  type, // 'incarcare' | 'descarcare'
+  type, // 'incarcare' | 'descarcare' | 'vama'
   date: '', time: '',
   company: '', street: '', city: '',
   coords: '',
@@ -43,31 +43,48 @@ function buildWhatsApp(fields, stops) {
     ``,
   ];
 
-  const multiInc  = stops.filter(s => s.type === 'incarcare').length  > 1;
-  const multiDesc = stops.filter(s => s.type === 'descarcare').length > 1;
-  let iInc = 0, iDesc = 0;
+  const incarcari  = stops.filter(s => s.type === 'incarcare');
+  const descarcari = stops.filter(s => s.type === 'descarcare');
+  const vami       = stops.filter(s => s.type === 'vama');
+  const multiInc   = incarcari.length > 1;
+  const multiDesc  = descarcari.length > 1;
+  const multiVama  = vami.length > 1;
 
-  for (const stop of stops) {
-    const isInc = stop.type === 'incarcare';
-    if (isInc) iInc++; else iDesc++;
-    const label      = isInc ? 'ÎNCĂRCARE'  : 'DESCĂRCARE';
-    const coordLabel = isInc ? 'INCARCARE'  : 'DESCARCARE';
-    const suffix     = (isInc ? multiInc : multiDesc) ? ` ${isInc ? iInc : iDesc}` : '';
+  incarcari.forEach((stop, i) => {
+    const suffix = multiInc ? ` ${i + 1}` : '';
     const addr = [stop.company, stop.street, stop.city].filter(Boolean).join('\n') || '___________';
-
-    lines.push(`*•${label}${suffix} ${stop.date || '___'}, ${fmtTime(stop.time)}, LA ADRESA:*`);
+    lines.push(`*•ÎNCĂRCARE${suffix} ${stop.date || '___'}, ${fmtTime(stop.time)}, LA ADRESA:*`);
     lines.push(``);
     lines.push(addr);
     lines.push(``);
-    lines.push(`*•COORDONATE ${coordLabel}${suffix}:*`);
+    lines.push(`*•COORDONATE INCARCARE${suffix}:*`);
     lines.push(fmtCoord(stop.coords));
-    if (isInc) {
-      lines.push(``);
-      lines.push(`*•DETALII INCARCARE:*${stop.details ? ' ' + stop.details : ''}`);
-    }
+    lines.push(``);
+    lines.push(`*•DETALII INCARCARE:*${stop.details ? ' ' + stop.details : ''}`);
     if (stop.ref) lines.push(`*•REFERINTA:* ${stop.ref}`);
     lines.push(``);
-  }
+  });
+
+  vami.forEach((stop, i) => {
+    const suffix = multiVama ? ` ${i + 1}` : '';
+    const loc = [stop.city, stop.ref].filter(Boolean).join(' — ') || '___________';
+    lines.push(`*•VAMĂ${suffix} ${stop.date || '___'}${stop.time ? ', ' + fmtTime(stop.time) : ''}:*`);
+    lines.push(loc);
+    lines.push(``);
+  });
+
+  descarcari.forEach((stop, i) => {
+    const suffix = multiDesc ? ` ${i + 1}` : '';
+    const addr = [stop.company, stop.street, stop.city].filter(Boolean).join('\n') || '___________';
+    lines.push(`*•DESCĂRCARE${suffix} ${stop.date || '___'}, ${fmtTime(stop.time)}, LA ADRESA:*`);
+    lines.push(``);
+    lines.push(addr);
+    lines.push(``);
+    lines.push(`*•COORDONATE DESCARCARE${suffix}:*`);
+    lines.push(fmtCoord(stop.coords));
+    if (stop.ref) lines.push(`\n*•REFERINTA:* ${stop.ref}`);
+    lines.push(``);
+  });
 
   return lines.join('\n');
 }
@@ -75,8 +92,8 @@ function buildWhatsApp(fields, stops) {
 // ── Styles ────────────────────────────────────────────────────
 const inputStyle = {
   width: '100%', boxSizing: 'border-box',
-  padding: '9px 11px', fontSize: '13px',
-  border: '1px solid var(--gray-2)', borderRadius: '7px',
+  padding: '10px 12px', fontSize: '14px',
+  border: '1px solid var(--gray-2)', borderRadius: '8px',
   background: 'var(--gray-1)', color: 'var(--black)',
   outline: 'none', fontFamily: FONT, transition: 'border-color 0.15s',
 };
@@ -84,7 +101,7 @@ const inputStyle = {
 const labelStyle = {
   fontSize: '11px', fontWeight: 600,
   color: 'var(--gray-4)', textTransform: 'uppercase',
-  letterSpacing: '0.07em', marginBottom: '5px', display: 'block',
+  letterSpacing: '0.07em', marginBottom: '6px', display: 'block',
   fontFamily: FONT,
 };
 
@@ -108,126 +125,110 @@ function Field({ label, value, onChange, placeholder, multiline }) {
   );
 }
 
-// ── Icon buttons shared style ─────────────────────────────────
+// ── Shared icon button ────────────────────────────────────────
 const iconBtn = {
   background: 'transparent', border: 'none',
-  cursor: 'pointer', padding: '4px 5px',
+  cursor: 'pointer', padding: '3px 5px',
   borderRadius: '5px', display: 'flex', alignItems: 'center',
   transition: 'background 0.12s, color 0.12s',
+  flexShrink: 0,
 };
 
-// ── StopCard ──────────────────────────────────────────────────
-function StopCard({ stop, index, total, onUpdate, onMove, onDelete, canDelete, copiedId, onCopyAddr }) {
-  const isInc = stop.type === 'incarcare';
-  const accent = isInc ? 'var(--green)' : 'var(--orange)';
+// ── StopBlock — fields inside a column ───────────────────────
+function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, copiedId, onCopyAddr }) {
+  const isInc  = stop.type === 'incarcare';
+  const isDesc = stop.type === 'descarcare';
   const set = (key) => (val) => onUpdate(stop.id, key, val);
 
+  const showControls = total > 1 || canDelete;
+
   return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--gray-2)',
-      borderRadius: '10px',
-      overflow: 'hidden',
-    }}>
-      {/* ── Header ── */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '6px',
-        padding: '9px 12px',
-        background: 'var(--gray-1)',
-        borderBottom: '1px solid var(--gray-2)',
-      }}>
-        {/* type dot */}
-        <div style={{ width: 6, height: 6, borderRadius: '50%', background: accent, flexShrink: 0 }} />
-
-        {/* label */}
-        <span style={{ fontSize: '11px', fontWeight: 700, color: accent, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT, flex: 1 }}>
-          {isInc ? 'Încărcare' : 'Descărcare'}
-        </span>
-
-        {/* copy address */}
-        <button
-          onClick={() => onCopyAddr(stop.id)}
-          title="Copiază adresa"
-          style={{
-            display: 'flex', alignItems: 'center', gap: '4px',
-            padding: '3px 8px',
-            border: `1px solid ${copiedId === stop.id ? 'var(--green)' : 'var(--gray-3)'}`,
-            borderRadius: '5px',
-            background: copiedId === stop.id ? 'var(--green)' : 'transparent',
-            cursor: 'pointer', fontSize: '11px', fontWeight: 500,
-            color: copiedId === stop.id ? 'white' : 'var(--gray-4)',
-            fontFamily: FONT, transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => { if (copiedId !== stop.id) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
-          onMouseLeave={e => { if (copiedId !== stop.id) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; } }}
-        >
-          {copiedId === stop.id ? (
-            <>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Copiat
-            </>
-          ) : (
-            <>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-              Adresă
-            </>
-          )}
-        </button>
-
-        {/* separator */}
-        <div style={{ width: 1, height: 14, background: 'var(--gray-3)', margin: '0 2px' }} />
-
-        {/* move up */}
-        <button
-          onClick={() => onMove(index, -1)}
-          disabled={index === 0}
-          title="Mută sus"
-          style={{ ...iconBtn, color: index === 0 ? 'var(--gray-3)' : 'var(--gray-4)', cursor: index === 0 ? 'default' : 'pointer' }}
-          onMouseEnter={e => { if (index > 0) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; } }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = index === 0 ? 'var(--gray-3)' : 'var(--gray-4)'; }}
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-        </button>
-
-        {/* move down */}
-        <button
-          onClick={() => onMove(index, 1)}
-          disabled={index === total - 1}
-          title="Mută jos"
-          style={{ ...iconBtn, color: index === total - 1 ? 'var(--gray-3)' : 'var(--gray-4)', cursor: index === total - 1 ? 'default' : 'pointer' }}
-          onMouseEnter={e => { if (index < total - 1) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; } }}
-          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = index === total - 1 ? 'var(--gray-3)' : 'var(--gray-4)'; }}
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </button>
-
-        {/* delete */}
-        {canDelete && (
-          <button
-            onClick={() => onDelete(stop.id)}
-            title="Șterge oprire"
-            style={{ ...iconBtn, color: 'var(--gray-4)' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', position: 'relative' }}>
+      {/* controls row — only if multiple stops of this type */}
+      {(total > 1 || canDelete) && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', justifyContent: 'flex-end', marginBottom: '-4px' }}>
+          <button onClick={() => onMove(index, -1)} disabled={index === 0} title="Mută sus"
+            style={{ ...iconBtn, color: index === 0 ? 'var(--gray-3)' : 'var(--gray-4)', cursor: index === 0 ? 'default' : 'pointer' }}
+            onMouseEnter={e => { if (index > 0) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; } }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = index === 0 ? 'var(--gray-3)' : 'var(--gray-4)'; }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
-        )}
+          <button onClick={() => onMove(index, 1)} disabled={index === total - 1} title="Mută jos"
+            style={{ ...iconBtn, color: index === total - 1 ? 'var(--gray-3)' : 'var(--gray-4)', cursor: index === total - 1 ? 'default' : 'pointer' }}
+            onMouseEnter={e => { if (index < total - 1) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; } }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = index === total - 1 ? 'var(--gray-3)' : 'var(--gray-4)'; }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          {canDelete && (
+            <button onClick={() => onDelete(stop.id)} title="Șterge oprire"
+              style={{ ...iconBtn, color: 'var(--gray-4)' }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* date + time */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+        <Field label="Dată" value={stop.date} onChange={set('date')} placeholder="DD.MM.YYYY" />
+        <Field label="Oră" value={stop.time} onChange={set('time')} placeholder="HH:MM / Direct" />
       </div>
 
-      {/* ── Fields ── */}
-      <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          <Field label="Dată" value={stop.date} onChange={set('date')} placeholder="DD.MM.YYYY" />
-          <Field label="Oră" value={stop.time} onChange={set('time')} placeholder="HH:MM / Direct" />
-        </div>
-        <Field label="Firmă" value={stop.company} onChange={set('company')} placeholder={isInc ? 'ex: MUBEA PROSTEJOV' : 'ex: ILN MIOVENI'} />
-        <Field label="Stradă / Nr. / Zonă industrială" value={stop.street} onChange={set('street')} placeholder="ex: ROVNA 4708" />
-        <Field label="Țară, Cod poștal, Oraș" value={stop.city} onChange={set('city')} placeholder={isInc ? 'ex: CZ 796 01 PROSTEJOV' : 'ex: RO 115400 MIOVENI'} />
-        <Field label="Coordonate (Lat, Long)" value={stop.coords} onChange={set('coords')} placeholder="47.123456, 27.123456" />
-        {isInc && <Field label="Detalii marfă / Tonaj" value={stop.details} onChange={set('details')} multiline />}
-        <Field label="Referință" value={stop.ref} onChange={set('ref')} />
-      </div>
+      {isInc || isDesc ? (
+        <>
+          <Field label="Firmă" value={stop.company} onChange={set('company')} placeholder={isInc ? 'ex: MUBEA PROSTEJOV' : 'ex: ILN MIOVENI'} />
+          <Field label="Stradă / Nr. / Zonă industrială" value={stop.street} onChange={set('street')} placeholder="ex: ROVNA 4708" />
+          {/* city + copy button */}
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+              <label style={{ ...labelStyle, margin: 0 }}>Țară, Cod poștal, Oraș</label>
+              <button onClick={() => onCopyAddr(stop.id)} title="Copiază adresa pentru Maps"
+                style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 7px', border: `1px solid ${copiedId === stop.id ? 'var(--green)' : 'var(--gray-3)'}`, borderRadius: '5px', background: copiedId === stop.id ? 'var(--green)' : 'transparent', cursor: 'pointer', fontSize: '11px', fontWeight: 500, color: copiedId === stop.id ? 'white' : 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
+                onMouseEnter={e => { if (copiedId !== stop.id) { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
+                onMouseLeave={e => { if (copiedId !== stop.id) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; } }}>
+                {copiedId === stop.id
+                  ? <><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiat!</>
+                  : <><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiază adresa</>
+                }
+              </button>
+            </div>
+            <input type="text" value={stop.city} onChange={e => set('city')(e.target.value)}
+              placeholder={isInc ? 'ex: CZ 796 01 PROSTEJOV' : 'ex: RO 115400 MIOVENI'}
+              style={inputStyle}
+              onFocus={e => e.target.style.borderColor = '#ff7a3d'}
+              onBlur={e  => e.target.style.borderColor = 'var(--gray-2)'} />
+          </div>
+          <Field label="Coordonate (Lat, Long)" value={stop.coords} onChange={set('coords')} placeholder="47.123456, 27.123456" />
+          {isInc && <Field label="Detalii marfă / Tonaj" value={stop.details} onChange={set('details')} multiline />}
+          <Field label="Referință" value={stop.ref} onChange={set('ref')} />
+        </>
+      ) : (
+        /* vamă — simplified */
+        <>
+          <Field label="Punct vamal" value={stop.city} onChange={set('city')} placeholder="ex: GIURGIU - RUSE" />
+          <Field label="Referință / Documente" value={stop.ref} onChange={set('ref')} />
+        </>
+      )}
+    </div>
+  );
+}
+
+// ── Column header with add button ─────────────────────────────
+function ColHeader({ label, color, onAdd, addLabel }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+      <span style={{ fontSize: '12px', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>
+        {label}
+      </span>
+      <button onClick={onAdd} title={addLabel}
+        style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', border: '1px solid var(--gray-3)', borderRadius: '5px', background: 'transparent', cursor: 'pointer', fontSize: '11px', fontWeight: 500, color: 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
+        onMouseEnter={e => { e.currentTarget.style.borderColor = color; e.currentTarget.style.color = color; }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--gray-3)'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        {addLabel}
+      </button>
     </div>
   );
 }
@@ -235,10 +236,10 @@ function StopCard({ stop, index, total, onUpdate, onMove, onDelete, canDelete, c
 // ── Main component ────────────────────────────────────────────
 export default function GenerareComanda({ user }) {
   const [fields, setFields]       = useState(EMPTY_FIELDS);
-  const [stops, setStops]         = useState(DEFAULT_STOPS);
+  const [stops,  setStops]        = useState(DEFAULT_STOPS);
   const [loading, setLoading]     = useState(false);
-  const [error, setError]         = useState('');
-  const [copied, setCopied]       = useState(false);
+  const [error,   setError]       = useState('');
+  const [copied,  setCopied]      = useState(false);
   const [dragOver, setDragOver]   = useState(false);
   const [fileName, setFileName]   = useState('');
   const [pdfDataUrl, setPdfDataUrl] = useState('');
@@ -248,16 +249,25 @@ export default function GenerareComanda({ user }) {
 
   const setField = (key) => (val) => setFields(f => ({ ...f, [key]: val }));
 
-  // ── Stop handlers ─────────────────────────────────────────
+  // ── Stop handlers (per-type index) ───────────────────────
   const updateStop = (id, key, val) =>
     setStops(prev => prev.map(s => s.id === id ? { ...s, [key]: val } : s));
 
-  const moveStop = (index, dir) => setStops(prev => {
-    const arr = [...prev];
+  const moveStop = (type, index, dir) => setStops(prev => {
+    // reorder only within the same type group
+    const others = prev.filter(s => s.type !== type);
+    const group  = prev.filter(s => s.type === type);
     const to = index + dir;
-    if (to < 0 || to >= arr.length) return prev;
-    [arr[index], arr[to]] = [arr[to], arr[index]];
-    return arr;
+    if (to < 0 || to >= group.length) return prev;
+    [group[index], group[to]] = [group[to], group[index]];
+    // rebuild preserving original interleaving position for other types
+    const result = [];
+    let gi = 0;
+    for (const s of prev) {
+      if (s.type === type) result.push(group[gi++]);
+      else result.push(s);
+    }
+    return result;
   });
 
   const deleteStop = (id) => setStops(prev => prev.filter(s => s.id !== id));
@@ -292,7 +302,7 @@ export default function GenerareComanda({ user }) {
       setPdfDataUrl(e.target.result);
       try {
         const base64 = e.target.result.split(',')[1];
-        const token = localStorage.getItem('authToken');
+        const token  = localStorage.getItem('authToken');
         const res = await fetch('/api/extract-order', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -312,7 +322,7 @@ export default function GenerareComanda({ user }) {
             coords: s.coords || '', details: s.details || '', ref: s.ref || '',
           })));
         } else {
-          // fallback format vechi (load_* / unload_*)
+          // fallback format vechi
           setStops([
             { ...newStop('incarcare'), date: d.load_date||'', time: d.load_time||'', company: d.load_company||'', street: d.load_street||'', city: d.load_city||'', details: d.load_details||'', ref: d.load_ref||'' },
             { ...newStop('descarcare'), date: d.unload_date||'', time: d.unload_time||'', company: d.unload_company||'', street: d.unload_street||'', city: d.unload_city||'', ref: d.unload_ref||'' },
@@ -346,6 +356,9 @@ export default function GenerareComanda({ user }) {
     setShowPdfModal(false);
   };
 
+  const incarcari  = stops.filter(s => s.type === 'incarcare');
+  const descarcari = stops.filter(s => s.type === 'descarcare');
+  const vami       = stops.filter(s => s.type === 'vama');
   const previewLines = buildWhatsApp(fields, stops).split('\n');
 
   // ── Render ────────────────────────────────────────────────
@@ -361,18 +374,15 @@ export default function GenerareComanda({ user }) {
             <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
                 </svg>
                 <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--black)', fontFamily: FONT }}>{fileName}</span>
               </div>
               <button onClick={() => setShowPdfModal(false)}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: '4px', display: 'flex', alignItems: 'center', borderRadius: '6px', transition: 'all 0.12s' }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--gray-4)', padding: '4px', display: 'flex', borderRadius: '6px', transition: 'all 0.12s' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
             <iframe src={pdfDataUrl} style={{ flex: 1, border: 'none', width: '100%' }} title="PDF Preview" />
@@ -410,7 +420,6 @@ export default function GenerareComanda({ user }) {
             }}
           >
             <input ref={fileRef} type="file" accept=".pdf" style={{ display: 'none' }} onChange={handleFileInput} />
-
             {loading ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
                 <svg style={{ animation: 'spin-loader 0.8s linear infinite' }} width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2.5" strokeLinecap="round">
@@ -421,9 +430,7 @@ export default function GenerareComanda({ user }) {
             ) : fileName ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <polyline points="9 15 11 17 15 13"/>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/>
                 </svg>
                 <span style={{ fontSize: '13px', color: 'var(--green)', fontWeight: 600 }}>{fileName}</span>
                 <span style={{ fontSize: '11px', color: 'var(--gray-4)' }}>Click pentru a înlocui</span>
@@ -431,10 +438,7 @@ export default function GenerareComanda({ user }) {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gray-3)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="12" y1="18" x2="12" y2="12"/>
-                  <line x1="9"  y1="15" x2="15" y2="15"/>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/>
                 </svg>
                 <span style={{ fontSize: '13px', color: 'var(--gray-4)' }}>
                   <span style={{ color: '#ff7a3d', fontWeight: 600 }}>Click</span> sau trage un PDF aici
@@ -450,10 +454,8 @@ export default function GenerareComanda({ user }) {
               onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <path d="M10 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/>
-                <path d="M2 12s3-5 10-5 10 5 10 5-3 5-10 5-10-5-10-5z"/>
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                <path d="M10 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/><path d="M2 12s3-5 10-5 10 5 10 5-3 5-10 5-10-5-10-5z"/>
               </svg>
               Previzualizează PDF original
             </button>
@@ -466,7 +468,7 @@ export default function GenerareComanda({ user }) {
           )}
 
           {/* ── Fields card ── */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '14px', padding: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '14px', padding: '24px' }}>
 
             {/* Număr comandă + Client */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
@@ -474,73 +476,110 @@ export default function GenerareComanda({ user }) {
               <Field label="Client" value={fields.client} onChange={setField('client')} />
             </div>
 
-            {/* ── Stops list ── */}
-            <div style={{ borderTop: '1px solid var(--gray-2)', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {stops.map((stop, index) => (
-                <StopCard
-                  key={stop.id}
-                  stop={stop}
-                  index={index}
-                  total={stops.length}
-                  onUpdate={updateStop}
-                  onMove={moveStop}
-                  onDelete={deleteStop}
-                  canDelete={canDeleteStop(stop)}
-                  copiedId={copiedAddr}
-                  onCopyAddr={copyAddr}
-                />
-              ))}
+            {/* ── 2 coloane: Încărcare | Descărcare ── */}
+            <div style={{ borderTop: '1px solid var(--gray-2)', paddingTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
 
-              {/* ── Add stop buttons ── */}
-              <div style={{ display: 'flex', gap: '8px', paddingTop: '4px' }}>
-                <button
-                  onClick={() => addStop('incarcare')}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    padding: '7px 14px',
-                    border: '1px solid var(--gray-3)',
-                    borderRadius: '7px',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    fontSize: '12px', fontWeight: 500,
-                    color: 'var(--gray-4)',
-                    fontFamily: FONT,
-                    transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--green)'; e.currentTarget.style.color = 'var(--green)'; e.currentTarget.style.background = 'rgba(22,163,74,0.06)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--gray-3)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Încărcare
-                </button>
+              {/* Col headers */}
+              <ColHeader label="Încărcare" color="var(--green)" onAdd={() => addStop('incarcare')} addLabel="Adaugă" />
+              <ColHeader label="Descărcare" color="var(--orange)" onAdd={() => addStop('descarcare')} addLabel="Adaugă" />
 
-                <button
-                  onClick={() => addStop('descarcare')}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '6px',
-                    padding: '7px 14px',
-                    border: '1px solid var(--gray-3)',
-                    borderRadius: '7px',
-                    background: 'transparent',
-                    cursor: 'pointer',
-                    fontSize: '12px', fontWeight: 500,
-                    color: 'var(--gray-4)',
-                    fontFamily: FONT,
-                    transition: 'all 0.15s',
-                  }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--orange)'; e.currentTarget.style.color = 'var(--orange)'; e.currentTarget.style.background = 'rgba(234,88,12,0.06)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--gray-3)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.background = 'transparent'; }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Descărcare
-                </button>
+              {/* Stop blocks — left col */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {incarcari.map((stop, idx) => (
+                  <div key={stop.id}>
+                    {incarcari.length > 1 && (
+                      <div style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>
+                        #{idx + 1}
+                      </div>
+                    )}
+                    <StopBlock
+                      stop={stop}
+                      index={idx}
+                      total={incarcari.length}
+                      onUpdate={updateStop}
+                      onMove={(i, dir) => moveStop('incarcare', i, dir)}
+                      onDelete={deleteStop}
+                      canDelete={canDeleteStop(stop)}
+                      copiedId={copiedAddr}
+                      onCopyAddr={copyAddr}
+                    />
+                    {idx < incarcari.length - 1 && (
+                      <div style={{ marginTop: '20px', borderBottom: '1px dashed var(--gray-2)' }} />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Stop blocks — right col */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {descarcari.map((stop, idx) => (
+                  <div key={stop.id}>
+                    {descarcari.length > 1 && (
+                      <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>
+                        #{idx + 1}
+                      </div>
+                    )}
+                    <StopBlock
+                      stop={stop}
+                      index={idx}
+                      total={descarcari.length}
+                      onUpdate={updateStop}
+                      onMove={(i, dir) => moveStop('descarcare', i, dir)}
+                      onDelete={deleteStop}
+                      canDelete={canDeleteStop(stop)}
+                      copiedId={copiedAddr}
+                      onCopyAddr={copyAddr}
+                    />
+                    {idx < descarcari.length - 1 && (
+                      <div style={{ marginTop: '20px', borderBottom: '1px dashed var(--gray-2)' }} />
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Reset */}
-            <div style={{ paddingTop: '8px', borderTop: '1px solid var(--gray-2)' }}>
+            {/* ── Vamă — full width ── */}
+            {vami.length > 0 && (
+              <div style={{ borderTop: '1px solid var(--gray-2)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>Vamă</span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: vami.length > 1 ? '1fr 1fr' : '1fr', gap: '12px 24px' }}>
+                  {vami.map((stop, idx) => (
+                    <div key={stop.id}>
+                      {vami.length > 1 && (
+                        <div style={{ fontSize: '11px', color: 'var(--blue)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>
+                          #{idx + 1}
+                        </div>
+                      )}
+                      <StopBlock
+                        stop={stop}
+                        index={idx}
+                        total={vami.length}
+                        onUpdate={updateStop}
+                        onMove={(i, dir) => moveStop('vama', i, dir)}
+                        onDelete={deleteStop}
+                        canDelete={canDeleteStop(stop)}
+                        copiedId={copiedAddr}
+                        onCopyAddr={copyAddr}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Adaugă vamă + Reset ── */}
+            <div style={{ display: 'flex', gap: '8px', paddingTop: '8px', borderTop: '1px solid var(--gray-2)' }}>
+              <button onClick={() => addStop('vama')}
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '9px 14px', border: '1px solid var(--gray-3)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--blue)'; e.currentTarget.style.color = 'var(--blue)'; e.currentTarget.style.background = 'rgba(37,99,235,0.05)'; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--gray-3)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.background = 'transparent'; }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Adaugă vamă
+              </button>
               <button onClick={handleReset}
-                style={{ width: '100%', padding: '10px', border: '1px solid var(--gray-3)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
+                style={{ flex: 1, padding: '9px', border: '1px solid var(--gray-3)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
                 Resetează
@@ -552,36 +591,32 @@ export default function GenerareComanda({ user }) {
         {/* RIGHT — Preview */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '20px' }}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '14px', overflow: 'hidden' }}>
-
             <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--black)', fontFamily: FONT }}>Preview comandă</span>
               <button onClick={handleCopy}
                 style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 14px', border: '1px solid var(--gray-3)', borderRadius: '7px', background: copied ? 'var(--green)' : 'transparent', cursor: 'pointer', fontSize: '13px', color: copied ? 'white' : 'var(--black)', fontFamily: FONT, transition: 'all 0.15s', fontWeight: 500 }}
                 onMouseEnter={e => { if (!copied) { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
                 onMouseLeave={e => { if (!copied) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; } }}>
-                {copied ? (
-                  <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiat!</>
-                ) : (
-                  <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Copiază</>
-                )}
+                {copied
+                  ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiat!</>
+                  : <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Copiază</>
+                }
               </button>
             </div>
-
-            {/* Preview text */}
             <div style={{ padding: '20px 24px', background: 'var(--surface)', minHeight: '220px', maxHeight: '70vh', overflowY: 'auto' }}>
               {previewLines.map((line, i) => {
-                if (line === '') return <div key={i} style={{ height: '0.7em' }} />;
+                if (line === '') return <div key={i} style={{ height: '0.8em' }} />;
                 const boldMatch = line.match(/^\*•(.*?)\*(.*)$/);
                 if (boldMatch) {
                   const label = '•' + boldMatch[1];
                   const rest  = boldMatch[2].trim();
                   return (
-                    <div key={i} style={{ fontSize: '13px', color: 'var(--black)', fontFamily: "'SF Mono', 'Fira Code', monospace", lineHeight: 1.7 }}>
+                    <div key={i} style={{ fontSize: '13px', color: 'var(--black)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7 }}>
                       <strong>{label}</strong>{rest ? ' ' + rest : ''}
                     </div>
                   );
                 }
-                return <div key={i} style={{ fontSize: '13px', color: 'var(--gray-4)', fontFamily: "'SF Mono', 'Fira Code', monospace", lineHeight: 1.7 }}>{line}</div>;
+                return <div key={i} style={{ fontSize: '13px', color: 'var(--gray-4)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7 }}>{line}</div>;
               })}
             </div>
           </div>
@@ -590,7 +625,7 @@ export default function GenerareComanda({ user }) {
             <strong style={{ color: 'var(--black)', fontWeight: 600 }}>Cum funcționează:</strong><br/>
             1. Încarcă PDF-ul comenzii de transport<br/>
             2. AI-ul extrage automat toate opririle<br/>
-            3. Adaugă opriri suplimentare dacă e necesar<br/>
+            3. Adaugă opriri sau vamă dacă e necesar<br/>
             4. Copiază textul formatat pentru WhatsApp
           </div>
         </div>
