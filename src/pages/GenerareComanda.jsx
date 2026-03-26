@@ -181,8 +181,61 @@ function AddStopDropdown({ onAdd }) {
   );
 }
 
+// ── Inline type selector ──────────────────────────────────────
+const STOP_OPTS = [
+  { type: 'incarcare',  label: 'Încărcare',  dot: '#16a34a', color: 'var(--green)'  },
+  { type: 'descarcare', label: 'Descărcare', dot: '#ea580c', color: 'var(--orange)' },
+  { type: 'vama',       label: 'Vamă',       dot: '#2563eb', color: 'var(--blue)'   },
+];
+
+function TypeSelector({ type, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef();
+  const current = STOP_OPTS.find(o => o.type === type) || STOP_OPTS[0];
+
+  useEffect(() => {
+    if (!open) return;
+    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, [open]);
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '3px 8px', border: '1px solid var(--gray-3)', borderRadius: '5px', background: 'transparent', cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: current.color, fontFamily: FONT, transition: 'all 0.12s', letterSpacing: '0.04em' }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
+      >
+        <div style={{ width: 6, height: 6, borderRadius: '50%', background: current.dot, flexShrink: 0 }} />
+        {current.label}
+        <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+
+      {open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)', overflow: 'hidden', zIndex: 200, minWidth: 130 }}>
+          {STOP_OPTS.map(opt => (
+            <button
+              key={opt.type}
+              onClick={() => { onChange(opt.type); setOpen(false); }}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '8px 12px', background: opt.type === type ? 'var(--gray-1)' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: opt.type === type ? 600 : 400, color: opt.type === type ? opt.color : 'var(--black)', fontFamily: FONT, textAlign: 'left', transition: 'background 0.1s' }}
+              onMouseEnter={e => { if (opt.type !== type) e.currentTarget.style.background = 'var(--gray-1)'; }}
+              onMouseLeave={e => { if (opt.type !== type) e.currentTarget.style.background = 'transparent'; }}
+            >
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: opt.dot, flexShrink: 0 }} />
+              {opt.label}
+              {opt.type === type && <svg style={{ marginLeft: 'auto' }} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── StopBlock — fields for one stop ──────────────────────────
-function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, copiedId, onCopyAddr }) {
+function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, onChangeType, copiedId, onCopyAddr }) {
   const isInc  = stop.type === 'incarcare';
   const isDesc = stop.type === 'descarcare';
   const isVama = stop.type === 'vama';
@@ -237,21 +290,24 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      {/* reorder + delete controls */}
-      {(total > 1 || canDelete) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', justifyContent: 'flex-end', marginBottom: '-4px' }}>
-          <button onClick={() => onMove(index, -1)} disabled={index === 0} title="Mută sus"
-            style={{ ...iconBtn, color: index === 0 ? 'var(--gray-3)' : 'var(--gray-4)', cursor: index === 0 ? 'default' : 'pointer' }}
-            onMouseEnter={e => { if (index > 0) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; } }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = index === 0 ? 'var(--gray-3)' : 'var(--gray-4)'; }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
-          </button>
-          <button onClick={() => onMove(index, 1)} disabled={index === total - 1} title="Mută jos"
-            style={{ ...iconBtn, color: index === total - 1 ? 'var(--gray-3)' : 'var(--gray-4)', cursor: index === total - 1 ? 'default' : 'pointer' }}
-            onMouseEnter={e => { if (index < total - 1) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; } }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = index === total - 1 ? 'var(--gray-3)' : 'var(--gray-4)'; }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
+      {/* controls: type selector left, reorder+delete right */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '-4px' }}>
+        <TypeSelector type={stop.type} onChange={(newType) => onChangeType(stop.id, newType)} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+          {total > 1 && <>
+            <button onClick={() => onMove(index, -1)} disabled={index === 0} title="Mută sus"
+              style={{ ...iconBtn, color: index === 0 ? 'var(--gray-3)' : 'var(--gray-4)', cursor: index === 0 ? 'default' : 'pointer' }}
+              onMouseEnter={e => { if (index > 0) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; } }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = index === 0 ? 'var(--gray-3)' : 'var(--gray-4)'; }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+            <button onClick={() => onMove(index, 1)} disabled={index === total - 1} title="Mută jos"
+              style={{ ...iconBtn, color: index === total - 1 ? 'var(--gray-3)' : 'var(--gray-4)', cursor: index === total - 1 ? 'default' : 'pointer' }}
+              onMouseEnter={e => { if (index < total - 1) { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--black)'; } }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = index === total - 1 ? 'var(--gray-3)' : 'var(--gray-4)'; }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </>}
           {canDelete && (
             <button onClick={() => onDelete(stop.id)} title="Șterge oprire"
               style={{ ...iconBtn, color: 'var(--gray-4)' }}
@@ -261,7 +317,7 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
             </button>
           )}
         </div>
-      )}
+      </div>
 
       {/* date + time */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -377,9 +433,10 @@ export default function GenerareComanda({ user }) {
     return prev.map(s => s.type === type ? group[gi++] : s);
   });
 
-  const deleteStop = (id) => setStops(prev => prev.filter(s => s.id !== id));
-  const addStop    = (type) => setStops(prev => [...prev, newStop(type)]);
-  const canDeleteStop = (stop) => stops.filter(s => s.type === stop.type).length > 1;
+  const deleteStop     = (id) => setStops(prev => prev.filter(s => s.id !== id));
+  const addStop        = (type) => setStops(prev => [...prev, newStop(type)]);
+  const changeStopType = (id, newType) => setStops(prev => prev.map(s => s.id === id ? { ...s, type: newType } : s));
+  const canDeleteStop  = (stop) => stops.filter(s => s.type === stop.type).length > 1;
 
   const copyAddr = (stopId) => {
     const s = stops.find(st => st.id === stopId);
@@ -525,7 +582,7 @@ export default function GenerareComanda({ user }) {
                 {incarcari.map((stop, idx) => (
                   <div key={stop.id}>
                     {incarcari.length > 1 && <div style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>#{idx + 1}</div>}
-                    <StopBlock stop={stop} index={idx} total={incarcari.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('incarcare', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} copiedId={copiedAddr} onCopyAddr={copyAddr} />
+                    <StopBlock stop={stop} index={idx} total={incarcari.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('incarcare', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
                     {idx < incarcari.length - 1 && <div style={{ marginTop: '20px', borderBottom: '1px dashed var(--gray-2)' }} />}
                   </div>
                 ))}
@@ -535,7 +592,7 @@ export default function GenerareComanda({ user }) {
                 {descarcari.map((stop, idx) => (
                   <div key={stop.id}>
                     {descarcari.length > 1 && <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>#{idx + 1}</div>}
-                    <StopBlock stop={stop} index={idx} total={descarcari.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('descarcare', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} copiedId={copiedAddr} onCopyAddr={copyAddr} />
+                    <StopBlock stop={stop} index={idx} total={descarcari.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('descarcare', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
                     {idx < descarcari.length - 1 && <div style={{ marginTop: '20px', borderBottom: '1px dashed var(--gray-2)' }} />}
                   </div>
                 ))}
@@ -550,7 +607,7 @@ export default function GenerareComanda({ user }) {
                   {vami.map((stop, idx) => (
                     <div key={stop.id}>
                       {vami.length > 1 && <div style={{ fontSize: '11px', color: 'var(--blue)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>#{idx + 1}</div>}
-                      <StopBlock stop={stop} index={idx} total={vami.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('vama', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} copiedId={copiedAddr} onCopyAddr={copyAddr} />
+                      <StopBlock stop={stop} index={idx} total={vami.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('vama', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
                     </div>
                   ))}
                 </div>
