@@ -1139,7 +1139,7 @@ export default function ChatPanel({ user, currentPage }) {
     setOpenCards(prev => prev.find(c => c.key === key)
       ? prev.map(c => c.key === key ? { ...c, minimized: false } : c)
       : [...prev, { key, type: 'dm', peer: u, minimized: false }]);
-    setSlideDir('right'); setPeer(u); setActiveGroup(null); setView('chat'); setPeerReadAt(null);
+    setSlideDir('right'); setPeer(u); setActiveGroup(null); setView('contacts'); setPeerReadAt(null);
     setShowScrollBtn(false); setShowSearch(false); setSearchQuery(''); setEditingMsgId(null);
     const hasUnread = (unreadCounts[u.username] || 0) > 0;
     const fetchMsgs = !conversations[u.username]
@@ -1176,7 +1176,7 @@ export default function ChatPanel({ user, currentPage }) {
     setOpenCards(prev => prev.find(c => c.key === key)
       ? prev.map(c => c.key === key ? { ...c, minimized: false } : c)
       : [...prev, { key, type: 'group', group: g, minimized: false }]);
-    setSlideDir('right'); setPeer(null); setActiveGroup(g); setView('group-chat');
+    setSlideDir('right'); setPeer(null); setActiveGroup(g); setView('contacts');
     setShowScrollBtn(false); setShowSearch(false); setSearchQuery(''); setEditingMsgId(null);
     const hasUnread = (groupUnread[g.id] || 0) > 0;
     let msgs = groupMessages[g.id] || null;
@@ -2654,9 +2654,9 @@ export default function ChatPanel({ user, currentPage }) {
                     const showMuteBtn = hoveredDm === u.username || isMutedDm;
                     return (
                       <div key={u.username} onClick={() => openConversation(u)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: i < filteredUsers.length - 1 ? '1px solid var(--gray-2)' : 'none', cursor: 'pointer', background: 'transparent', transition: 'background 0.12s' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; setHoveredDm(u.username); }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setHoveredDm(null); }}>
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: i < filteredUsers.length - 1 ? '1px solid var(--gray-2)' : 'none', cursor: 'pointer', background: hoveredDm === u.username ? 'var(--gray-1)' : 'transparent', transition: 'background 0.12s' }}
+                        onMouseEnter={() => setHoveredDm(u.username)}
+                        onMouseLeave={() => setHoveredDm(null)}>
                         <div style={{ position: 'relative', flexShrink: 0 }}>
                           <div style={{ width: 36, height: 36, borderRadius: '50%', background: avatarColor(u.username), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 14 }}>{(u.first_name || u.username).charAt(0).toUpperCase()}</div>
                           <div style={{ position: 'absolute', bottom: 1, right: 1, width: 9, height: 9, borderRadius: '50%', background: online ? '#22c55e' : 'var(--gray-3)', border: '2px solid var(--surface)', transition: 'background 0.3s' }}/>
@@ -2703,9 +2703,9 @@ export default function ChatPanel({ user, currentPage }) {
                     const showMuteGrp = hoveredGroup === g.id || isMutedGrp;
                     return (
                       <div key={g.id} onClick={() => openGroupConversation(g)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: i < filteredGroups.length - 1 ? '1px solid var(--gray-2)' : 'none', cursor: 'pointer', background: 'transparent', transition: 'background 0.12s' }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; setHoveredGroup(g.id); }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; setHoveredGroup(null); }}>
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: i < filteredGroups.length - 1 ? '1px solid var(--gray-2)' : 'none', cursor: 'pointer', background: hoveredGroup === g.id ? 'var(--gray-1)' : 'transparent', transition: 'background 0.12s' }}
+                        onMouseEnter={() => setHoveredGroup(g.id)}
+                        onMouseLeave={() => setHoveredGroup(null)}>
                         <div style={{ width: 36, height: 36, borderRadius: '50%', background: groupColor(g.name), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><GroupIcon size={17} color="white"/></div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
@@ -2803,7 +2803,7 @@ export default function ChatPanel({ user, currentPage }) {
 
       {/* ── Chat Cards ────────────────────────────────────── */}
       {openCards.map((card, idx) => {
-        const cardW = 300;
+        const cardW = 360;
         const rightOffset = SW + 8 + idx * (cardW + 8);
         const isActiveDm  = card.type === 'dm'    && peer?.username  === card.peer?.username;
         const isActiveGrp = card.type === 'group' && activeGroup?.id === card.group?.id;
@@ -2812,7 +2812,7 @@ export default function ChatPanel({ user, currentPage }) {
         return (
           <div key={card.key} style={{
             position: 'fixed', bottom: 0, right: rightOffset, zIndex: 9800, width: cardW,
-            height: card.minimized ? 48 : 460,
+            height: card.minimized ? 48 : 560,
             background: 'var(--surface)', border: '1px solid var(--gray-2)',
             borderRadius: '12px 12px 0 0', boxShadow: '0 -4px 24px rgba(0,0,0,0.12)',
             display: 'flex', flexDirection: 'column', overflow: 'hidden',
