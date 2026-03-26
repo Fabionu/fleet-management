@@ -1136,10 +1136,14 @@ export default function ChatPanel({ user, currentPage }) {
 
   const openConversation = async (u) => {
     const key = `dm_${u.username}`;
-    setOpenCards(prev => prev.find(c => c.key === key)
-      ? prev.map(c => c.key === key ? { ...c, minimized: false } : c)
-      : [...prev, { key, type: 'dm', peer: u, minimized: false }]);
-    setSlideDir('right'); setPeer(u); setActiveGroup(null); setView('contacts'); setPeerReadAt(null);
+    if (currentPage !== 'chat') {
+      setOpenCards(prev => prev.find(c => c.key === key)
+        ? prev.map(c => c.key === key ? { ...c, minimized: false } : c)
+        : [...prev, { key, type: 'dm', peer: u, minimized: false }]);
+    }
+    setSlideDir('right'); setPeer(u); setActiveGroup(null);
+    setView(currentPage === 'chat' ? 'chat' : 'contacts');
+    setPeerReadAt(null);
     setShowScrollBtn(false); setShowSearch(false); setSearchQuery(''); setEditingMsgId(null);
     const hasUnread = (unreadCounts[u.username] || 0) > 0;
     const fetchMsgs = !conversations[u.username]
@@ -1173,10 +1177,13 @@ export default function ChatPanel({ user, currentPage }) {
 
   const openGroupConversation = async (g) => {
     const key = `group_${g.id}`;
-    setOpenCards(prev => prev.find(c => c.key === key)
-      ? prev.map(c => c.key === key ? { ...c, minimized: false } : c)
-      : [...prev, { key, type: 'group', group: g, minimized: false }]);
-    setSlideDir('right'); setPeer(null); setActiveGroup(g); setView('contacts');
+    if (currentPage !== 'chat') {
+      setOpenCards(prev => prev.find(c => c.key === key)
+        ? prev.map(c => c.key === key ? { ...c, minimized: false } : c)
+        : [...prev, { key, type: 'group', group: g, minimized: false }]);
+    }
+    setSlideDir('right'); setPeer(null); setActiveGroup(g);
+    setView(currentPage === 'chat' ? 'group-chat' : 'contacts');
     setShowScrollBtn(false); setShowSearch(false); setSearchQuery(''); setEditingMsgId(null);
     const hasUnread = (groupUnread[g.id] || 0) > 0;
     let msgs = groupMessages[g.id] || null;
