@@ -2609,7 +2609,7 @@ export default function ChatPanel({ user, currentPage }) {
               const unread = unreadCounts[u.username] || 0;
               const online = isOnline(u.username);
               return (
-                <div key={u.username} onClick={() => openConversation(u)} title={dn(u.username)}
+                <div key={u.username} onClick={() => openConversation(u)} data-tooltip={dn(u.username)}
                   className="chat-avatar-item"
                   style={{ position: 'relative', cursor: 'pointer', padding: '4px 0', width: '100%', display: 'flex', justifyContent: 'center' }}>
                   <div className="chat-avatar-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: avatarColor(u.username), display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: 14 }}>
@@ -2623,7 +2623,7 @@ export default function ChatPanel({ user, currentPage }) {
             {groups.map(g => {
               const unread = groupUnread[g.id] || 0;
               return (
-                <div key={g.id} onClick={() => openGroupConversation(g)} title={g.name}
+                <div key={g.id} onClick={() => openGroupConversation(g)} data-tooltip={g.name}
                   className="chat-avatar-item"
                   style={{ position: 'relative', cursor: 'pointer', padding: '4px 0', width: '100%', display: 'flex', justifyContent: 'center' }}>
                   <div className="chat-avatar-circle" style={{ width: 34, height: 34, borderRadius: '50%', background: groupColor(g.name), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -2875,8 +2875,7 @@ export default function ChatPanel({ user, currentPage }) {
                   {card.type === 'dm' ? dn(card.peer?.username) : card.group?.name}
                 </div>
                 {card.type === 'dm' && !card.minimized && (
-                  <div style={{ fontSize: 12, fontWeight: 500, color: isOnline(card.peer?.username) ? '#22c55e' : 'var(--gray-4)', display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: isOnline(card.peer?.username) ? '#22c55e' : 'var(--gray-3)', flexShrink: 0 }}/>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: isOnline(card.peer?.username) ? '#22c55e' : 'var(--gray-4)', marginTop: 1 }}>
                     {isOnline(card.peer?.username) ? 'online' : 'offline'}
                   </div>
                 )}
