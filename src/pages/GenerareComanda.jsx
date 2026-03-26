@@ -332,13 +332,10 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
         </>
       ) : (
         <>
-          <Field label="Firmă" value={stop.company} onChange={set('company')} placeholder={isInc ? 'ex: MUBEA PROSTEJOV' : 'ex: ILN MIOVENI'} />
-          <Field label="Stradă / Nr. / Zonă industrială" value={stop.street} onChange={set('street')} placeholder="ex: ROVNA 4708" />
-
-          {/* City + copy button */}
+          {/* Firmă + copy button */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <label style={{ ...labelStyle, margin: 0 }}>Țară, Cod poștal, Oraș</label>
+              <label style={{ ...labelStyle, margin: 0 }}>Firmă</label>
               <button onClick={() => onCopyAddr(stop.id)} title="Copiază adresa pentru Maps"
                 style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 7px', border: `1px solid ${copiedId === stop.id ? 'var(--green)' : 'var(--gray-3)'}`, borderRadius: '5px', background: copiedId === stop.id ? 'var(--green)' : 'transparent', cursor: 'pointer', fontSize: '11px', fontWeight: 500, color: copiedId === stop.id ? 'white' : 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
                 onMouseEnter={e => { if (copiedId !== stop.id) { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
@@ -349,12 +346,14 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
                 }
               </button>
             </div>
-            <input type="text" value={stop.city} onChange={e => set('city')(e.target.value)}
-              placeholder={isInc ? 'ex: CZ 796 01 PROSTEJOV' : 'ex: RO 115400 MIOVENI'}
+            <input type="text" value={stop.company} onChange={e => set('company')(e.target.value)}
+              placeholder={isInc ? 'ex: MUBEA PROSTEJOV' : 'ex: ILN MIOVENI'}
               style={inputStyle}
               onFocus={e => e.target.style.borderColor = '#ff7a3d'}
               onBlur={e  => e.target.style.borderColor = 'var(--gray-2)'} />
           </div>
+          <Field label="Stradă / Nr. / Zonă industrială" value={stop.street} onChange={set('street')} placeholder="ex: ROVNA 4708" />
+          <Field label="Țară, Cod poștal, Oraș" value={stop.city} onChange={set('city')} placeholder={isInc ? 'ex: CZ 796 01 PROSTEJOV' : 'ex: RO 115400 MIOVENI'} />
 
           {/* Coords + save/cache buttons */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
