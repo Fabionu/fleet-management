@@ -1899,6 +1899,45 @@ app.get('/api/dashboard/stats', authMiddleware, async (req, res) => {
 });
 
 // ── GENERARE COMANDĂ — extragere AI din PDF ─────────────────
+// ── LOCATION CACHE ──────────────────────────────────────────
+app.get('/api/location-cache', authMiddleware, async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.json({ coords: null });
+    const result = await pool.query(
+      'SELECT coords FROM location_cache WHERE address_key = $1 AND organization_id = $2',
+      [q.toLowerCase().trim(), req.user.organization_id]
+    );
+    if (result.rows.length > 0) {
+      await pool.query(
+        'UPDATE location_cache SET use_count = use_count + 1, last_used = NOW() WHERE address_key = $1 AND organization_id = $2',
+        [q.toLowerCase().trim(), req.user.organization_id]
+      );
+      return res.json({ coords: result.rows[0].coords });
+    }
+    res.json({ coords: null });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/location-cache', authMiddleware, async (req, res) => {
+  try {
+    const { address_key, display_name, coords } = req.body;
+    if (!address_key || !coords) return res.status(400).json({ error: 'Lipsesc câmpuri' });
+    await pool.query(
+      `INSERT INTO location_cache (address_key, display_name, coords, organization_id)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (address_key, organization_id)
+       DO UPDATE SET coords = $3, display_name = $2, last_used = NOW(), use_count = location_cache.use_count + 1`,
+      [address_key.toLowerCase().trim(), display_name || '', coords, req.user.organization_id]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/extract-order', authMiddleware, async (req, res) => {
   try {
     const { pdfBase64 } = req.body;

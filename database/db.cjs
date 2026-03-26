@@ -526,6 +526,20 @@ async function initDb() {
       }
     }
 
+    // Migration: location cache for coords auto-fill
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS location_cache (
+        id SERIAL PRIMARY KEY,
+        address_key TEXT NOT NULL,
+        display_name TEXT,
+        coords TEXT NOT NULL,
+        organization_id INTEGER REFERENCES organizations(id),
+        use_count INTEGER DEFAULT 1,
+        last_used TIMESTAMP DEFAULT NOW(),
+        UNIQUE(address_key, organization_id)
+      )
+    `);
+
     console.log('✓ Baza de date PostgreSQL inițializată cu succes');
   } finally {
     client.release();
