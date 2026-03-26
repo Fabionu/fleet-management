@@ -778,7 +778,7 @@ export default function ChatPanel({ user, currentPage }) {
   const sendBrowserNotif = (title, body, icon) => {
     if (!('Notification' in window)) return;
     if (Notification.permission !== 'granted') return;
-    if (!document.hidden) return; // doar când tabul e în fundal
+    // Fără restricție document.hidden — caller decide când trimite
     const n = new Notification(title, { body, icon: icon || '/favicon.ico', silent: false });
     n.onclick = () => { window.focus(); n.close(); };
   };
@@ -831,14 +831,23 @@ export default function ChatPanel({ user, currentPage }) {
       }));
       if (!isMine) {
         const chatOpen = (openRef.current || currentPageRef.current === 'chat') && peerRef.current?.username === peerOfMsg;
+        // "Activ în pagină" = chat-ul e deschis + tabul e vizibil + utilizatorul e pe pagina /chat
+        const activelyViewing = chatOpen && document.visibilityState === 'visible' && currentPageRef.current === 'chat';
         const isMuted  = mutedRef.current.dm.includes(peerOfMsg);
-        if (chatOpen) {
+        if (activelyViewing) {
+          // Utilizatorul vede conversația în timp real — marchează citit, fără sunet
           axios.put(`/api/chat/read/${peerOfMsg}`, {}, { headers }).catch(() => {});
-        } else if (!isMuted) {
-          isTripOrderMsg(msg) ? playTripOrderReceived() : playReceived();
-          setUnreadCounts(prev => ({ ...prev, [peerOfMsg]: (prev[peerOfMsg] || 0) + 1 }));
+        } else {
+          // Alt tab activ, altă pagină sau fundal → sună
+          if (!isMuted) {
+            isTripOrderMsg(msg) ? playTripOrderReceived() : playReceived();
+          }
+          if (!chatOpen && !isMuted) {
+            // Chat-ul nu e deschis deloc → crește și contorul necitite
+            setUnreadCounts(prev => ({ ...prev, [peerOfMsg]: (prev[peerOfMsg] || 0) + 1 }));
+          }
         }
-        if (!isMuted) {
+        if (!isMuted && !activelyViewing) {
           const preview = isTripOrderMsg(msg) ? '📦 Comandă de transport' : (msg.message?.slice(0, 80) || '');
           sendBrowserNotif(`Mesaj de la ${peerOfMsg}`, preview);
         }
@@ -853,19 +862,27 @@ export default function ChatPanel({ user, currentPage }) {
           ? { ...g, _lastMsg: { sender: msg.username, message: msg.message, created_at: msg.created_at } }
           : g
       ));
-      const isActive = (openRef.current || currentPageRef.current === 'chat') && activeGroupRef.current?.id === gId;
-      const isMuted  = mutedRef.current.group.includes(gId);
-      if (!isActive && msg.username !== user.username && msg.message_type !== 'system' && !isMuted) {
-        isTripOrderMsg(msg) ? playTripOrderReceived() : playReceived();
-        setGroupUnread(prev => ({ ...prev, [gId]: (prev[gId] || 0) + 1 }));
-      }
-      if (msg.username !== user.username && msg.message_type !== 'system' && !isMuted) {
-        const grpName = groups.find(g => g.id === gId)?.name || 'Grup';
-        const preview = isTripOrderMsg(msg) ? '📦 Comandă de transport' : (msg.message?.slice(0, 80) || '');
-        sendBrowserNotif(`${msg.username} în ${grpName}`, preview);
-      }
-      if (isActive) {
-        axios.put(`/api/chat/groups/${gId}/read`, {}, { headers }).catch(() => {});
+      const chatOpenGrp = (openRef.current || currentPageRef.current === 'chat') && activeGroupRef.current?.id === gId;
+      const activelyViewingGrp = chatOpenGrp && document.visibilityState === 'visible' && currentPageRef.current === 'chat';
+      const isMuted = mutedRef.current.group.includes(gId);
+      if (msg.username !== user.username && msg.message_type !== 'system') {
+        if (activelyViewingGrp) {
+          // Utilizatorul vede grupul în timp real — marchează citit, fără sunet
+          axios.put(`/api/chat/groups/${gId}/read`, {}, { headers }).catch(() => {});
+        } else {
+          // Alt tab activ, altă pagină sau fundal → sună
+          if (!isMuted) {
+            isTripOrderMsg(msg) ? playTripOrderReceived() : playReceived();
+          }
+          if (!chatOpenGrp && !isMuted) {
+            setGroupUnread(prev => ({ ...prev, [gId]: (prev[gId] || 0) + 1 }));
+          }
+          if (!isMuted) {
+            const grpName = groups.find(g => g.id === gId)?.name || 'Grup';
+            const preview = isTripOrderMsg(msg) ? '📦 Comandă de transport' : (msg.message?.slice(0, 80) || '');
+            sendBrowserNotif(`${msg.username} în ${grpName}`, preview);
+          }
+        }
       }
     };
 
