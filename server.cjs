@@ -1911,27 +1911,38 @@ app.post('/api/extract-order', authMiddleware, async (req, res) => {
     const client = new Anthropic.default({ apiKey });
 
     const prompt = `Ești un asistent care extrage informații dintr-o comandă de transport.
-Analizează documentul PDF și extrage EXACT următoarele câmpuri, returnând UN SINGUR OBIECT JSON valid:
+Analizează documentul PDF și returnează UN SINGUR OBIECT JSON valid cu următoarea structură:
 
 {
   "order_number": "numărul comenzii",
   "client": "numele clientului/expeditorului comenzii (firma care a emis comanda, NU firmele de încărcare/descărcare)",
-  "load_date": "data încărcării în format DD.MM.YYYY",
-  "load_time": "ora încărcării în format HH:MM",
-  "load_company": "numele firmei/depozitului de la locul de ÎNCĂRCARE (Loading Address)",
-  "load_street": "strada, numărul sau zona industrială de la locul de ÎNCĂRCARE",
-  "load_city": "țara (2 litere ISO) + cod poștal + oraș, fără virgulă, pe un singur rând (ex: \"CZ 796 01 PROSTEJOV\", \"DE 79669 ZELL\", \"NL 1234 AB ROTTERDAM\", \"ES 08450 BARCELONA\")",
-  "load_details": "DOAR numărul de paleți și greutatea/tonajul mărfii (ex: \"18 paleți, 5079 kg\" sau \"24 PLT, 12.5T\") — ignoră alte informații precum dimensiuni, coduri de produs, condiții de echipament etc.",
-  "load_ref": "referința/numărul de referință de încărcare dacă există",
-  "unload_date": "data descărcării în format DD.MM.YYYY",
-  "unload_time": "ora descărcării în format HH:MM",
-  "unload_company": "numele firmei/depozitului de la locul de DESCĂRCARE (Delivery Address)",
-  "unload_street": "strada, numărul sau zona industrială de la locul de DESCĂRCARE",
-  "unload_city": "țara (2 litere ISO) + cod poștal + oraș, fără virgulă, pe un singur rând (ex: \"RO 115400 MIOVENI\", \"FR 59000 LILLE\", \"PL 61-131 POZNAN\")",
-  "unload_ref": "referința/numărul de referință de descărcare dacă există"
+  "stops": [
+    {
+      "type": "incarcare",
+      "date": "DD.MM.YYYY",
+      "time": "HH:MM",
+      "company": "numele firmei/depozitului",
+      "street": "strada, numărul sau zona industrială",
+      "city": "țara (2 litere ISO) + cod poștal + oraș pe un singur rând (ex: \"CZ 796 01 PROSTEJOV\")",
+      "details": "DOAR numărul de paleți și greutatea (ex: \"18 paleți, 5079 kg\") — doar la încărcare",
+      "ref": "referința de la această oprire dacă există",
+      "coords": ""
+    },
+    {
+      "type": "descarcare",
+      "date": "DD.MM.YYYY",
+      "time": "HH:MM",
+      "company": "...",
+      "street": "...",
+      "city": "...",
+      "details": "",
+      "ref": "...",
+      "coords": ""
+    }
+  ]
 }
 
-REGULI CRITICE — citește cu mare atenție:
+REGULI CRITICE:
 
 0. COMENZI FERCAM — REGULĂ SPECIALĂ:
    - Dacă documentul este o comandă emisă de FERCAM (clientul este FERCAM), numărul comenzii NU este numărul general al documentului
@@ -1939,20 +1950,23 @@ REGULI CRITICE — citește cu mare atenție:
    - Exemplu: "POSITION FERCAM: KA-123-45678" → order_number = "KA-123-45678"
    - Acest cod FERCAM are prioritate față de orice alt număr de comandă găsit în document
 
-1. IDENTIFICAREA CORECTĂ A COLOANELOR:
-   - Documentele de transport au două coloane/secțiuni de adresă
-   - Coloana/secțiunea marcată "Loading Address", "Chargement", "Încărcare", "Pickup", "Collection", "From" = ÎNCĂRCARE → câmpurile load_*
-   - Coloana/secțiunea marcată "Delivery Address", "Livraison", "Descărcare", "Delivery", "Unloading", "To" = DESCĂRCARE → câmpurile unload_*
-   - De obicei Loading Address este în STÂNGA și Delivery Address în DREAPTA. NU le inversa NICIODATĂ.
-   - Data/ora asociată Loading Address merge la load_date/load_time; data/ora Delivery Address merge la unload_date/unload_time.
+1. ARRAY-UL stops — REGULI:
+   - Adaugă în array TOATE punctele de încărcare și descărcare găsite în document, în ordinea logică în care apar
+   - type = "incarcare" pentru Loading Address / Chargement / Pickup / Collection / From
+   - type = "descarcare" pentru Delivery Address / Livraison / Delivery / Unloading / To
+   - De obicei Loading Address este în STÂNGA și Delivery Address în DREAPTA — NU le inversa
+   - Dacă documentul are o singură încărcare și o singură descărcare, stops va avea exact 2 elemente
+   - Dacă documentul are multiple puncte (ex: 2 încărcări + 1 descărcare), adaugă toate în ordine
+   - Câmpul "details" se completează DOAR la opriri de tip "incarcare" (paleți + greutate), la descărcare lasă ""
+   - Câmpul "coords" lasă ÎNTOTDEAUNA string gol "" — coordonatele se adaugă manual
 
 2. Returnează DOAR JSON-ul, fără text suplimentar, fără markdown, fără \`\`\`
 
 3. Dacă un câmp nu există în document, lasă-l string gol ""
 
-4. Datele să fie în formatul specificat (DD.MM.YYYY pentru date, HH:MM pentru ore)
+4. Datele în format DD.MM.YYYY, orele în format HH:MM
 
-5. Nu completa coordonate GPS — acestea vor fi adăugate manual ulterior`;
+5. city: țara (2 litere ISO) + cod poștal + oraș, fără virgulă (ex: "CZ 796 01 PROSTEJOV", "DE 79669 ZELL", "RO 115400 MIOVENI", "FR 59000 LILLE")`;
 
     const response = await client.messages.create({
       model: 'claude-opus-4-5',

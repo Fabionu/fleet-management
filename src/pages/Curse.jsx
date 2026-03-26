@@ -23,7 +23,7 @@ function Curse({ user }) {
   const [filterMonth, setFilterMonth] = useState('');
   const [filterCreatedBy, setFilterCreatedBy] = useState('');
   const [filterTruck, setFilterTruck] = useState('');
-  const [sortBy, setSortBy] = useState('date_desc');
+  const [sortBy, setSortBy] = useState('added_desc');
   const menuRef = useRef(null);
 
   const showToast = (message, type = 'success') => {
@@ -371,6 +371,7 @@ function Curse({ user }) {
     setFilterMonth('');
     setFilterCreatedBy('');
     setFilterTruck('');
+    setSortBy('added_desc');
   };
 
   const parseLoadDate = (dateStr) => {
@@ -395,6 +396,8 @@ function Curse({ user }) {
     return true;
   }).sort((a, b) => {
     switch (sortBy) {
+      case 'added_desc': return new Date(b.created_at) - new Date(a.created_at);
+      case 'added_asc':  return new Date(a.created_at) - new Date(b.created_at);
       case 'date_asc':  return parseLoadDate(a.load_date) - parseLoadDate(b.load_date);
       case 'date_desc': return parseLoadDate(b.load_date) - parseLoadDate(a.load_date);
       case 'price_desc': return (b.price || 0) - (a.price || 0);
@@ -568,8 +571,10 @@ function Curse({ user }) {
             onChange={e => setSortBy(e.target.value)}
             style={{ padding: '9px 12px', border: '1px solid var(--gray-2)', borderRadius: '8px', fontSize: '13px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', cursor: 'pointer', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}
           >
-            <option value="date_desc">Dată (recent)</option>
-            <option value="date_asc">Dată (vechi)</option>
+            <option value="added_desc">Adăugate recent</option>
+            <option value="added_asc">Adăugate vechi</option>
+            <option value="date_desc">Dată încărcare (recent)</option>
+            <option value="date_asc">Dată încărcare (vechi)</option>
             <option value="price_desc">Preț (mare → mic)</option>
             <option value="price_asc">Preț (mic → mare)</option>
             <option value="km_desc">KM (mare → mic)</option>
