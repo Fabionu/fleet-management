@@ -735,7 +735,7 @@ export default function ChatPanel({ user, currentPage }) {
       if (peerObj) openConversation(peerObj);
     } else {
       const grp = groups.find(g => g.id === result.group_id);
-      if (grp) openGroupChat(grp);
+      if (grp) openGroupConversation(grp);
     }
     setGlobalSearch(false);
     setGlobalQuery('');
@@ -1045,16 +1045,16 @@ export default function ChatPanel({ user, currentPage }) {
 
   // Update pinned message whenever the active message list changes
   useEffect(() => {
-    if (view === 'chat' && peer) {
+    if (peer) {
       const msgs = conversations[peer.username] || [];
       setPinnedMsg(msgs.find(m => m.is_pinned) || null);
-    } else if (view === 'group-chat' && activeGroup) {
+    } else if (activeGroup) {
       const msgs = groupMessages[activeGroup.id] || [];
       setPinnedMsg(msgs.find(m => m.is_pinned) || null);
     } else {
       setPinnedMsg(null);
     }
-  }, [conversations, groupMessages, view, peer?.username, activeGroup?.id]);
+  }, [conversations, groupMessages, peer?.username, activeGroup?.id]);
 
   useEffect(() => {
     const pt = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
@@ -1221,9 +1221,9 @@ export default function ChatPanel({ user, currentPage }) {
     if (atMatch) {
       const query = atMatch[1].toLowerCase();
       let available = [];
-      if (view === 'group-chat' && activeGroup)
+      if (activeGroup)
         available = (activeGroup.members || []).filter(u => u !== user.username);
-      else if (view === 'chat' && peer)
+      else if (peer)
         available = [peer.username];
       const filtered = available.filter(u => u.toLowerCase().startsWith(query));
       if (filtered.length > 0) {
@@ -1235,9 +1235,9 @@ export default function ChatPanel({ user, currentPage }) {
     const socket = getSocket();
     if (socket) {
       if (val.trim()) {
-        if (view === 'group-chat' && activeGroup) {
+        if (activeGroup) {
           socket.emit('typing', { groupId: activeGroup.id });
-        } else if (view === 'chat' && peer) {
+        } else if (peer) {
           socket.emit('typing', { to: peer.username });
         }
       }
@@ -1245,9 +1245,9 @@ export default function ChatPanel({ user, currentPage }) {
       if (stopTypingTimer.current) clearTimeout(stopTypingTimer.current);
       const delay = val.trim() ? 2000 : 0;
       stopTypingTimer.current = setTimeout(() => {
-        if (view === 'group-chat' && activeGroup) {
+        if (activeGroup) {
           socket.emit('stop_typing', { groupId: activeGroup.id });
-        } else if (view === 'chat' && peer) {
+        } else if (peer) {
           socket.emit('stop_typing', { to: peer.username });
         }
       }, delay);
@@ -1276,10 +1276,10 @@ export default function ChatPanel({ user, currentPage }) {
     if (stopTypingTimer.current) clearTimeout(stopTypingTimer.current);
     const socket = getSocket();
     if (socket) {
-      if (view === 'group-chat' && activeGroup) socket.emit('stop_typing', { groupId: activeGroup.id });
-      else if (view === 'chat' && peer) socket.emit('stop_typing', { to: peer.username });
+      if (activeGroup) socket.emit('stop_typing', { groupId: activeGroup.id });
+      else if (peer) socket.emit('stop_typing', { to: peer.username });
     }
-    if (view === 'group-chat' && activeGroup) {
+    if (activeGroup) {
       try {
         await axios.post(`/api/chat/groups/${activeGroup.id}/messages`, {
           message: msg,
@@ -1289,7 +1289,7 @@ export default function ChatPanel({ user, currentPage }) {
         }, { headers });
         playSent();
       } catch {}
-    } else if (view === 'chat' && peer) {
+    } else if (peer) {
       try {
         await axios.post('/api/chat/messages', {
           to: peer.username,
@@ -1320,9 +1320,9 @@ export default function ChatPanel({ user, currentPage }) {
         reply_to_username: replyTo?.username || null,
       };
       try {
-        if (view === 'group-chat' && activeGroup) {
+        if (activeGroup) {
           await axios.post(`/api/chat/groups/${activeGroup.id}/messages`, payload, { headers });
-        } else if (view === 'chat' && peer) {
+        } else if (peer) {
           await axios.post('/api/chat/messages', { to: peer.username, ...payload }, { headers });
         }
         playSent();
@@ -1333,10 +1333,10 @@ export default function ChatPanel({ user, currentPage }) {
   };
 
   const sendTripOrder = async ({ order_number, truck, payment_terms, doc_type, file_name, file_data, file_type, to_user }) => {
-    if (view === 'chat' && peer) {
+    if (peer) {
       await axios.post('/api/chat/trip-order', { to: peer.username, order_number, truck, payment_terms, doc_type, file_name, file_data, file_type }, { headers });
       playSent();
-    } else if (view === 'group-chat' && activeGroup) {
+    } else if (activeGroup) {
       if (to_user) {
         // Send as DM to specific group member
         await axios.post('/api/chat/trip-order', { to: to_user, order_number, truck, payment_terms, doc_type, file_name, file_data, file_type }, { headers });
@@ -1360,14 +1360,14 @@ export default function ChatPanel({ user, currentPage }) {
   const handlePin = async (msg) => {
     const isPinned = !msg.is_pinned;
     try {
-      if (view === 'group-chat' && activeGroup) {
+      if (activeGroup) {
         await axios.put(`/api/chat/groups/${activeGroup.id}/messages/${msg.id}/pin`, { is_pinned: isPinned }, { headers });
         setGroupMessages(prev => {
           const gId = activeGroup.id;
           const updated = (prev[gId] || []).map(m => m.id === msg.id ? { ...m, is_pinned: isPinned, pinned_by: isPinned ? user.username : null } : (isPinned ? { ...m, is_pinned: false, pinned_by: null } : m));
           return { ...prev, [gId]: updated };
         });
-      } else if (view === 'chat' && peer) {
+      } else if (peer) {
         await axios.put(`/api/chat/messages/${msg.id}/pin`, { is_pinned: isPinned }, { headers });
         setConversations(prev => {
           const peerUn = peer.username;
@@ -1406,9 +1406,9 @@ export default function ChatPanel({ user, currentPage }) {
   const submitEdit = async (msg) => {
     if (!editingText.trim() || editingText.trim() === msg.message) { cancelEdit(); return; }
     try {
-      if (view === 'group-chat' && activeGroup) {
+      if (activeGroup) {
         await axios.put(`/api/chat/groups/${activeGroup.id}/messages/${msg.id}`, { message: editingText.trim() }, { headers });
-      } else if (view === 'chat' && peer) {
+      } else if (peer) {
         await axios.put(`/api/chat/messages/${msg.id}`, { message: editingText.trim() }, { headers });
       }
     } catch {}
@@ -1436,9 +1436,9 @@ export default function ChatPanel({ user, currentPage }) {
     const msg = deleteConfirm;
     setDeleteConfirm(null);
     try {
-      if (view === 'group-chat' && activeGroup) {
+      if (activeGroup) {
         await axios.delete(`/api/chat/groups/${activeGroup.id}/messages/${msg.id}`, { headers });
-      } else if (view === 'chat' && peer) {
+      } else if (peer) {
         await axios.delete(`/api/chat/messages/${msg.id}`, { headers });
       }
       showChatToast('Mesaj șters');
@@ -1455,7 +1455,7 @@ export default function ChatPanel({ user, currentPage }) {
   const searchMatches = (() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    const list = view === 'chat' ? messages : groupMsgs;
+    const list = peer ? messages : groupMsgs;
     return list.reduce((acc, msg, i) => {
       if (!msg.is_deleted && msg.message?.toLowerCase().includes(q)) acc.push(i);
       return acc;
@@ -1466,7 +1466,7 @@ export default function ChatPanel({ user, currentPage }) {
     if (!searchMatches.length) return;
     const next = (searchIdx + dir + searchMatches.length) % searchMatches.length;
     setSearchIdx(next);
-    const list = view === 'chat' ? messages : groupMsgs;
+    const list = peer ? messages : groupMsgs;
     const msgId = list[searchMatches[next]]?.id;
     if (msgId) {
       const el = document.getElementById(`msg-${msgId}`);
@@ -2612,7 +2612,7 @@ export default function ChatPanel({ user, currentPage }) {
           </div>
         ) : (
           <>
-            {view === 'contacts' && (
+            {(view === 'contacts' || view === 'chat' || view === 'group-chat') && (
               <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--gray-2)', flexShrink: 0 }}>
                 <div style={{ position: 'relative' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gray-4)" strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -2642,7 +2642,7 @@ export default function ChatPanel({ user, currentPage }) {
               </div>
             )}
 
-            {view === 'contacts' && (
+            {(view === 'contacts' || view === 'chat' || view === 'group-chat') && (
               <div className="chat-scroll" style={{ flex: 1, overflowY: 'auto' }}>
                 <div onClick={toggleDm} style={{ padding: '8px 14px 6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none' }} onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--gray-4)' }}>Mesaje directe {dmCollapsed && filteredUsers.length > 0 ? `(${filteredUsers.length})` : ''}</span>
@@ -2807,7 +2807,7 @@ export default function ChatPanel({ user, currentPage }) {
 
       {/* ── Chat Cards ────────────────────────────────────── */}
       {openCards.map((card, idx) => {
-        const cardW = 360;
+        const cardW = 400;
         const rightOffset = SW + 8 + idx * (cardW + 8);
         const isActiveDm  = card.type === 'dm'    && peer?.username  === card.peer?.username;
         const isActiveGrp = card.type === 'group' && activeGroup?.id === card.group?.id;
@@ -2860,22 +2860,22 @@ export default function ChatPanel({ user, currentPage }) {
                 <div style={{ background: '#ff7a3d', color: 'white', borderRadius: 10, minWidth: 18, height: 18, fontSize: 10, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px', flexShrink: 0 }}>{cardUnread > 9 ? '9+' : cardUnread}</div>
               )}
               <button onClick={e => { e.stopPropagation(); minimizeCard(card.key); }} title={card.minimized ? 'Extinde' : 'Minimizează'}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 8px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'background 0.12s', flexShrink: 0 }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 10px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'background 0.12s', flexShrink: 0 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </button>
               <button onClick={e => { e.stopPropagation(); closeCard(card.key); }} title="Închide"
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '6px 8px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'background 0.12s, color 0.12s', flexShrink: 0 }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '8px 10px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: 6, transition: 'background 0.12s, color 0.12s', flexShrink: 0 }}
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--red)'; }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>
             </div>
 
             {/* Card Body */}
             {!card.minimized && (
               isActive ? (
-                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
                   {showSearch && (
                     <div style={{ padding: '5px 10px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-page)', flexShrink: 0 }}>
                       <div style={{ position: 'relative', flex: 1 }}>
