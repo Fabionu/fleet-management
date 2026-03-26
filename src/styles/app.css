@@ -1260,6 +1260,15 @@ body.card-view tbody tr td {
   background: var(--gray-4);
 }
 
+/* ── Chat sidebar contact hover ────────────────────────── */
+.chat-contact-item {
+  background: transparent;
+  transition: background 0.1s;
+}
+.chat-contact-item:hover {
+  background: var(--gray-2) !important;
+}
+
 /* ── Chat panel animations ─────────────────────────────── */
 @keyframes chatPanelIn {
   from { opacity: 0; transform: translateY(22px) scale(0.95); }

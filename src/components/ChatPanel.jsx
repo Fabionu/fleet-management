@@ -1063,11 +1063,11 @@ export default function ChatPanel({ user, currentPage }) {
   }, [unreadCounts, groupUnread]);
 
   useEffect(() => {
-    if (view === 'chat' && peer) messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+    if (peer) messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
   }, [conversations]);
 
   useEffect(() => {
-    if (view === 'group-chat' && activeGroup) messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
+    if (activeGroup) messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
   }, [groupMessages]);
 
   // Auto-scroll when typing indicator appears (if already near bottom)
@@ -1080,10 +1080,10 @@ export default function ChatPanel({ user, currentPage }) {
   }, [typingUsers]);
 
   useEffect(() => {
-    if (view === 'chat' || view === 'group-chat') {
-      requestAnimationFrame(() => { inputRef.current?.focus(); messagesEndRef.current?.scrollIntoView(); });
+    if (peer || activeGroup) {
+      requestAnimationFrame(() => { inputRef.current?.focus(); messagesEndRef.current?.scrollIntoView({ behavior: 'instant' }); });
     }
-    if (view === 'contacts') requestAnimationFrame(() => searchRef.current?.focus());
+    if (!peer && !activeGroup && view === 'contacts') requestAnimationFrame(() => searchRef.current?.focus());
     if (view === 'create-group') requestAnimationFrame(() => newGroupNameRef.current?.focus());
   }, [view, peer?.username, activeGroup?.id]);
 
@@ -2654,7 +2654,8 @@ export default function ChatPanel({ user, currentPage }) {
                     const showMuteBtn = hoveredDm === u.username || isMutedDm;
                     return (
                       <div key={u.username} onClick={() => openConversation(u)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: i < filteredUsers.length - 1 ? '1px solid var(--gray-2)' : 'none', cursor: 'pointer', background: hoveredDm === u.username ? 'var(--gray-1)' : 'transparent', transition: 'background 0.12s' }}
+                        className="chat-contact-item"
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: i < filteredUsers.length - 1 ? '1px solid var(--gray-2)' : 'none', cursor: 'pointer' }}
                         onMouseEnter={() => setHoveredDm(u.username)}
                         onMouseLeave={() => setHoveredDm(null)}>
                         <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -2703,7 +2704,8 @@ export default function ChatPanel({ user, currentPage }) {
                     const showMuteGrp = hoveredGroup === g.id || isMutedGrp;
                     return (
                       <div key={g.id} onClick={() => openGroupConversation(g)}
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: i < filteredGroups.length - 1 ? '1px solid var(--gray-2)' : 'none', cursor: 'pointer', background: hoveredGroup === g.id ? 'var(--gray-1)' : 'transparent', transition: 'background 0.12s' }}
+                        className="chat-contact-item"
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 14px', borderBottom: i < filteredGroups.length - 1 ? '1px solid var(--gray-2)' : 'none', cursor: 'pointer' }}
                         onMouseEnter={() => setHoveredGroup(g.id)}
                         onMouseLeave={() => setHoveredGroup(null)}>
                         <div style={{ width: 36, height: 36, borderRadius: '50%', background: groupColor(g.name), display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><GroupIcon size={17} color="white"/></div>
