@@ -3033,10 +3033,13 @@ export default function ChatPanel({ user, currentPage }) {
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
                                     {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const cardH = card.minimized ? 48 : 560;
-                                        const cardTop = window.innerHeight - cardH;
-                                        const H = 160;
-                                        let relY = e.clientY - cardTop + 6;
-                                        if (relY + H > cardH - 4) relY = (e.clientY - cardTop) - H - 6;
+                                        const cardTop = window.innerHeight - cardH; // poate fi negativ
+                                        const H = 120; // înălțime reală dropdown ~3 iteme
+                                        const btnH = 24; // înălțimea aproximativă a butonului
+                                        const cardY = e.clientY - cardTop; // click y relativ la card
+                                        // Încearcă sub buton, altfel deasupra
+                                        let relY = cardY + btnH / 2 + 4;
+                                        if (relY + H > cardH - 4) relY = cardY - btnH / 2 - H - 4;
                                         if (relY < 4) relY = 4;
                                         setActionMenu({ msg, cardKey: card.key, relY }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
                                     {isEditing ? (
@@ -3099,10 +3102,13 @@ export default function ChatPanel({ user, currentPage }) {
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
                                     {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const cardH = card.minimized ? 48 : 560;
-                                        const cardTop = window.innerHeight - cardH;
-                                        const H = 160;
-                                        let relY = e.clientY - cardTop + 6;
-                                        if (relY + H > cardH - 4) relY = (e.clientY - cardTop) - H - 6;
+                                        const cardTop = window.innerHeight - cardH; // poate fi negativ
+                                        const H = 120; // înălțime reală dropdown ~3 iteme
+                                        const btnH = 24; // înălțimea aproximativă a butonului
+                                        const cardY = e.clientY - cardTop; // click y relativ la card
+                                        // Încearcă sub buton, altfel deasupra
+                                        let relY = cardY + btnH / 2 + 4;
+                                        if (relY + H > cardH - 4) relY = cardY - btnH / 2 - H - 4;
                                         if (relY < 4) relY = 4;
                                         setActionMenu({ msg, cardKey: card.key, relY }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
                                     {isEditing ? (
