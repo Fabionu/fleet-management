@@ -631,7 +631,7 @@ export default function ChatPanel({ user, currentPage }) {
   const [unreadCounts, setUnreadCounts]   = useState({});
   const [lastMessages, setLastMessages]   = useState({});
   const [totalUnread, setTotalUnread]     = useState(0);
-  const [peerReadAt, setPeerReadAt]       = useState(null);
+  const [dmPeerReadAt, setDmPeerReadAt]   = useState({});
 
   const [groups, setGroups]               = useState([]);
   const [groupUnread, setGroupUnread]     = useState({});
@@ -926,7 +926,7 @@ export default function ChatPanel({ user, currentPage }) {
 
     const handleUsersOnline     = (list) => setOnlineUsers(list);
     const handlePeerRead        = ({ reader, last_read_at }) => {
-      if (reader === peerRef.current?.username) setPeerReadAt(last_read_at);
+      setDmPeerReadAt(prev => ({ ...prev, [reader]: last_read_at }));
     };
     const handleGroupReadUpdate = ({ groupId, username, lastReadAt }) => {
       setMemberReads(prev => ({
@@ -1209,7 +1209,7 @@ export default function ChatPanel({ user, currentPage }) {
     }
     setSlideDir('right'); setPeer(u); setActiveGroup(null);
     setView(currentPage === 'chat' ? 'chat' : 'contacts');
-    setPeerReadAt(null);
+    // dmPeerReadAt e un map, nu mai e nevoie de reset individual
     setShowScrollBtn(false); setShowSearch(false); setSearchQuery(''); setEditingMsgId(null);
     const hasUnread = (unreadCounts[u.username] || 0) > 0;
     const fetchMsgs = !conversations[u.username]
@@ -1222,7 +1222,7 @@ export default function ChatPanel({ user, currentPage }) {
       msgs = msgsRes.value.data;
       setConversations(prev => ({ ...prev, [u.username]: msgs }));
     }
-    if (prRes.status === 'fulfilled') setPeerReadAt(prRes.value.data?.last_read_at || null);
+    if (prRes.status === 'fulfilled') setDmPeerReadAt(prev => ({ ...prev, [u.username]: prRes.value.data?.last_read_at || null }));
     // Marchează mereu citit la deschiderea conversației — indiferent de contorul necitite
     // Astfel peer-ul vede dubla bifă imediat ce deschidem chat-ul
     axios.put(`/api/chat/read/${u.username}`, {}, { headers }).catch(() => {});
@@ -1670,7 +1670,7 @@ export default function ChatPanel({ user, currentPage }) {
 
   // ── Helpers ────────────────────────────────────────────────
   const isOnline = (uname) => onlineUsers.includes(uname);
-  const isRead   = (msg)   => peerReadAt && new Date(peerReadAt) >= new Date(msg.created_at);
+  const isRead   = (msg, peerUsername) => { const ra = dmPeerReadAt[peerUsername ?? peer?.username]; return ra && new Date(ra) >= new Date(msg.created_at); };
 
   const sortedUsers = [...orgUsers].sort((a, b) => {
     const ao = isOnline(a.username), bo = isOnline(b.username);
@@ -1695,10 +1695,13 @@ export default function ChatPanel({ user, currentPage }) {
   // ── Shared helpers ──────────────────────────────────────────
   const calcMenuPos = (btnEl) => {
     const r = btnEl.getBoundingClientRect();
-    const W = 160, H = 180;
-    const x = r.right + W > window.innerWidth ? Math.max(4, r.right - W) : r.left;
-    const y = r.bottom + H > window.innerHeight ? Math.max(4, r.top - H) : r.bottom + 5;
-    return { x, y };
+    const H = 200;
+    // Vertical: sub buton, sau deasupra dacă nu e loc
+    const y = r.bottom + H > window.innerHeight ? r.top - H : r.bottom + 4;
+    // Orizontal: marginea dreaptă a meniului = marginea dreaptă a butonului (ca WhatsApp)
+    // "right" CSS = distanța față de marginea dreaptă a viewport-ului
+    const right = Math.max(4, window.innerWidth - r.right);
+    return { right, y };
   };
 
   const msgActionTrigger = (msg) => {
@@ -1710,8 +1713,8 @@ export default function ChatPanel({ user, currentPage }) {
         data-chat-action-trigger="true"
         onClick={e => {
           e.stopPropagation();
-          const { x, y } = calcMenuPos(e.currentTarget);
-          setActionMenu({ msg, x, y });
+          const { right, y } = calcMenuPos(e.currentTarget);
+          setActionMenu({ msg, right, y });
         }}
         style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
@@ -3002,7 +3005,7 @@ export default function ChatPanel({ user, currentPage }) {
                           if (isTripOrderMsg(msg)) return (
                             <div key={msg.id} id={`msg-${msg.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, padding: '1px 2px' }}>
                               <TripOrderCard msg={msg} currentUser={user.username} onRespond={isActive ? (status) => handleTripOrderRespond(msg, status) : undefined}/>
-                              {!nextSame && <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 2, flexDirection: isMe ? 'row-reverse' : 'row' }}><span style={{ fontSize: 10, color: 'var(--gray-4)' }}>{formatTime(msg.created_at)}</span>{isMe && <span title={isRead(msg) ? 'Văzut' : 'Trimis'}>{isRead(msg) ? <SeenIcon/> : <SentIcon/>}</span>}</div>}
+                              {!nextSame && <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 2, flexDirection: isMe ? 'row-reverse' : 'row' }}><span style={{ fontSize: 10, color: 'var(--gray-4)' }}>{formatTime(msg.created_at)}</span>{isMe && <span title={isRead(msg, card.peer?.username) ? 'Văzut' : 'Trimis'}>{isRead(msg, card.peer?.username) ? <SeenIcon/> : <SentIcon/>}</span>}</div>}
                             </div>
                           );
                           return (
@@ -3038,7 +3041,7 @@ export default function ChatPanel({ user, currentPage }) {
                                     )}
                                   </div>
                                 )}
-                                {!nextSame && !msg.is_deleted && <div style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 3, justifyContent: isMe ? 'flex-end' : 'flex-start' }}><span style={{ fontSize: 10, color: 'var(--gray-4)' }}>{formatTime(msg.created_at)}</span>{isMe && <span title={isRead(msg) ? 'Văzut' : 'Trimis'}>{isRead(msg) ? <SeenIcon/> : <SentIcon/>}</span>}</div>}
+                                {!nextSame && !msg.is_deleted && <div style={{ marginTop: 2, display: 'flex', alignItems: 'center', gap: 3, justifyContent: isMe ? 'flex-end' : 'flex-start' }}><span style={{ fontSize: 10, color: 'var(--gray-4)' }}>{formatTime(msg.created_at)}</span>{isMe && <span title={isRead(msg, card.peer?.username) ? 'Văzut' : 'Trimis'}>{isRead(msg, card.peer?.username) ? <SeenIcon/> : <SentIcon/>}</span>}</div>}
                               </div>
                             </div>
                           );
@@ -3190,7 +3193,7 @@ export default function ChatPanel({ user, currentPage }) {
 
       {/* ── Action menu portal ─────────────────────────────── */}
       {actionMenu && createPortal(
-        <div data-chat-action-menu style={{ position: 'fixed', top: actionMenu.y, left: actionMenu.x, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.13)', padding: 4, zIndex: 99999, minWidth: 152 }}>
+        <div data-chat-action-menu style={{ position: 'fixed', top: actionMenu.y, right: actionMenu.right, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.13)', padding: 4, zIndex: 99999, minWidth: 152 }}>
           {[
             { label: 'Răspunde', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>, action: () => { const msg = actionMenu.msg; setReplyTo({ id: msg.id, text: isTripOrderMsg(msg) ? (() => { try { const d = JSON.parse(msg.message); return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`; } catch { return '📦 Comandă de transport'; } })() : msg.message, username: msg.username }); setActionMenu(null); }, color: 'var(--black)', show: true },
             { label: actionMenu.msg.is_pinned ? 'Desprinde' : 'Prinde', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>, action: () => { handlePin(actionMenu.msg); setActionMenu(null); }, color: actionMenu.msg.is_pinned ? '#ff7a3d' : 'var(--black)', show: true },
