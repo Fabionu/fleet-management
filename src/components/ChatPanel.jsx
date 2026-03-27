@@ -1694,14 +1694,18 @@ export default function ChatPanel({ user, currentPage }) {
 
   // ── Shared helpers ──────────────────────────────────────────
   const calcMenuPos = (e) => {
+    const zoom = parseFloat(document.body.style.zoom) || 1;
     const W = 152, H = 200;
-    const cx = e.clientX, cy = e.clientY;
-    // Dreapta meniului se aliniază cu poziția click-ului
+    // Corectăm coordonatele mouse-ului cu factorul de zoom al body-ului
+    const cx = e.clientX / zoom;
+    const cy = e.clientY / zoom;
     let left = cx - W + 8;
     let top  = cy + 6;
+    const vw = window.innerWidth  / zoom;
+    const vh = window.innerHeight / zoom;
     if (left < 4) left = 4;
-    if (left + W > window.innerWidth - 4) left = window.innerWidth - W - 4;
-    if (top + H > window.innerHeight - 4) top = cy - H - 6;
+    if (left + W > vw - 4) left = vw - W - 4;
+    if (top + H > vh - 4) top = cy - H - 6;
     if (top < 4) top = 4;
     return { left, top };
   };
