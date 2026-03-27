@@ -1695,13 +1695,15 @@ export default function ChatPanel({ user, currentPage }) {
   // ── Shared helpers ──────────────────────────────────────────
   const calcMenuPos = (btnEl) => {
     const r = btnEl.getBoundingClientRect();
-    const H = 200;
-    // Vertical: sub buton, sau deasupra dacă nu e loc
-    const y = r.bottom + H > window.innerHeight ? r.top - H : r.bottom + 4;
-    // Orizontal: marginea dreaptă a meniului = marginea dreaptă a butonului (ca WhatsApp)
-    // "right" CSS = distanța față de marginea dreaptă a viewport-ului
-    const right = Math.max(4, window.innerWidth - r.right);
-    return { right, y };
+    const W = 152, H = 200;
+    // Marginea dreaptă a meniului = marginea dreaptă a butonului (ca WhatsApp)
+    let left = r.right - W;
+    let top  = r.bottom + 4;
+    if (left < 4) left = 4;
+    if (left + W > window.innerWidth - 4) left = window.innerWidth - W - 4;
+    if (top + H > window.innerHeight - 4) top = r.top - H - 4;
+    if (top < 4) top = 4;
+    return { left, top };
   };
 
   const msgActionTrigger = (msg) => {
@@ -1713,8 +1715,8 @@ export default function ChatPanel({ user, currentPage }) {
         data-chat-action-trigger="true"
         onClick={e => {
           e.stopPropagation();
-          const { right, y } = calcMenuPos(e.currentTarget);
-          setActionMenu({ msg, right, y });
+          const { left, top } = calcMenuPos(e.currentTarget);
+          setActionMenu({ msg, left, top });
         }}
         style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
@@ -3018,7 +3020,7 @@ export default function ChatPanel({ user, currentPage }) {
                                   <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '5px 9px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
-                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const { x, y } = calcMenuPos(e.currentTarget); setActionMenu({ msg, x, y }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
+                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const { left, top } = calcMenuPos(e.currentTarget); setActionMenu({ msg, left, top }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
                                     {isEditing ? (
                                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                         <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg); } if (e.key === 'Escape') cancelEdit(); }} style={{ resize: 'none', border: '1.5px solid #ff7a3d', borderRadius: 8, padding: '5px 8px', fontSize: 13, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, minWidth: 120 }}/>
@@ -3078,7 +3080,7 @@ export default function ChatPanel({ user, currentPage }) {
                                   <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '5px 9px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
-                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const { x, y } = calcMenuPos(e.currentTarget); setActionMenu({ msg, x, y }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
+                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const { left, top } = calcMenuPos(e.currentTarget); setActionMenu({ msg, left, top }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
                                     {isEditing ? (
                                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                         <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg); } if (e.key === 'Escape') cancelEdit(); }} style={{ resize: 'none', border: '1.5px solid #ff7a3d', borderRadius: 8, padding: '5px 8px', fontSize: 13, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, minWidth: 120 }}/>
@@ -3193,7 +3195,7 @@ export default function ChatPanel({ user, currentPage }) {
 
       {/* ── Action menu portal ─────────────────────────────── */}
       {actionMenu && createPortal(
-        <div data-chat-action-menu style={{ position: 'fixed', top: actionMenu.y, right: actionMenu.right, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.13)', padding: 4, zIndex: 99999, minWidth: 152 }}>
+        <div data-chat-action-menu style={{ position: 'fixed', top: actionMenu.top, left: actionMenu.left, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.13)', padding: 4, zIndex: 99999, minWidth: 152 }}>
           {[
             { label: 'Răspunde', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>, action: () => { const msg = actionMenu.msg; setReplyTo({ id: msg.id, text: isTripOrderMsg(msg) ? (() => { try { const d = JSON.parse(msg.message); return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`; } catch { return '📦 Comandă de transport'; } })() : msg.message, username: msg.username }); setActionMenu(null); }, color: 'var(--black)', show: true },
             { label: actionMenu.msg.is_pinned ? 'Desprinde' : 'Prinde', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>, action: () => { handlePin(actionMenu.msg); setActionMenu(null); }, color: actionMenu.msg.is_pinned ? '#ff7a3d' : 'var(--black)', show: true },
