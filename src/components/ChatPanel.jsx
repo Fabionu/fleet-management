@@ -677,6 +677,7 @@ export default function ChatPanel({ user, currentPage }) {
   const [hoveredGroup, setHoveredGroup] = useState(null);
 
   const openRef         = useRef(false);
+  const openCardsRef    = useRef([]);
   const peerRef         = useRef(null);
   const activeGroupRef  = useRef(null);
   const messagesEndRef  = useRef(null);
@@ -833,8 +834,12 @@ export default function ChatPanel({ user, currentPage }) {
       }));
       if (!isMine) {
         const chatOpen = (openRef.current || currentPageRef.current === 'chat') && peerRef.current?.username === peerOfMsg;
-        // "Activ în pagină" = chat-ul e deschis + tabul e vizibil + utilizatorul e pe pagina /chat
-        const activelyViewing = chatOpen && document.visibilityState === 'visible' && currentPageRef.current === 'chat';
+        // Mini panel deschis și neminimizat pentru acest peer
+        const cardOpen = openCardsRef.current.some(c => c.type === 'dm' && c.peer?.username === peerOfMsg && !c.minimized);
+        // "Activ în pagină" = vizibil + (pagina /chat cu conv deschisă SAU mini panel deschis)
+        const activelyViewing = document.visibilityState === 'visible' && (
+          (chatOpen && currentPageRef.current === 'chat') || cardOpen
+        );
         const isMuted  = mutedRef.current.dm.includes(peerOfMsg);
         if (activelyViewing) {
           // Utilizatorul vede conversația în timp real — marchează citit, fără sunet
@@ -865,7 +870,11 @@ export default function ChatPanel({ user, currentPage }) {
           : g
       ));
       const chatOpenGrp = (openRef.current || currentPageRef.current === 'chat') && activeGroupRef.current?.id === gId;
-      const activelyViewingGrp = chatOpenGrp && document.visibilityState === 'visible' && currentPageRef.current === 'chat';
+      // Mini panel grup deschis și neminimizat
+      const cardOpenGrp = openCardsRef.current.some(c => c.type === 'group' && c.group?.id === gId && !c.minimized);
+      const activelyViewingGrp = document.visibilityState === 'visible' && (
+        (chatOpenGrp && currentPageRef.current === 'chat') || cardOpenGrp
+      );
       const isMuted = mutedRef.current.group.includes(gId);
       if (msg.username !== user.username && msg.message_type !== 'system') {
         if (activelyViewingGrp) {
@@ -1058,6 +1067,7 @@ export default function ChatPanel({ user, currentPage }) {
   }, [open]);
 
   useEffect(() => { openRef.current = !!peer || !!activeGroup; }, [peer, activeGroup]);
+  useEffect(() => { openCardsRef.current = openCards; }, [openCards]);
   useEffect(() => { peerRef.current = peer; }, [peer]);
   useEffect(() => { activeGroupRef.current = activeGroup; }, [activeGroup]);
   useEffect(() => { currentPageRef.current = currentPage; }, [currentPage]);
