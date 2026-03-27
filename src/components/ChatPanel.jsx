@@ -61,18 +61,18 @@ function groupColor(name) {
   return GROUP_COLORS[Math.abs(hash) % GROUP_COLORS.length];
 }
 
-const CHECK_POINTS = '1 4.2 4.2 7.5 11 1';
 function SeenIcon() {
   return (
-    <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
-      <polyline points={CHECK_POINTS} stroke="#ff7a3d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    <svg width="16" height="9" viewBox="0 0 16 9" fill="none">
+      <polyline points="1 4.5 3.8 7.5 9 1.5" stroke="#ff7a3d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <polyline points="5 4.5 7.8 7.5 13.5 1.5" stroke="#ff7a3d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
 function SentIcon() {
   return (
     <svg width="12" height="9" viewBox="0 0 12 9" fill="none">
-      <polyline points={CHECK_POINTS} stroke="rgba(255,255,255,0.35)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+      <polyline points="1 4.5 3.8 7.5 9 1.5" stroke="var(--gray-3)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   );
 }
@@ -638,6 +638,7 @@ export default function ChatPanel({ user, currentPage }) {
   const [replyTo, setReplyTo]               = useState(null);
   const [pinnedMsg, setPinnedMsg]           = useState(null);
   const [hoveredMsgId, setHoveredMsgId]     = useState(null);
+  const [actionMenu, setActionMenu]         = useState(null); // { msg, x, y }
   const [highlightedMsgId, setHighlightedMsgId] = useState(null);
   const highlightTimer                      = useRef(null);
   const [showScrollBtn, setShowScrollBtn]   = useState(false);
@@ -1126,6 +1127,16 @@ export default function ChatPanel({ user, currentPage }) {
     document.addEventListener('mousedown', handleOutside);
     return () => document.removeEventListener('mousedown', handleOutside);
   }, []);
+
+  // ── Închide action menu la click în afară ─────────────────
+  useEffect(() => {
+    if (!actionMenu) return;
+    const close = (e) => {
+      if (!e.target.closest('[data-chat-action-menu]')) setActionMenu(null);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [actionMenu]);
 
   // ── Mute helpers ──────────────────────────────────────────
   const toggleMuteDm = (username) => {
@@ -1653,40 +1664,29 @@ export default function ChatPanel({ user, currentPage }) {
   const groupMsgs = (activeGroup && groupMessages[activeGroup.id]) || [];
 
   // ── Shared helpers ──────────────────────────────────────────
-  const msgActionBtns = (msg, isDm) => (
-    <div style={{ display: 'flex', gap: 2, opacity: hoveredMsgId === msg.id && editingMsgId !== msg.id ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: hoveredMsgId === msg.id && editingMsgId !== msg.id ? 'auto' : 'none' }}>
-      <button onClick={() => setReplyTo({ id: msg.id, text: isTripOrderMsg(msg) ? (() => { try { const d = JSON.parse(msg.message); return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`; } catch { return '📦 Comandă de transport'; } })() : msg.message, username: msg.username })} title="Răspunde"
-        style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
+  const msgActionTrigger = (msg) => {
+    if (msg.is_deleted) return null;
+    const isMe = msg.username === user.username;
+    const visible = hoveredMsgId === msg.id && editingMsgId !== msg.id;
+    return (
+      <button
+        data-chat-action-trigger="true"
+        onClick={e => {
+          e.stopPropagation();
+          const r = e.currentTarget.getBoundingClientRect();
+          setActionMenu({ msg, x: isMe ? r.right - 152 : r.left, y: r.bottom + 5 });
+        }}
+        style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+        onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
         onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+          <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+          <circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+        </svg>
       </button>
-      <button onClick={() => handlePin(msg)} title={msg.is_pinned ? 'Desprinde' : 'Prinde'}
-        style={{ background: 'var(--surface)', border: `1px solid ${msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'}`, borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)'; e.currentTarget.style.borderColor = msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'; }}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>
-      </button>
-      {msg.username === user.username && <>
-        {Date.now() - new Date(msg.created_at).getTime() <= EDIT_LIMIT_MS && (
-          <button onClick={() => startEdit(msg)} title="Editează"
-            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-        )}
-        {canChat('chatDeleteMessage') && (
-          <button onClick={() => deleteMsg(msg)} title="Șterge"
-            style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', transition: 'all 0.12s' }}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)'; }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-          </button>
-        )}
-      </>}
-    </div>
-  );
+    );
+  };
 
   const renderMsgBubble = (msg) => {
     const isMe = msg.username === user.username;
@@ -1694,13 +1694,13 @@ export default function ChatPanel({ user, currentPage }) {
     if (msg.is_deleted) return <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '6px 10px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>;
     if (isTripOrderMsg(msg)) return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse' }}>
-        {msgActionBtns(msg)}
+        {msgActionTrigger(msg)}
         <TripOrderCard msg={msg} currentUser={user.username} onRespond={(status) => handleTripOrderRespond(msg, status)} />
       </div>
     );
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '75%', justifyContent: isMe ? 'flex-end' : 'flex-start' }}>
-        {msgActionBtns(msg)}
+        {msgActionTrigger(msg)}
         {isEditing ? (
           <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
             <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2}
@@ -1780,7 +1780,8 @@ export default function ChatPanel({ user, currentPage }) {
             <div id={`msg-${msg.id}`}
               style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, borderRadius: 10, animation: highlightedMsgId === msg.id ? 'msgHighlight 1.6s ease forwards' : 'none', padding: '2px 4px', outline: isCurrentSearchMatch ? '2px solid #ff7a3d' : isSearchMatch ? '1px solid rgba(255,122,61,0.4)' : 'none', outlineOffset: 2 }}
               onMouseEnter={() => setHoveredMsgId(msg.id)}
-              onMouseLeave={() => setHoveredMsgId(null)}>
+              onMouseLeave={() => setHoveredMsgId(null)}
+              onDoubleClick={() => { if (msg.is_deleted) return; setReplyTo({ id: msg.id, text: isTripOrderMsg(msg) ? (() => { try { const d = JSON.parse(msg.message); return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`; } catch { return '📦 Comandă de transport'; } })() : msg.message, username: msg.username }); }}>
               {!isDm && !isMe && !prevSame && !msg.is_deleted && (
                 <div style={{ fontSize: 11, color: '#ff7a3d', marginBottom: 3, paddingLeft: 4, fontWeight: 600 }}>{dn(msg.username)}</div>
               )}
@@ -2920,11 +2921,11 @@ export default function ChatPanel({ user, currentPage }) {
             </div>
 
             {/* Card Body — mesajele se afișează mereu; inputul doar la cardul activ */}
-            {!card.minimized && (() => {
+            {(() => {
               const cardDmMsgs  = card.type === 'dm'    ? (conversations[card.peer?.username] || []) : [];
               const cardGrpMsgs = card.type === 'group' ? (groupMessages[card.group?.id]    || []) : [];
               return (
-                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
+                <div style={{ display: card.minimized ? 'none' : 'flex', flexDirection: 'column', flex: 1, minHeight: 0, position: 'relative', overflow: 'hidden' }}>
                   {/* Search bar — doar la cardul activ */}
                   {isActive && showSearch && (
                     <div style={{ padding: '5px 10px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', gap: 6, background: 'var(--bg-page)', flexShrink: 0 }}>
@@ -2971,19 +2972,13 @@ export default function ChatPanel({ user, currentPage }) {
                             <div key={msg.id}>
                               {isActive && msg.id === firstUnreadId && <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '6px 0' }}><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/><span style={{ fontSize: 10, fontWeight: 600, color: '#ff7a3d', whiteSpace: 'nowrap' }}>MESAJE NOI</span><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/></div>}
                               <div id={`msg-${msg.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, borderRadius: 8, animation: isActive && highlightedMsgId === msg.id ? 'msgHighlight 1.6s ease forwards' : 'none', padding: '1px 2px', outline: isCurrentSearchMatch ? '2px solid #ff7a3d' : isSearchMatch ? '1px solid rgba(255,122,61,0.4)' : 'none', outlineOffset: 2 }}
-                                onMouseEnter={() => isActive && setHoveredMsgId(msg.id)} onMouseLeave={() => isActive && setHoveredMsgId(null)}>
+                                onMouseEnter={() => isActive && setHoveredMsgId(msg.id)} onMouseLeave={() => isActive && setHoveredMsgId(null)}
+                                onDoubleClick={() => { if (msg.is_deleted) return; setReplyTo({ id: msg.id, text: isTripOrderMsg(msg) ? (() => { try { const d = JSON.parse(msg.message); return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`; } catch { return '📦 Comandă de transport'; } })() : msg.message, username: msg.username }); }}>
                                 {msg.is_deleted ? (
                                   <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '5px 9px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
-                                    {isActive && <div style={{ display: 'flex', gap: 2, opacity: isHovered && !isEditing ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered && !isEditing ? 'auto' : 'none' }}>
-                                      <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })} title="Răspunde" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg></button>
-                                      <button onClick={() => handlePin(msg)} title={msg.is_pinned ? 'Desprinde' : 'Prinde'} style={{ background: 'var(--surface)', border: `1px solid ${msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'}`, borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)'; e.currentTarget.style.borderColor = msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></button>
-                                      {isMe && <>
-                                        {Date.now() - new Date(msg.created_at).getTime() <= EDIT_LIMIT_MS && <button onClick={() => startEdit(msg)} title="Editează" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>}
-                                        {canChat('chatDeleteMessage') && <button onClick={() => deleteMsg(msg)} title="Șterge" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>}
-                                      </>}
-                                    </div>}
+                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const r = e.currentTarget.getBoundingClientRect(); const isMe = msg.username === user.username; setActionMenu({ msg, x: isMe ? r.right - 152 : r.left, y: r.bottom + 5 }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
                                     {isEditing ? (
                                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                         <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg); } if (e.key === 'Escape') cancelEdit(); }} style={{ resize: 'none', border: '1.5px solid #ff7a3d', borderRadius: 8, padding: '5px 8px', fontSize: 13, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, minWidth: 120 }}/>
@@ -3036,20 +3031,14 @@ export default function ChatPanel({ user, currentPage }) {
                             <div key={msg.id}>
                               {isActive && msg.id === firstUnreadId && <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '6px 0' }}><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/><span style={{ fontSize: 10, fontWeight: 600, color: '#ff7a3d', whiteSpace: 'nowrap' }}>MESAJE NOI</span><div style={{ flex: 1, height: 1, background: 'var(--gray-2)' }}/></div>}
                               <div id={`msg-${msg.id}`} style={{ display: 'flex', flexDirection: 'column', alignItems: isMe ? 'flex-end' : 'flex-start', marginBottom: nextSame ? 1 : 4, borderRadius: 8, animation: isActive && highlightedMsgId === msg.id ? 'msgHighlight 1.6s ease forwards' : 'none', padding: '1px 2px', outline: isCurrentSearchMatch ? '2px solid #ff7a3d' : isSearchMatch ? '1px solid rgba(255,122,61,0.4)' : 'none', outlineOffset: 2 }}
-                                onMouseEnter={() => isActive && setHoveredMsgId(msg.id)} onMouseLeave={() => isActive && setHoveredMsgId(null)}>
+                                onMouseEnter={() => isActive && setHoveredMsgId(msg.id)} onMouseLeave={() => isActive && setHoveredMsgId(null)}
+                                onDoubleClick={() => { if (msg.is_deleted) return; setReplyTo({ id: msg.id, text: isTripOrderMsg(msg) ? (() => { try { const d = JSON.parse(msg.message); return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`; } catch { return '📦 Comandă de transport'; } })() : msg.message, username: msg.username }); }}>
                                 {!isMe && !prevSame && !msg.is_deleted && <div style={{ fontSize: 11, color: '#ff7a3d', marginBottom: 2, paddingLeft: 2, fontWeight: 600 }}>{dn(msg.username)}</div>}
                                 {msg.is_deleted ? (
                                   <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '5px 9px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
-                                    {isActive && <div style={{ display: 'flex', gap: 2, opacity: isHovered && !isEditing ? 1 : 0, transition: 'opacity 0.15s', pointerEvents: isHovered && !isEditing ? 'auto' : 'none' }}>
-                                      <button onClick={() => setReplyTo({ id: msg.id, text: msg.message, username: msg.username })} title="Răspunde" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg></button>
-                                      <button onClick={() => handlePin(msg)} title={msg.is_pinned ? 'Desprinde' : 'Prinde'} style={{ background: 'var(--surface)', border: `1px solid ${msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'}`, borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = '#ff7a3d'; e.currentTarget.style.borderColor = '#ff7a3d'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = msg.is_pinned ? '#ff7a3d' : 'var(--gray-4)'; e.currentTarget.style.borderColor = msg.is_pinned ? '#ff7a3d' : 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></button>
-                                      {isMe && <>
-                                        {Date.now() - new Date(msg.created_at).getTime() <= EDIT_LIMIT_MS && <button onClick={() => startEdit(msg)} title="Editează" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>}
-                                        {canChat('chatDeleteMessage') && <button onClick={() => deleteMsg(msg)} title="Șterge" style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center' }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--red-light)'; e.currentTarget.style.color = 'var(--red)'; e.currentTarget.style.borderColor = 'var(--red)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>}
-                                      </>}
-                                    </div>}
+                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const r = e.currentTarget.getBoundingClientRect(); const isMe = msg.username === user.username; setActionMenu({ msg, x: isMe ? r.right - 152 : r.left, y: r.bottom + 5 }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
                                     {isEditing ? (
                                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                         <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg); } if (e.key === 'Escape') cancelEdit(); }} style={{ resize: 'none', border: '1.5px solid #ff7a3d', borderRadius: 8, padding: '5px 8px', fontSize: 13, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, minWidth: 120 }}/>
@@ -3158,6 +3147,26 @@ export default function ChatPanel({ user, currentPage }) {
           boxShadow: '0 2px 8px rgba(0,0,0,0.28)',
         }}>
           {avatarTooltip.name}
+        </div>,
+        document.body
+      )}
+
+      {/* ── Action menu portal ─────────────────────────────── */}
+      {actionMenu && createPortal(
+        <div data-chat-action-menu style={{ position: 'fixed', top: actionMenu.y, left: actionMenu.x, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.13)', padding: 4, zIndex: 99999, minWidth: 152 }}>
+          {[
+            { label: 'Răspunde', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>, action: () => { const msg = actionMenu.msg; setReplyTo({ id: msg.id, text: isTripOrderMsg(msg) ? (() => { try { const d = JSON.parse(msg.message); return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`; } catch { return '📦 Comandă de transport'; } })() : msg.message, username: msg.username }); setActionMenu(null); }, color: 'var(--black)', show: true },
+            { label: actionMenu.msg.is_pinned ? 'Desprinde' : 'Prinde', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>, action: () => { handlePin(actionMenu.msg); setActionMenu(null); }, color: actionMenu.msg.is_pinned ? '#ff7a3d' : 'var(--black)', show: true },
+            { label: 'Editează', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>, action: () => { startEdit(actionMenu.msg); setActionMenu(null); }, color: 'var(--black)', show: actionMenu.msg.username === user.username && !isTripOrderMsg(actionMenu.msg) && !actionMenu.msg.is_deleted && Date.now() - new Date(actionMenu.msg.created_at).getTime() <= EDIT_LIMIT_MS },
+            { label: 'Șterge', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>, action: () => { deleteMsg(actionMenu.msg); setActionMenu(null); }, color: 'var(--red)', show: canChat('chatDeleteMessage') && !actionMenu.msg.is_deleted },
+          ].filter(item => item.show).map((item, i) => (
+            <button key={i} onClick={item.action}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '7px 10px', background: 'transparent', border: 'none', borderRadius: 7, cursor: 'pointer', fontSize: 13, color: item.color, fontFamily: 'inherit', textAlign: 'left', transition: 'background 0.1s' }}
+              onMouseEnter={e => e.currentTarget.style.background = item.color === 'var(--red)' ? 'var(--red-light)' : 'var(--gray-1)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              {item.icon}{item.label}
+            </button>
+          ))}
         </div>,
         document.body
       )}
