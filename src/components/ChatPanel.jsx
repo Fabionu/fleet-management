@@ -3225,7 +3225,7 @@ export default function ChatPanel({ user, currentPage }) {
       )}
 
       {/* ── Action menu portal ─────────────────────────────── */}
-      {actionMenu && createPortal(
+      {actionMenu && !actionMenu.cardKey && createPortal(
         <div data-chat-action-menu style={{ position: 'fixed', top: actionMenu.top, left: actionMenu.left, background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 10, boxShadow: '0 4px 24px rgba(0,0,0,0.13)', padding: 4, zIndex: 99999, minWidth: 152 }}>
           {[
             { label: 'Răspunde', icon: <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>, action: () => { const msg = actionMenu.msg; setReplyTo({ id: msg.id, text: isTripOrderMsg(msg) ? (() => { try { const d = JSON.parse(msg.message); return `📦 Comandă de transport${d.order_number ? ` #${d.order_number}` : ''}${d.truck ? ` • ${d.truck}` : ''}`; } catch { return '📦 Comandă de transport'; } })() : msg.message, username: msg.username }); setActionMenu(null); }, color: 'var(--black)', show: true },
