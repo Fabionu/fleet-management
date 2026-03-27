@@ -104,7 +104,7 @@ function formatText(text) {
   return parts;
 }
 
-function renderTextSegment(text, currentUser, keyPrefix) {
+function renderMentionsAndFormat(text, currentUser, keyPrefix) {
   if (!text) return null;
   if (!text.includes('@')) {
     const fmtParts = formatText(text);
@@ -134,6 +134,32 @@ function renderTextSegment(text, currentUser, keyPrefix) {
       if (p.type === 'italic') return <em key={`${keyPrefix}-em${i}-${j}`}>{p.content}</em>;
       return p.content;
     });
+  });
+}
+
+function renderTextSegment(text, currentUser, keyPrefix) {
+  if (!text) return null;
+  // Împarte textul în segmente URL și text normal
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) => {
+    if (!part) return null;
+    if (/^https?:\/\/[^\s]+$/.test(part)) {
+      // Elimină punctuația finală care nu face parte din URL
+      const clean = part.replace(/[.,;:!?)]+$/, '');
+      const trail = part.slice(clean.length);
+      return (
+        <span key={`${keyPrefix}-url${i}`}>
+          <a href={clean} target="_blank" rel="noopener noreferrer"
+            style={{ color: '#ff7a3d', textDecoration: 'underline', wordBreak: 'break-all', cursor: 'pointer' }}
+            onClick={e => e.stopPropagation()}>
+            {clean}
+          </a>
+          {trail}
+        </span>
+      );
+    }
+    return <span key={`${keyPrefix}-t${i}`}>{renderMentionsAndFormat(part, currentUser, `${keyPrefix}-t${i}`)}</span>;
   });
 }
 
@@ -1197,6 +1223,10 @@ export default function ChatPanel({ user, currentPage }) {
       setConversations(prev => ({ ...prev, [u.username]: msgs }));
     }
     if (prRes.status === 'fulfilled') setPeerReadAt(prRes.value.data?.last_read_at || null);
+    // Marchează mereu citit la deschiderea conversației — indiferent de contorul necitite
+    // Astfel peer-ul vede dubla bifă imediat ce deschidem chat-ul
+    axios.put(`/api/chat/read/${u.username}`, {}, { headers }).catch(() => {});
+    setUnreadCounts(prev => ({ ...prev, [u.username]: 0 }));
     if (hasUnread) {
       // găsim primul mesaj necitit (de la peer, după last_read_at)
       const readAt = prRes.status === 'fulfilled' ? prRes.value.data?.last_read_at : null;
@@ -1208,8 +1238,6 @@ export default function ChatPanel({ user, currentPage }) {
         const firstOther = allMsgs.find(m => m.username !== user.username);
         setFirstUnreadId(firstOther?.id || null);
       }
-      axios.put(`/api/chat/read/${u.username}`, {}, { headers }).catch(() => {});
-      setUnreadCounts(prev => ({ ...prev, [u.username]: 0 }));
     } else {
       setFirstUnreadId(null);
     }
@@ -1234,6 +1262,11 @@ export default function ChatPanel({ user, currentPage }) {
         setGroupMessages(prev => ({ ...prev, [g.id]: msgs }));
       } catch {}
     }
+    // Marchează mereu citit la deschidere — pentru seen indicators corecte
+    axios.put(`/api/chat/groups/${g.id}/read`, {}, { headers }).catch(() => {});
+    setGroupUnread(prev => ({ ...prev, [g.id]: 0 }));
+    const now = new Date().toISOString();
+    setMemberReads(prev => ({ ...prev, [g.id]: { ...(prev[g.id] || {}), [user.username]: now } }));
     if (hasUnread) {
       const myRead = memberReads[g.id]?.[user.username];
       if (myRead && msgs) {
@@ -1242,10 +1275,6 @@ export default function ChatPanel({ user, currentPage }) {
       } else {
         setFirstUnreadId(null);
       }
-      axios.put(`/api/chat/groups/${g.id}/read`, {}, { headers }).catch(() => {});
-      setGroupUnread(prev => ({ ...prev, [g.id]: 0 }));
-      const now = new Date().toISOString();
-      setMemberReads(prev => ({ ...prev, [g.id]: { ...(prev[g.id] || {}), [user.username]: now } }));
     } else {
       setFirstUnreadId(null);
     }
@@ -1664,6 +1693,14 @@ export default function ChatPanel({ user, currentPage }) {
   const groupMsgs = (activeGroup && groupMessages[activeGroup.id]) || [];
 
   // ── Shared helpers ──────────────────────────────────────────
+  const calcMenuPos = (btnEl) => {
+    const r = btnEl.getBoundingClientRect();
+    const W = 160, H = 180;
+    const x = r.right + W > window.innerWidth ? Math.max(4, r.right - W) : r.left;
+    const y = r.bottom + H > window.innerHeight ? Math.max(4, r.top - H) : r.bottom + 5;
+    return { x, y };
+  };
+
   const msgActionTrigger = (msg) => {
     if (msg.is_deleted) return null;
     const isMe = msg.username === user.username;
@@ -1673,8 +1710,8 @@ export default function ChatPanel({ user, currentPage }) {
         data-chat-action-trigger="true"
         onClick={e => {
           e.stopPropagation();
-          const r = e.currentTarget.getBoundingClientRect();
-          setActionMenu({ msg, x: isMe ? r.right - 152 : r.left, y: r.bottom + 5 });
+          const { x, y } = calcMenuPos(e.currentTarget);
+          setActionMenu({ msg, x, y });
         }}
         style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 6, cursor: 'pointer', padding: '3px 6px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
@@ -2978,7 +3015,7 @@ export default function ChatPanel({ user, currentPage }) {
                                   <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '5px 9px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
-                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const r = e.currentTarget.getBoundingClientRect(); const isMe = msg.username === user.username; setActionMenu({ msg, x: isMe ? r.right - 152 : r.left, y: r.bottom + 5 }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
+                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const { x, y } = calcMenuPos(e.currentTarget); setActionMenu({ msg, x, y }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
                                     {isEditing ? (
                                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                         <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg); } if (e.key === 'Escape') cancelEdit(); }} style={{ resize: 'none', border: '1.5px solid #ff7a3d', borderRadius: 8, padding: '5px 8px', fontSize: 13, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, minWidth: 120 }}/>
@@ -3038,7 +3075,7 @@ export default function ChatPanel({ user, currentPage }) {
                                   <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '5px 9px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
-                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const r = e.currentTarget.getBoundingClientRect(); const isMe = msg.username === user.username; setActionMenu({ msg, x: isMe ? r.right - 152 : r.left, y: r.bottom + 5 }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
+                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const { x, y } = calcMenuPos(e.currentTarget); setActionMenu({ msg, x, y }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
                                     {isEditing ? (
                                       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                                         <textarea value={editingText} onChange={e => setEditingText(e.target.value)} autoFocus rows={2} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(msg); } if (e.key === 'Escape') cancelEdit(); }} style={{ resize: 'none', border: '1.5px solid #ff7a3d', borderRadius: 8, padding: '5px 8px', fontSize: 13, background: 'var(--gray-1)', color: 'var(--black)', outline: 'none', fontFamily: 'inherit', lineHeight: 1.4, minWidth: 120 }}/>
