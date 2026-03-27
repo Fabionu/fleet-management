@@ -74,7 +74,8 @@
       "Bash(rm -rf node_modules/.cache)",
       "Bash(rm -rf .expo)",
       "Bash(grep -v \"^\\\\s*//\")",
-      "Bash(\"C:/Users/uhelios_fb/Desktop/fleet-management-main/src/components/ChatPanel.jsx\")"
+      "Bash(\"C:/Users/uhelios_fb/Desktop/fleet-management-main/src/components/ChatPanel.jsx\")",
+      "Bash(grep -v \"^$\")"
     ]
   }
 }

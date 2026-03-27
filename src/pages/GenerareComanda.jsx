@@ -35,9 +35,7 @@ function fmtCoord(coords) {
   const latStr = match[1], lngStr = match[2];
   const latDir = latStr.startsWith('-') ? 'SUD' : 'NORD';
   const lngDir = lngStr.startsWith('-') ? 'VEST' : 'EST';
-  const latAbs = latStr.startsWith('-') ? latStr.slice(1) : latStr;
-  const lngAbs = lngStr.startsWith('-') ? lngStr.slice(1) : lngStr;
-  return `${latDir} - ${lngDir} ${latAbs}, ${lngAbs}`;
+  return `${latDir} - ${lngDir} ${latStr}, ${lngStr}`;
 }
 
 function buildWhatsApp(fields, stops) {
