@@ -1083,7 +1083,7 @@ const handleDeleteTrip = async (truck) => {
                           borderTop: `1px solid ${rowHoverId === truck.id ? 'var(--gray-3)' : 'var(--gray-2)'}`,
                           borderRight: `1px solid ${rowHoverId === truck.id ? 'var(--gray-3)' : 'var(--gray-2)'}`,
                           borderBottom: `1px solid ${rowHoverId === truck.id ? 'var(--gray-3)' : 'var(--gray-2)'}`,
-                          borderLeft: `7px solid ${statusColor}`,
+                          borderLeft: `8px solid ${statusColor}`,
                           boxShadow: rowHoverId === truck.id ? '0 2px 8px rgba(0,0,0,0.13)' : '0 1px 4px rgba(0,0,0,0.07)',
                           overflow: 'hidden',
                           cursor: 'default',
