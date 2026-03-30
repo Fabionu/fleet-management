@@ -489,6 +489,12 @@ export default function GenerareComanda({ user }) {
 
   const handleReset = () => { setFields(EMPTY_FIELDS); setStops(DEFAULT_STOPS()); setFileName(''); setError(''); setPdfDataUrl(''); setShowPdfModal(false); };
 
+  const swapStops = () => setStops(prev => prev.map(s => {
+    if (s.type === 'incarcare')  return { ...s, type: 'descarcare' };
+    if (s.type === 'descarcare') return { ...s, type: 'incarcare' };
+    return s;
+  }));
+
   const incarcari  = stops.filter(s => s.type === 'incarcare');
   const descarcari = stops.filter(s => s.type === 'descarcare');
   const vami       = stops.filter(s => s.type === 'vama');
@@ -571,28 +577,46 @@ export default function GenerareComanda({ user }) {
             </div>
 
             {/* 2 columns: Încărcare | Descărcare */}
-            <div style={{ borderTop: '1px solid var(--gray-2)', paddingTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
-              <ColHeader label="Încărcare" color="var(--green)" />
-              <ColHeader label="Descărcare" color="var(--orange)" />
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {incarcari.map((stop, idx) => (
-                  <div key={stop.id}>
-                    {incarcari.length > 1 && <div style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>#{idx + 1}</div>}
-                    <StopBlock stop={stop} index={idx} total={incarcari.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('incarcare', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
-                    {idx < incarcari.length - 1 && <div style={{ marginTop: '20px', borderBottom: '1px dashed var(--gray-2)' }} />}
-                  </div>
-                ))}
+            <div style={{ borderTop: '1px solid var(--gray-2)', paddingTop: '20px' }}>
+              {/* Headers + swap button */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+                <div style={{ flex: 1 }}><ColHeader label="Încărcare" color="var(--green)" /></div>
+                <button
+                  onClick={swapStops}
+                  title="Inversează încărcare ↔ descărcare"
+                  style={{ flexShrink: 0, width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '8px', cursor: 'pointer', color: 'var(--gray-4)', transition: 'all 0.15s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; e.currentTarget.style.color = 'var(--black)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--gray-4)'; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 16V4m0 0L3 8m4-4l4 4"/>
+                    <path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+                  </svg>
+                </button>
+                <div style={{ flex: 1 }}><ColHeader label="Descărcare" color="var(--orange)" /></div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                {descarcari.map((stop, idx) => (
-                  <div key={stop.id}>
-                    {descarcari.length > 1 && <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>#{idx + 1}</div>}
-                    <StopBlock stop={stop} index={idx} total={descarcari.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('descarcare', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
-                    {idx < descarcari.length - 1 && <div style={{ marginTop: '20px', borderBottom: '1px dashed var(--gray-2)' }} />}
-                  </div>
-                ))}
+              {/* Stop columns */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {incarcari.map((stop, idx) => (
+                    <div key={stop.id}>
+                      {incarcari.length > 1 && <div style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>#{idx + 1}</div>}
+                      <StopBlock stop={stop} index={idx} total={incarcari.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('incarcare', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
+                      {idx < incarcari.length - 1 && <div style={{ marginTop: '20px', borderBottom: '1px dashed var(--gray-2)' }} />}
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {descarcari.map((stop, idx) => (
+                    <div key={stop.id}>
+                      {descarcari.length > 1 && <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>#{idx + 1}</div>}
+                      <StopBlock stop={stop} index={idx} total={descarcari.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('descarcare', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
+                      {idx < descarcari.length - 1 && <div style={{ marginTop: '20px', borderBottom: '1px dashed var(--gray-2)' }} />}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
