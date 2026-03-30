@@ -504,6 +504,9 @@ async function initDb() {
     // Migration: add completed column to trips
     await client.query(`ALTER TABLE trips ADD COLUMN IF NOT EXISTS completed INTEGER DEFAULT 0`);
 
+    // Migration: add cancelled column to trips
+    await client.query(`ALTER TABLE trips ADD COLUMN IF NOT EXISTS cancelled INTEGER DEFAULT 0`);
+
     // Migration: image support for chat messages
     await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS image_data TEXT`);
     await client.query(`ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS image_type TEXT`);

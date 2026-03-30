@@ -23,6 +23,7 @@ function Curse({ user }) {
   const [filterMonth, setFilterMonth] = useState('');
   const [filterCreatedBy, setFilterCreatedBy] = useState('');
   const [filterTruck, setFilterTruck] = useState('');
+  const [filterCancelled, setFilterCancelled] = useState('all');
   const [sortBy, setSortBy] = useState('added_desc');
   const menuRef = useRef(null);
 
@@ -101,6 +102,20 @@ function Curse({ user }) {
       loadTrips();
     } catch (error) {
       setTrips(prev => prev.map(t => t.id === trip.id ? { ...t, completed: trip.completed } : t));
+      console.error('Eroare la actualizarea statusului cursă:', error);
+    }
+  };
+
+  const handleMarkCancelled = async (trip) => {
+    const newCancelled = trip.cancelled ? 0 : 1;
+    setTrips(prev => prev.map(t => t.id === trip.id ? { ...t, cancelled: newCancelled } : t));
+    setOpenMenuId(null);
+    try {
+      await api.updateTrip(trip.id, { ...trip, cancelled: newCancelled });
+      showToast(newCancelled ? 'Cursă marcată ca Anulată' : 'Cursă marcată ca activă');
+      loadTrips();
+    } catch (error) {
+      setTrips(prev => prev.map(t => t.id === trip.id ? { ...t, cancelled: trip.cancelled } : t));
       console.error('Eroare la actualizarea statusului cursă:', error);
     }
   };
@@ -363,7 +378,7 @@ function Curse({ user }) {
   const uniqueMonths = [...new Set(trips.map(t => parseDateToMonthKey(t.load_date)).filter(Boolean))].sort().reverse();
   const uniqueTrucks = [...new Set(trips.map(t => t.truck_number).filter(Boolean))].sort();
 
-  const hasActiveFilters = searchText.trim() || filterInvoiced !== 'all' || filterMonth || filterCreatedBy || filterTruck;
+  const hasActiveFilters = searchText.trim() || filterInvoiced !== 'all' || filterMonth || filterCreatedBy || filterTruck || filterCancelled !== 'all';
 
   const resetFilters = () => {
     setSearchText('');
@@ -371,6 +386,7 @@ function Curse({ user }) {
     setFilterMonth('');
     setFilterCreatedBy('');
     setFilterTruck('');
+    setFilterCancelled('all');
     setSortBy('added_desc');
   };
 
@@ -390,6 +406,8 @@ function Curse({ user }) {
     }
     if (filterInvoiced === 'invoiced' && !trip.invoiced) return false;
     if (filterInvoiced === 'not_invoiced' && trip.invoiced) return false;
+    if (filterCancelled === 'cancelled' && !trip.cancelled) return false;
+    if (filterCancelled === 'not_cancelled' && trip.cancelled) return false;
     if (filterMonth && parseDateToMonthKey(trip.load_date) !== filterMonth) return false;
     if (filterCreatedBy && trip.created_by !== filterCreatedBy) return false;
     if (filterTruck && trip.truck_number !== filterTruck) return false;
@@ -536,6 +554,17 @@ function Curse({ user }) {
           <option value="invoiced">Facturate</option>
         </select>
 
+        {/* Cancelled filter */}
+        <select
+          value={filterCancelled}
+          onChange={e => setFilterCancelled(e.target.value)}
+          style={{ padding: '9px 12px', border: '1px solid var(--gray-2)', borderRadius: '8px', fontSize: '13px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', cursor: 'pointer', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}
+        >
+          <option value="all">Toate statusurile</option>
+          <option value="not_cancelled">Active</option>
+          <option value="cancelled">Anulate</option>
+        </select>
+
         {/* Created by filter */}
         <select
           value={filterCreatedBy}
@@ -677,11 +706,12 @@ function Curse({ user }) {
                     onMouseLeave={() => setHoveredRowId(null)}
                     style={{
                       borderBottom: '1px solid var(--gray-2)',
-                      borderLeft: `4px solid ${trip.invoiced ? '#22c55e' : '#ef4444'}`,
+                      borderLeft: `4px solid ${trip.cancelled ? 'var(--orange)' : trip.invoiced ? '#22c55e' : '#ef4444'}`,
                       transition: 'background 0.15s',
                       background: hoveredRowId === trip.id
-                        ? (isInvoiced ? 'rgba(34, 197, 94, 0.09)' : 'var(--gray-1)')
-                        : (isInvoiced ? 'rgba(34, 197, 94, 0.04)' : 'transparent'),
+                        ? (trip.cancelled ? 'rgba(234,88,12,0.07)' : isInvoiced ? 'rgba(34, 197, 94, 0.09)' : 'var(--gray-1)')
+                        : (trip.cancelled ? 'rgba(234,88,12,0.03)' : isInvoiced ? 'rgba(34, 197, 94, 0.04)' : 'transparent'),
+                      opacity: trip.cancelled ? 0.75 : 1,
                     }}
                   >
                     <td style={{ padding: '16px', textAlign: 'center', verticalAlign: 'middle' }}>
@@ -912,6 +942,47 @@ function Curse({ user }) {
                               )}
                             </button>
 
+                            {/* Marchează anulată */}
+                            <button
+                              onClick={() => handleMarkCancelled(trip)}
+                              style={{
+                                width: '100%',
+                                padding: '12px 16px',
+                                background: 'transparent',
+                                border: 'none',
+                                textAlign: 'left',
+                                fontSize: '13px',
+                                color: trip.cancelled ? 'var(--gray-4)' : 'var(--orange)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                transition: 'background 0.2s',
+                                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
+                              }}
+                              onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--gray-1)'; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+                            >
+                              {trip.cancelled ? (
+                                <>
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/>
+                                    <polyline points="9 12 11 14 15 10"/>
+                                  </svg>
+                                  Reactivează cursa
+                                </>
+                              ) : (
+                                <>
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <circle cx="12" cy="12" r="10"/>
+                                    <line x1="9" y1="9" x2="15" y2="15"/>
+                                    <line x1="15" y1="9" x2="9" y2="15"/>
+                                  </svg>
+                                  Marchează Anulată
+                                </>
+                              )}
+                            </button>
+
                             {/* Trimite în Tracking */}
                             <button
                               onClick={() => handleSendToTracking(trip)}
@@ -1006,11 +1077,16 @@ function Curse({ user }) {
                     <td style={{ padding: '16px 8px 16px 16px', width: '140px', verticalAlign: 'middle' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '14px', color: cellColor, fontWeight: 500 }}>{trip.client}</span>
-                        {!!trip.completed && (
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.9 }}>
+                        {!!trip.completed && !trip.cancelled && (
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.9 }} title="Completată">
                             <circle cx="12" cy="12" r="10"/>
                             <polyline points="8 12 11 15 16 9"/>
                           </svg>
+                        )}
+                        {!!trip.cancelled && (
+                          <span title="Anulată" style={{ fontSize: '10px', fontWeight: 600, color: 'var(--orange)', background: 'rgba(234,88,12,0.08)', border: '1px solid rgba(234,88,12,0.2)', borderRadius: '4px', padding: '1px 5px', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0 }}>
+                            Anulat
+                          </span>
                         )}
                       </div>
                       {trip.order_number && (

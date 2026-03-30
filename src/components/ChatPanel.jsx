@@ -714,6 +714,7 @@ export default function ChatPanel({ user, currentPage }) {
   const searchRef       = useRef(null);
   const newGroupNameRef = useRef(null);
   const currentPageRef  = useRef(currentPage);
+  const cardRefs        = useRef({});
 
   const token   = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
   const headers = { Authorization: `Bearer ${token}` };
@@ -2905,7 +2906,7 @@ export default function ChatPanel({ user, currentPage }) {
         const isActive = isActiveDm || isActiveGrp;
         const cardUnread = card.type === 'dm' ? (unreadCounts[card.peer?.username] || 0) : (groupUnread[card.group?.id] || 0);
         return (
-          <div key={card.key} style={{
+          <div key={card.key} ref={el => { if (el) cardRefs.current[card.key] = el; else delete cardRefs.current[card.key]; }} style={{
             position: 'fixed', bottom: 0, right: rightOffset, zIndex: 9800, width: cardW,
             height: card.minimized ? 48 : 560,
             borderRadius: '12px 12px 0 0', boxShadow: '0 -4px 24px rgba(0,0,0,0.12)',
@@ -3032,14 +3033,12 @@ export default function ChatPanel({ user, currentPage }) {
                                   <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '5px 9px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
-                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const cardH = card.minimized ? 48 : 560;
-                                        const cardTop = window.innerHeight - cardH;
-                                        const H = 120;
+                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const cardEl = cardRefs.current[card.key]; if (!cardEl) return; const cardRect = cardEl.getBoundingClientRect(); const H = 120;
                                         const r = e.currentTarget.getBoundingClientRect();
-                                        const btnTop = r.top - cardTop;
-                                        const btnBottom = r.bottom - cardTop;
+                                        const btnTop = r.top - cardRect.top;
+                                        const btnBottom = r.bottom - cardRect.top;
                                         let relY = btnBottom + 4;
-                                        if (relY + H > cardH - 4) relY = btnTop - H - 4;
+                                        if (relY + H > cardRect.height - 4) relY = btnTop - H - 4;
                                         if (relY < 4) relY = 4;
                                         setActionMenu({ msg, cardKey: card.key, relY }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
                                     {isEditing ? (
@@ -3101,14 +3100,12 @@ export default function ChatPanel({ user, currentPage }) {
                                   <div style={{ fontSize: 13, color: 'var(--gray-4)', fontStyle: 'italic', padding: '5px 9px', border: '1px solid var(--gray-2)', borderRadius: 10 }}>Mesaj șters</div>
                                 ) : (
                                   <div style={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: isMe ? 'row' : 'row-reverse', maxWidth: '82%' }}>
-                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const cardH = card.minimized ? 48 : 560;
-                                        const cardTop = window.innerHeight - cardH;
-                                        const H = 120;
+                                    {isActive && (() => { const visible = isHovered && !isEditing; return ( <button data-chat-action-trigger="true" onClick={e => { e.stopPropagation(); const cardEl = cardRefs.current[card.key]; if (!cardEl) return; const cardRect = cardEl.getBoundingClientRect(); const H = 120;
                                         const r = e.currentTarget.getBoundingClientRect();
-                                        const btnTop = r.top - cardTop;
-                                        const btnBottom = r.bottom - cardTop;
+                                        const btnTop = r.top - cardRect.top;
+                                        const btnBottom = r.bottom - cardRect.top;
                                         let relY = btnBottom + 4;
-                                        if (relY + H > cardH - 4) relY = btnTop - H - 4;
+                                        if (relY + H > cardRect.height - 4) relY = btnTop - H - 4;
                                         if (relY < 4) relY = 4;
                                         setActionMenu({ msg, cardKey: card.key, relY }); }} style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transition: 'opacity 0.12s', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: 5, cursor: 'pointer', padding: '2px 5px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }} onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }} onMouseLeave={e => { e.currentTarget.style.background = 'var(--surface)'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg></button> ); })()}
                                     {isEditing ? (

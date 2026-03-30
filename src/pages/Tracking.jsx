@@ -785,6 +785,7 @@ const handleDeleteTrip = async (truck) => {
                                 flexDirection: 'column',
                                 gap: '6px',
                                 overflow: 'hidden',
+                                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                               }}
                             >
                               <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--gray-4)', marginBottom: '2px' }}>Setare pauza</div>
@@ -901,6 +902,7 @@ const handleDeleteTrip = async (truck) => {
                                 zIndex: 200,
                                 padding: '12px',
                                 overflow: 'hidden',
+                                fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                               }}
                             >
                               <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gray-4)', marginBottom: '8px' }}>Pauza săptămânală</div>
@@ -1081,7 +1083,7 @@ const handleDeleteTrip = async (truck) => {
                           borderTop: `1px solid ${rowHoverId === truck.id ? 'var(--gray-3)' : 'var(--gray-2)'}`,
                           borderRight: `1px solid ${rowHoverId === truck.id ? 'var(--gray-3)' : 'var(--gray-2)'}`,
                           borderBottom: `1px solid ${rowHoverId === truck.id ? 'var(--gray-3)' : 'var(--gray-2)'}`,
-                          borderLeft: `4px solid ${statusColor}`,
+                          borderLeft: `6px solid ${statusColor}`,
                           boxShadow: rowHoverId === truck.id ? '0 2px 8px rgba(0,0,0,0.13)' : '0 1px 4px rgba(0,0,0,0.07)',
                           overflow: 'hidden',
                           cursor: 'default',
@@ -1378,6 +1380,7 @@ const handleDeleteTrip = async (truck) => {
                                   flexDirection: 'column',
                                   gap: '6px',
                                   overflow: 'hidden',
+                                  fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                                 }}
                               >
                                 <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--gray-4)', marginBottom: '2px' }}>Setare pauza</div>
@@ -1503,6 +1506,7 @@ const handleDeleteTrip = async (truck) => {
                                   zIndex: 200,
                                   padding: '12px',
                                   overflow: 'hidden',
+                                  fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif",
                                 }}
                               >
                                 <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--gray-4)', marginBottom: '8px' }}>Pauza săptămânală</div>
