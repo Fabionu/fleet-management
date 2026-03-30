@@ -1990,6 +1990,12 @@ REGULI CRITICE:
    - Exemplu: "POSITION FERCAM: KA-123-45678" → order_number = "KA-123-45678"
    - Acest cod FERCAM are prioritate față de orice alt număr de comandă găsit în document
 
+0b. COMENZI PRIORITY FREIGHT — REGULĂ SPECIALĂ:
+   - Dacă documentul este o comandă emisă de PRIORITY FREIGHT (clientul conține "Priority Freight"), numărul comenzii este la câmpul "Shipment ID:" de pe PRIMA PAGINĂ, la începutul documentului
+   - Caută textul "Shipment ID:" urmat de un cod/număr
+   - Exemplu: "Shipment ID: 123456789" → order_number = "123456789"
+   - Acest Shipment ID are prioritate față de orice alt număr de comandă găsit în document
+
 1. ARRAY-UL stops — REGULI:
    - Adaugă în array TOATE punctele de încărcare și descărcare găsite în document, în ordinea logică în care apar
    - type = "incarcare" pentru Loading Address / Chargement / Pickup / Collection / From
