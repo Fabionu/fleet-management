@@ -410,6 +410,7 @@ export default function GenerareComanda({ user }) {
   const [error,   setError]         = useState('');
   const [copied,  setCopied]        = useState(false);
   const [dragOver, setDragOver]     = useState(false);
+  const [hoverDrop, setHoverDrop]   = useState(false);
   const [fileName, setFileName]     = useState('');
   const [pdfDataUrl, setPdfDataUrl] = useState('');
   const [showPdfModal, setShowPdfModal] = useState(false);
@@ -533,9 +534,11 @@ export default function GenerareComanda({ user }) {
 
           {/* Drop zone */}
           <div onClick={() => !loading && fileRef.current?.click()}
+            onMouseEnter={() => !loading && setHoverDrop(true)}
+            onMouseLeave={() => setHoverDrop(false)}
             onDragOver={e => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
-            style={{ border: dragOver ? '2px dashed #ff7a3d' : '2px dashed var(--gray-3)', borderRadius: '12px', padding: '28px 20px', textAlign: 'center', cursor: loading ? 'default' : 'pointer', background: dragOver ? 'rgba(255,122,61,0.04)' : 'var(--gray-1)', transition: 'all 0.15s' }}>
+            style={{ border: (dragOver || hoverDrop) ? '2px dashed #ff7a3d' : '2px dashed var(--gray-3)', borderRadius: '12px', padding: '28px 20px', textAlign: 'center', cursor: loading ? 'default' : 'pointer', background: dragOver ? 'rgba(255,122,61,0.06)' : hoverDrop ? 'rgba(255,122,61,0.03)' : 'var(--gray-1)', transition: 'all 0.2s' }}>
             <input ref={fileRef} type="file" accept=".pdf" style={{ display: 'none' }} onChange={handleFileInput} />
             {loading ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
