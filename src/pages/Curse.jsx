@@ -1079,7 +1079,7 @@ function Curse({ user }) {
                         <span style={{ fontSize: '14px', color: cellColor, fontWeight: 500 }}>{trip.client}</span>
                         {!!trip.completed && !trip.cancelled && (
                           <span title="Completată" style={{ fontSize: '10px', fontWeight: 600, color: 'var(--green)', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '4px', padding: '1px 5px', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0 }}>
-                            Complet
+                            Completat
                           </span>
                         )}
                         {!!trip.cancelled && (
