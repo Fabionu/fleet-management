@@ -1078,10 +1078,9 @@ function Curse({ user }) {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                         <span style={{ fontSize: '14px', color: cellColor, fontWeight: 500 }}>{trip.client}</span>
                         {!!trip.completed && !trip.cancelled && (
-                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.9 }} title="Completată">
-                            <circle cx="12" cy="12" r="10"/>
-                            <polyline points="8 12 11 15 16 9"/>
-                          </svg>
+                          <span title="Completată" style={{ fontSize: '10px', fontWeight: 600, color: 'var(--green)', background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '4px', padding: '1px 5px', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0 }}>
+                            Complet
+                          </span>
                         )}
                         {!!trip.cancelled && (
                           <span title="Anulată" style={{ fontSize: '10px', fontWeight: 600, color: 'var(--orange)', background: 'rgba(234,88,12,0.08)', border: '1px solid rgba(234,88,12,0.2)', borderRadius: '4px', padding: '1px 5px', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0 }}>
