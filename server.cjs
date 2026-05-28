@@ -1963,7 +1963,7 @@ Analizează documentul PDF și returnează UN SINGUR OBIECT JSON valid cu următ
       "time": "HH:MM",
       "company": "numele firmei/depozitului",
       "street": "strada, numărul sau zona industrială",
-      "city": "țara (2 litere ISO) + cod poștal + oraș pe un singur rând (ex: \"CZ 796 01 PROSTEJOV\")",
+      "city": "țara (2 litere ISO) + '-' + cod poștal + ' ' + oraș pe un singur rând (ex: \"CZ-796 01 PROSTEJOV\")",
       "details": "DOAR numărul de paleți și greutatea (ex: \"18 paleți, 5079 kg\") — doar la încărcare",
       "ref": "referința de la această oprire dacă există",
       "coords": ""
@@ -2012,7 +2012,7 @@ REGULI CRITICE:
 
 4. Datele în format DD.MM.YYYY, orele în format HH:MM
 
-5. city: țara (2 litere ISO) + cod poștal + oraș, fără virgulă (ex: "CZ 796 01 PROSTEJOV", "DE 79669 ZELL", "RO 115400 MIOVENI", "FR 59000 LILLE")`;
+5. city: țara (2 litere ISO) + '-' + cod poștal + ' ' + oraș, fără virgulă (ex: "CZ-796 01 PROSTEJOV", "DE-79669 ZELL", "RO-115400 MIOVENI", "FR-59000 LILLE", "ES-28000 MADRID")`;
 
     const response = await client.messages.create({
       model: 'claude-opus-4-5',
