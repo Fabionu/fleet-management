@@ -21,7 +21,7 @@ function App() {
   const [theme, setTheme] = useState('dark');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [socketConnected, setSocketConnected] = useState(false);
-  const [trackingView, setTrackingView] = useState('card');
+  const [trackingView, setTrackingView] = useState('standard');
   const [alerts, setAlerts]         = useState([]);
   const [alertsOpen, setAlertsOpen] = useState(false);
 
@@ -87,7 +87,7 @@ function App() {
         last_name: storage.getItem('lastName') || '',
       });
       if (role === 'camion') setCurrentPage('chat');
-      setTrackingView(localStorage.getItem(`trackingView_${username}`) || 'card');
+      setTrackingView(localStorage.getItem(`trackingViewV2_${username}`) || 'standard');
     }
 
     // Set theme
@@ -134,7 +134,7 @@ function App() {
       }
     }
     if (data.role === 'camion') setCurrentPage('chat');
-    setTrackingView(localStorage.getItem(`trackingView_${data.username}`) || 'card');
+    setTrackingView(localStorage.getItem(`trackingViewV2_${data.username}`) || 'standard');
 
     // Conectează socket după login
     const sock = connectSocket();
@@ -157,7 +157,7 @@ function App() {
 
   const handleLogout = () => {
     disconnectSocket();
-    // Ștergem doar cheile de autentificare, păstrăm preferințele per user (trackingView_*, theme)
+    // Ștergem doar cheile de autentificare, păstrăm preferințele per user (trackingViewV2_*, theme)
     ['authToken', 'fleetUser', 'role', 'permissions', 'organizationName',
      'currentPage', 'adminSection', 'adminActiveSection'].forEach(k => {
       localStorage.removeItem(k);
@@ -184,7 +184,7 @@ function App() {
   const toggleTrackingView = () => {
     const next = trackingView === 'card' ? 'standard' : 'card';
     setTrackingView(next);
-    if (user) localStorage.setItem(`trackingView_${user.username}`, next);
+    if (user) localStorage.setItem(`trackingViewV2_${user.username}`, next);
     setUserMenuOpen(false);
   };
 

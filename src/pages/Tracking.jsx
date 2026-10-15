@@ -22,7 +22,7 @@ const STATUS_COLORS = {
   booked: '#4ade80', service: '#a8a8a8', acasa: '#a8a8a8',
 };
 
-function Tracking({ user, viewMode = 'card' }) {
+function Tracking({ user, viewMode = 'standard' }) {
   const { trucks, setTrucks } = useStore();
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
