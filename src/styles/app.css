@@ -1397,3 +1397,25 @@ body.card-view tbody tr td {
   .fm-line::before, .fm-line::after,
   .fm-save, .fm-save * { animation: none !important; }
 }
+
+/* ══════════════════════════════════════════
+   Tracking — efect live pe câmpul Vehicul (după status)
+   ══════════════════════════════════════════ */
+.fm-fx { --fx: #60a5fa; --k: 1; position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; opacity: 0; transition: opacity 1.8s ease-in-out; -webkit-mask-image: linear-gradient(90deg, #000 0, #000 80px, rgba(0,0,0,0.55) 140px, transparent 195px); mask-image: linear-gradient(90deg, #000 0, #000 80px, rgba(0,0,0,0.55) 140px, transparent 195px); }
+.fm-fx.is-on { opacity: 0.62; }
+.fm-fx-wash { position: absolute; inset: 0; background: radial-gradient(120% 140% at 0% 50%, color-mix(in srgb, var(--fx) 20%, transparent), color-mix(in srgb, var(--fx) 6%, transparent) 55%, transparent 80%); animation: fm-fx-breathe calc(4.8s * var(--k)) ease-in-out infinite; }
+.fm-fx-beam { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--fx) 80%, transparent), transparent); box-shadow: 0 0 12px 2px color-mix(in srgb, var(--fx) 28%, transparent); animation: fm-fx-beam calc(2.6s * var(--k)) ease-in-out infinite; }
+.fm-fx-streak { position: absolute; top: var(--t); left: 0; height: 1.5px; width: var(--w); border-radius: 2px; background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--fx) 75%, transparent) 70%, var(--fx)); animation: fm-fx-streak calc(var(--d) * var(--k)) cubic-bezier(0.3, 0.1, 0.5, 1) infinite; animation-delay: calc(var(--o) * var(--k)); opacity: 0; }
+.fm-fx-mote { position: absolute; top: var(--t); left: 0; width: 3px; height: 3px; border-radius: 50%; background: var(--fx); box-shadow: 0 0 4px 0 var(--fx); animation: fm-fx-mote calc(var(--d) * var(--k)) linear infinite; animation-delay: calc(var(--o) * var(--k)); opacity: 0; }
+.fm-fx-wait .fm-fx-wash { animation: fm-fx-wait 7s ease-in-out infinite; }
+.fm-fx-wait .fm-fx-beam { animation: fm-fx-wait-beam 7s ease-in-out infinite; }
+@keyframes fm-fx-breathe { 0%, 100% { opacity: 0.65; } 50% { opacity: 1; } }
+@keyframes fm-fx-beam { 0%, 100% { opacity: 0.5; transform: scaleY(0.7); } 50% { opacity: 1; transform: scaleY(1); } }
+@keyframes fm-fx-streak { 0% { transform: translateX(-100%); opacity: 0; } 15% { opacity: 0.7; } 100% { transform: translateX(210px); opacity: 0; } }
+@keyframes fm-fx-mote { 0% { transform: translateX(0) scale(0.6); opacity: 0; } 15% { opacity: 0.7; } 100% { transform: translateX(190px) scale(1.2); opacity: 0; } }
+@keyframes fm-fx-wait { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+@keyframes fm-fx-wait-beam { 0%, 100% { opacity: 0.3; transform: scaleY(0.55); } 50% { opacity: 0.9; transform: scaleY(0.9); } }
+@media (prefers-reduced-motion: reduce) {
+  .fm-fx-wash, .fm-fx-beam, .fm-fx-streak, .fm-fx-mote { animation: none; }
+  .fm-fx-streak, .fm-fx-mote { display: none; }
+}
