@@ -9,28 +9,55 @@ const FX = {
 };
 const KIND = { tranzit: 'move', incarcare: 'load', descarcare: 'load', booked: 'wait' };
 
-const STREAKS = [
-  [12, 120, 1.6, 0], [26, 70, 2.4, -0.9], [41, 160, 1.9, -0.4],
-  [57, 90, 2.9, -1.7], [72, 140, 2.1, -1.1], [88, 60, 2.6, -2.0],
-];
-const MOTES = [[20, 3.8, -0.5], [50, 4.6, -2.2], [80, 4.1, -1.4]];
+const rnd = (min, max) => min + Math.random() * (max - min);
+
+// Parametri aleatorii pentru o linie: poziție verticală, lungime, durată.
+// La fiecare ciclu (animationiteration) se aleg din nou, ca rândurile să nu
+// repete același model.
+const newStreak = () => { const d = rnd(1.4, 3.4); return { t: rnd(6, 94), w: rnd(45, 175), d, o: -rnd(0, d) }; };
+const newMote = () => { const d = rnd(3.2, 5.4); return { t: rnd(10, 90), d, o: -rnd(0, d) }; };
+
+function Streak() {
+  const [p, setP] = useState(newStreak);
+  return (
+    <span
+      className="fm-fx-streak"
+      onAnimationIteration={() => setP(newStreak())}
+      style={{ '--t': `${p.t}%`, '--w': `${p.w}px`, '--d': `${p.d}s`, '--o': `${p.o}s` }}
+    />
+  );
+}
+
+function Mote() {
+  const [p, setP] = useState(newMote);
+  return (
+    <span
+      className="fm-fx-mote"
+      onAnimationIteration={() => setP(newMote())}
+      style={{ '--t': `${p.t}%`, '--d': `${p.d}s`, '--o': `${p.o}s` }}
+    />
+  );
+}
 
 function Layer({ kind, on }) {
   const { color, k } = FX[kind];
+  // număr de linii/particule și faza glow-ului diferă de la rând la rând
+  const [shape] = useState(() => ({
+    streaks: Math.round(rnd(4, 8)),
+    motes: Math.round(rnd(2, 4)),
+    washDelay: -rnd(0, 6),
+    beamDelay: -rnd(0, 3),
+  }));
   return (
     <span
       className={`fm-fx${on ? ' is-on' : ''}${kind === 'wait' ? ' fm-fx-wait' : ''}`}
       aria-hidden="true"
       style={{ '--fx': color, '--k': k }}
     >
-      <span className="fm-fx-wash" />
-      <span className="fm-fx-beam" />
-      {kind !== 'wait' && STREAKS.map(([t, w, d, o], i) => (
-        <span key={`s${i}`} className="fm-fx-streak" style={{ '--t': `${t}%`, '--w': `${w}px`, '--d': `${d}s`, '--o': `${o}s` }} />
-      ))}
-      {kind !== 'wait' && MOTES.map(([t, d, o], i) => (
-        <span key={`m${i}`} className="fm-fx-mote" style={{ '--t': `${t}%`, '--d': `${d}s`, '--o': `${o}s` }} />
-      ))}
+      <span className="fm-fx-wash" style={{ animationDelay: `${shape.washDelay}s` }} />
+      <span className="fm-fx-beam" style={{ animationDelay: `${shape.beamDelay}s` }} />
+      {kind !== 'wait' && Array.from({ length: shape.streaks }, (_, i) => <Streak key={`s${i}`} />)}
+      {kind !== 'wait' && Array.from({ length: shape.motes }, (_, i) => <Mote key={`m${i}`} />)}
     </span>
   );
 }
