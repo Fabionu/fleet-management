@@ -87,15 +87,15 @@ function buildWhatsApp(fields, stops) {
 // ── Styles ────────────────────────────────────────────────────
 const inputStyle = {
   width: '100%', boxSizing: 'border-box',
-  padding: '10px 12px', fontSize: '14px',
-  border: '1px solid var(--gray-2)', borderRadius: '8px',
+  padding: '8px 12px', fontSize: '13px',
+  border: '1px solid transparent', borderRadius: '8px',
   background: 'var(--gray-1)', color: 'var(--black)',
   outline: 'none', fontFamily: FONT, transition: 'border-color 0.15s',
 };
 const labelStyle = {
   fontSize: '11px', fontWeight: 600, color: 'var(--gray-4)',
   textTransform: 'uppercase', letterSpacing: '0.07em',
-  marginBottom: '6px', display: 'block', fontFamily: FONT,
+  marginBottom: '4px', display: 'block', fontFamily: FONT,
 };
 const iconBtn = {
   background: 'transparent', border: 'none', cursor: 'pointer',
@@ -112,68 +112,12 @@ function Field({ label, value, onChange, placeholder, multiline }) {
           placeholder={placeholder || ''} rows={2}
           style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.4 }}
           onFocus={e => e.target.style.borderColor = '#ff7a3d'}
-          onBlur={e  => e.target.style.borderColor = 'var(--gray-2)'} />
+          onBlur={e  => e.target.style.borderColor = 'transparent'} />
       ) : (
         <input type="text" value={value} onChange={e => onChange(e.target.value)}
           placeholder={placeholder || ''} style={inputStyle}
           onFocus={e => e.target.style.borderColor = '#ff7a3d'}
-          onBlur={e  => e.target.style.borderColor = 'var(--gray-2)'} />
-      )}
-    </div>
-  );
-}
-
-// ── Add stop dropdown button ──────────────────────────────────
-function AddStopDropdown({ onAdd }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef();
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  const opts = [
-    { type: 'incarcare',  label: 'Încărcare',  color: 'var(--green)',  dot: '#16a34a' },
-    { type: 'descarcare', label: 'Descărcare', color: 'var(--orange)', dot: '#ea580c' },
-    { type: 'vama',       label: 'Vamă',       color: 'var(--blue)',   dot: '#2563eb' },
-  ];
-
-  return (
-    <div ref={ref} style={{ position: 'relative' }}>
-      <button
-        onClick={() => setOpen(v => !v)}
-        style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '9px 14px', border: '1px solid var(--gray-3)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
-        onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; }}
-        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
-      >
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Adaugă oprire
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 2 }}><polyline points="6 9 12 15 18 9"/></svg>
-      </button>
-
-      {open && (
-        <div style={{
-          position: 'absolute', bottom: 'calc(100% + 6px)', left: 0,
-          background: 'var(--surface)', border: '1px solid var(--gray-2)',
-          borderRadius: '10px', boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
-          overflow: 'hidden', zIndex: 100, minWidth: 160,
-        }}>
-          {opts.map(opt => (
-            <button
-              key={opt.type}
-              onClick={() => { onAdd(opt.type); setOpen(false); }}
-              style={{ display: 'flex', alignItems: 'center', gap: '9px', width: '100%', padding: '10px 14px', background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '13px', color: 'var(--black)', fontFamily: FONT, textAlign: 'left', transition: 'background 0.1s' }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-            >
-              <div style={{ width: 7, height: 7, borderRadius: '50%', background: opt.dot, flexShrink: 0 }} />
-              {opt.label}
-            </button>
-          ))}
-        </div>
+          onBlur={e  => e.target.style.borderColor = 'transparent'} />
       )}
     </div>
   );
@@ -278,16 +222,17 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
         }),
       });
       setCoordsSaved(true);
-      setTimeout(() => setCoordsSaved(false), 2500);
     } finally { setSavingCoords(false); }
   };
+
+  useEffect(() => { setCoordsSaved(false); }, [stop.coords]);
 
   const handleApplyCache = () => {
     if (cachedCoords) { onUpdate(stop.id, 'coords', cachedCoords); setCachedCoords(null); }
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
       {/* controls: type selector left, reorder+delete right */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '-4px' }}>
         <TypeSelector type={stop.type} onChange={(newType) => onChangeType(stop.id, newType)} />
@@ -332,7 +277,7 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
         <>
           {/* Firmă + copy button */}
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
               <label style={{ ...labelStyle, margin: 0 }}>Firmă</label>
               <button onClick={() => onCopyAddr(stop.id)} title="Copiază adresa pentru Maps"
                 style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '2px 7px', border: `1px solid ${copiedId === stop.id ? 'var(--green)' : 'var(--gray-3)'}`, borderRadius: '5px', background: copiedId === stop.id ? 'var(--green)' : 'transparent', cursor: 'pointer', fontSize: '11px', fontWeight: 500, color: copiedId === stop.id ? 'white' : 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
@@ -348,7 +293,7 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
               placeholder={isInc ? 'ex: MUBEA PROSTEJOV' : 'ex: ILN MIOVENI'}
               style={inputStyle}
               onFocus={e => e.target.style.borderColor = '#ff7a3d'}
-              onBlur={e  => e.target.style.borderColor = 'var(--gray-2)'} />
+              onBlur={e  => e.target.style.borderColor = 'transparent'} />
           </div>
           <Field label="Stradă / Nr. / Zonă industrială" value={stop.street} onChange={set('street')} placeholder="ex: ROVNA 4708" />
           <Field label="Țară, Cod poștal, Oraș" value={stop.city} onChange={set('city')} placeholder={isInc ? 'ex: CZ 796 01 PROSTEJOV' : 'ex: RO 115400 MIOVENI'} />
@@ -371,14 +316,18 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
             {/* Save coords button — show when coords are filled */}
             {stop.coords && makeAddrKey(stop.street, stop.city) && (
               <button onClick={handleSaveCoords} disabled={savingCoords || coordsSaved}
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 11px', border: `1px solid ${coordsSaved ? 'var(--green)' : 'var(--gray-3)'}`, borderRadius: '7px', background: coordsSaved ? 'rgba(22,163,74,0.06)' : 'transparent', cursor: coordsSaved ? 'default' : 'pointer', fontSize: '12px', color: coordsSaved ? 'var(--green)' : 'var(--gray-4)', fontFamily: FONT, fontWeight: 500, transition: 'all 0.15s', width: '100%' }}
-                onMouseEnter={e => { if (!coordsSaved) { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
-                onMouseLeave={e => { if (!coordsSaved) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; } }}>
-                {coordsSaved ? (
-                  <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Coordonate salvate</>
-                ) : (
-                  <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salvează coordonatele</>
-                )}
+                className={`fm-save${coordsSaved ? ' is-saved' : ''}`}
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 11px', border: `1px solid ${coordsSaved ? 'var(--fm-st-green)' : 'var(--gray-3)'}`, borderRadius: '8px', background: 'transparent', cursor: coordsSaved ? 'default' : 'pointer', fontSize: '12px', color: coordsSaved ? 'var(--fm-st-green)' : 'var(--gray-4)', fontFamily: FONT, fontWeight: coordsSaved ? 600 : 500, width: '100%' }}
+                onMouseEnter={e => { if (!coordsSaved) { e.currentTarget.style.color = 'var(--black)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
+                onMouseLeave={e => { if (!coordsSaved) { e.currentTarget.style.color = 'var(--gray-4)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; } }}>
+                <span className="fm-fill" aria-hidden="true" /><span className="fm-burst" aria-hidden="true" />
+                <span className="fm-icon" aria-hidden="true">
+                  <span className="fm-spark" style={{ '--a': '0deg' }} /><span className="fm-spark" style={{ '--a': '45deg' }} /><span className="fm-spark" style={{ '--a': '90deg' }} /><span className="fm-spark" style={{ '--a': '135deg' }} /><span className="fm-spark" style={{ '--a': '180deg' }} /><span className="fm-spark" style={{ '--a': '225deg' }} /><span className="fm-spark" style={{ '--a': '270deg' }} /><span className="fm-spark" style={{ '--a': '315deg' }} />
+                  {coordsSaved
+                    ? <svg className="fm-pop" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path className="fm-tick" d="M20 6L9 17l-5-5"/></svg>
+                    : <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>}
+                </span>
+                <span>{coordsSaved ? 'Coordonate salvate' : savingCoords ? 'Se salvează…' : 'Salvează coordonatele'}</span>
               </button>
             )}
           </div>
@@ -391,16 +340,56 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
   );
 }
 
-// ── Column header ─────────────────────────────────────────────
-function ColHeader({ label, color }) {
+// ── Column header (linie colorată cu efect live) ─────────────
+function ColHeader({ label, color, count, delay = '0s' }) {
   return (
-    <div style={{ marginBottom: '16px' }}>
-      <span style={{ fontSize: '12px', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>
-        {label}
-      </span>
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '10px', paddingBottom: '10px', marginBottom: '14px' }}>
+      <span style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
+      <span style={{ fontSize: '12px', fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>{label}</span>
+      {count !== undefined && <span style={{ fontSize: '12px', color: 'var(--gray-4)', fontFamily: FONT }}>{count}</span>}
+      <span className="fm-line" aria-hidden="true" style={{ color, '--d': delay }} />
     </div>
   );
 }
+
+// ── Flux de cifre (efect live discret în spatele documentului) ─
+const HEX = '0123456789ABCDEF';
+const randLine = () => Array.from({ length: 12 }, () => Array.from({ length: 4 }, () => HEX[Math.floor(Math.random() * 16)]).join('')).join(' ');
+function HackStream() {
+  const [lines, setLines] = useState(() => [0, 1, 2, 3].map(randLine));
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const iv = setInterval(() => {
+      setLines(prev => prev.map(l => {
+        const arr = l.split('');
+        for (let k = 0; k < 6; k++) { const i = Math.floor(Math.random() * arr.length); if (arr[i] !== ' ') arr[i] = HEX[Math.floor(Math.random() * 16)]; }
+        return arr.join('');
+      }));
+    }, 160);
+    return () => clearInterval(iv);
+  }, []);
+  return <div className="fm-hack" aria-hidden="true">{lines.map((l, i) => <div key={i}>{l}</div>)}</div>;
+}
+
+// ── Section heading ───────────────────────────────────────────
+function SectionTitle({ num, title, extra, right }) {
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '14px' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+        <span style={{ fontSize: '12px', color: 'var(--gray-4)', fontVariantNumeric: 'tabular-nums' }}>{num}</span>
+        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--black)' }}>{title}</h3>
+        {extra && <span style={{ fontSize: '13px', color: 'var(--gray-4)' }}>{extra}</span>}
+      </div>
+      {right}
+    </div>
+  );
+}
+
+const ghostBtn = {
+  display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '8px 14px',
+  border: '1px solid var(--gray-2)', borderRadius: '10px', background: 'transparent',
+  cursor: 'pointer', fontSize: '13px', color: 'var(--black)', fontFamily: FONT,
+};
 
 // ── Main component ────────────────────────────────────────────
 export default function GenerareComanda({ user }) {
@@ -524,169 +513,167 @@ export default function GenerareComanda({ user }) {
         </div>
       )}
 
-      <div style={{ marginBottom: '28px' }}>
-        <h2 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--black)', margin: 0, letterSpacing: '-0.02em', fontFamily: FONT }}>Generare Comandă</h2>
-        <p style={{ fontSize: '13px', color: 'var(--gray-4)', marginTop: '5px', fontFamily: FONT }}>Încarcă un PDF cu comanda de transport și AI-ul va completa automat câmpurile.</p>
+      {/* Titlu */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', marginBottom: '28px' }}>
+        <div style={{ maxWidth: '620px' }}>
+          <h2 style={{ fontSize: '32px', fontWeight: 300, color: 'var(--black)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: FONT }}>Generare <strong style={{ fontWeight: 600 }}>comandă</strong></h2>
+          <p style={{ fontSize: '14px', color: 'var(--gray-4)', margin: '8px 0 0', lineHeight: 1.5, fontFamily: FONT }}>Încarcă PDF-ul comenzii de transport, AI-ul completează câmpurile, iar tu trimiți mesajul gata formatat pe WhatsApp.</p>
+        </div>
+        <button onClick={handleReset} style={{ ...ghostBtn, padding: '10px 16px', fontSize: '14px' }}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+          Resetează
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: '24px', alignItems: 'start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'flex-start' }}>
+        <div style={{ flex: '999 1 560px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
-          {/* Drop zone */}
-          <div onClick={() => !loading && fileRef.current?.click()}
-            onMouseEnter={() => !loading && setHoverDrop(true)}
-            onMouseLeave={() => setHoverDrop(false)}
-            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
-            style={{ border: (dragOver || hoverDrop) ? '2px dashed #ff7a3d' : '2px dashed var(--gray-3)', borderRadius: '12px', padding: '28px 20px', textAlign: 'center', cursor: loading ? 'default' : 'pointer', background: dragOver ? 'rgba(255,122,61,0.06)' : hoverDrop ? 'rgba(255,122,61,0.03)' : 'var(--gray-1)', transition: 'all 0.2s' }}>
+          {/* 01 — Document */}
+          <section style={{ paddingBottom: '24px', borderBottom: '1px solid var(--gray-2)' }}>
+            <SectionTitle num="01" title="Document" />
             <input ref={fileRef} type="file" accept=".pdf" style={{ display: 'none' }} onChange={handleFileInput} />
             {loading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                <svg style={{ animation: 'spin-loader 0.8s linear infinite' }} width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2.5" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-                <span style={{ fontSize: '13px', color: 'var(--gray-4)' }}>AI procesează PDF-ul...</span>
+              <div role="status" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '28px 20px', border: '1px solid var(--gray-2)', borderRadius: '14px', background: 'var(--surface)', fontSize: '14px', color: 'var(--gray-4)' }}>
+                <svg style={{ animation: 'spin-loader 0.8s linear infinite' }} width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--fm-accent)" strokeWidth="2.4" strokeLinecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                AI procesează PDF-ul…
               </div>
             ) : fileName ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 11 17 15 13"/></svg>
-                <span style={{ fontSize: '13px', color: 'var(--green)', fontWeight: 600 }}>{fileName}</span>
-                <span style={{ fontSize: '11px', color: 'var(--gray-4)' }}>Click pentru a înlocui</span>
+              <div style={{ position: 'relative', overflow: 'hidden', isolation: 'isolate', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '14px 16px', padding: '14px 16px', border: '1px solid var(--gray-2)', borderRadius: '14px', background: 'var(--surface)' }}
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}>
+                <HackStream />
+                <span style={{ width: '44px', height: '44px', flexShrink: 0, borderRadius: '10px', background: 'var(--gray-1)', color: 'var(--black)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </span>
+                <div style={{ flex: '1 1 200px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fileName}</span>
+                  {error
+                    ? <span style={{ fontSize: '12px', color: 'var(--red)' }}>{error}</span>
+                    : <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--fm-st-green)' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Extras automat · {stops.length} opriri</span>}
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {pdfDataUrl && (
+                    <button onClick={() => setShowPdfModal(true)} style={ghostBtn}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                      Vezi PDF
+                    </button>
+                  )}
+                  <button onClick={() => fileRef.current?.click()} style={ghostBtn}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>Înlocuiește</button>
+                </div>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--gray-3)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-                <span style={{ fontSize: '13px', color: 'var(--gray-4)' }}><span style={{ color: '#ff7a3d', fontWeight: 600 }}>Click</span> sau trage un PDF aici</span>
-              </div>
+              <button onClick={() => fileRef.current?.click()}
+                onMouseEnter={() => setHoverDrop(true)} onMouseLeave={() => setHoverDrop(false)}
+                onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
+                style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '30px 20px', border: `1.5px dashed ${(dragOver || hoverDrop) ? 'var(--fm-accent)' : 'var(--gray-3)'}`, borderRadius: '14px', background: dragOver ? 'var(--fm-accent-soft)' : 'transparent', color: 'var(--gray-4)', cursor: 'pointer', fontFamily: FONT, transition: 'all 0.2s' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6M9 15l3-3 3 3"/></svg>
+                <span style={{ fontSize: '14px', color: 'var(--black)' }}><span style={{ color: 'var(--fm-accent)', fontWeight: 600 }}>Alege un PDF</span> sau trage-l aici</span>
+                <span style={{ fontSize: '12px' }}>Comanda de transport, un singur fișier PDF</span>
+                {error && <span style={{ fontSize: '12px', color: 'var(--red)' }}>{error}</span>}
+              </button>
             )}
-          </div>
+          </section>
 
-          {pdfDataUrl && !loading && (
-            <button onClick={() => setShowPdfModal(true)}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', width: '100%', padding: '9px 14px', border: '1px solid var(--gray-3)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--black)', fontFamily: FONT, fontWeight: 500, transition: 'all 0.15s' }}
-              onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; }}
-              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0"/><path d="M2 12s3-5 10-5 10 5 10 5-3 5-10 5-10-5-10-5z"/></svg>
-              Previzualizează PDF original
-            </button>
-          )}
-
-          {error && <div style={{ padding: '10px 14px', background: 'var(--red-light)', border: '1px solid var(--red)', borderRadius: '8px', fontSize: '13px', color: 'var(--red)' }}>{error}</div>}
-
-          {/* Fields card */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '14px', padding: '24px' }}>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+          {/* 02 — Detalii comandă */}
+          <section style={{ padding: '24px 0', borderBottom: '1px solid var(--gray-2)' }}>
+            <SectionTitle num="02" title="Detalii comandă" />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px 16px' }}>
               <Field label="Număr comandă" value={fields.order_number} onChange={setField('order_number')} />
               <Field label="Client" value={fields.client} onChange={setField('client')} />
             </div>
+          </section>
 
-            {/* 2 columns: Încărcare | Descărcare */}
-            <div style={{ borderTop: '1px solid var(--gray-2)', paddingTop: '20px' }}>
-              {/* Headers + swap button */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-                <div style={{ flex: 1 }}><ColHeader label="Încărcare" color="var(--green)" /></div>
-                <button
-                  onClick={swapStops}
-                  title="Inversează încărcare ↔ descărcare"
-                  style={{ flexShrink: 0, width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '8px', cursor: 'pointer', color: 'var(--gray-4)', transition: 'all 0.15s' }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.borderColor = 'var(--gray-3)'; e.currentTarget.style.color = 'var(--black)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-2)'; e.currentTarget.style.color = 'var(--gray-4)'; }}
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M7 16V4m0 0L3 8m4-4l4 4"/>
-                    <path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
-                  </svg>
+          {/* 03 — Traseu */}
+          <section style={{ paddingTop: '24px' }}>
+            <SectionTitle num="03" title="Traseu" extra={`${stops.length} opriri`} right={
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {vami.length === 0 && (
+                  <button onClick={() => addStop('vama')} style={ghostBtn}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    Adaugă vamă
+                  </button>
+                )}
+                <button onClick={swapStops} title="Inversează încărcare ↔ descărcare" style={ghostBtn}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7h16M16 3l4 4-4 4"/><path d="M20 17H4M8 13l-4 4 4 4"/></svg>
+                  Inversează
                 </button>
-                <div style={{ flex: 1 }}><ColHeader label="Descărcare" color="var(--orange)" /></div>
               </div>
+            } />
 
-              {/* Stop columns */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {incarcari.map((stop, idx) => (
-                    <div key={stop.id}>
-                      {incarcari.length > 1 && <div style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>#{idx + 1}</div>}
-                      <StopBlock stop={stop} index={idx} total={incarcari.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('incarcare', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
-                      {idx < incarcari.length - 1 && <div style={{ marginTop: '20px', borderBottom: '1px dashed var(--gray-2)' }} />}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px 32px' }}>
+              {[
+                { type: 'incarcare',  label: 'Încărcare',  color: 'var(--green)',  list: incarcari,  add: 'Adaugă încărcare',  basis: '1 1 300px', delay: '0s' },
+                { type: 'descarcare', label: 'Descărcare', color: 'var(--orange)', list: descarcari, add: 'Adaugă descărcare', basis: '1 1 300px', delay: '-1.2s' },
+                ...(vami.length > 0 ? [{ type: 'vama', label: 'Vamă', color: 'var(--blue)', list: vami, add: 'Adaugă vamă', basis: '1 1 100%', delay: '-2.4s' }] : []),
+              ].map(col => (
+                <div key={col.type} style={{ flex: col.basis, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                  <ColHeader label={col.label} color={col.color} count={col.list.length} delay={col.delay} />
+                  {col.list.map((stop, idx) => (
+                    <div key={stop.id} style={idx > 0 ? { marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed var(--gray-2)' } : undefined}>
+                      {col.list.length > 1 && <div style={{ fontSize: '11px', color: col.color, fontWeight: 600, letterSpacing: '0.06em', marginBottom: '6px', fontFamily: FONT }}>#{idx + 1}</div>}
+                      <StopBlock stop={stop} index={idx} total={col.list.length} onUpdate={updateStop} onMove={(i, dir) => moveStop(col.type, i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
                     </div>
                   ))}
+                  <button onClick={() => addStop(col.type)} style={{ ...ghostBtn, alignSelf: 'flex-start', marginTop: '12px', border: '1px dashed var(--gray-3)' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+                    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                    {col.add}
+                  </button>
                 </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  {descarcari.map((stop, idx) => (
-                    <div key={stop.id}>
-                      {descarcari.length > 1 && <div style={{ fontSize: '11px', color: 'var(--orange)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>#{idx + 1}</div>}
-                      <StopBlock stop={stop} index={idx} total={descarcari.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('descarcare', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
-                      {idx < descarcari.length - 1 && <div style={{ marginTop: '20px', borderBottom: '1px dashed var(--gray-2)' }} />}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
-
-            {/* Vamă — full width, only if exists */}
-            {vami.length > 0 && (
-              <div style={{ borderTop: '1px solid var(--gray-2)', paddingTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT }}>Vamă</span>
-                <div style={{ display: 'grid', gridTemplateColumns: vami.length > 1 ? '1fr 1fr' : '1fr', gap: '12px 24px' }}>
-                  {vami.map((stop, idx) => (
-                    <div key={stop.id}>
-                      {vami.length > 1 && <div style={{ fontSize: '11px', color: 'var(--blue)', fontWeight: 600, letterSpacing: '0.06em', marginBottom: '10px', fontFamily: FONT }}>#{idx + 1}</div>}
-                      <StopBlock stop={stop} index={idx} total={vami.length} onUpdate={updateStop} onMove={(i, dir) => moveStop('vama', i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Bottom row: add + reset */}
-            <div style={{ display: 'flex', gap: '8px', paddingTop: '8px', borderTop: '1px solid var(--gray-2)' }}>
-              <AddStopDropdown onAdd={addStop} />
-              <button onClick={handleReset}
-                style={{ flex: 1, padding: '9px', border: '1px solid var(--gray-3)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', fontSize: '13px', color: 'var(--gray-4)', fontFamily: FONT, transition: 'all 0.15s' }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.color = 'var(--black)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--gray-4)'; }}>
-                Resetează
-              </button>
-            </div>
-          </div>
+          </section>
         </div>
 
-        {/* RIGHT — Preview */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', position: 'sticky', top: '20px' }}>
+        {/* Previzualizare */}
+        <aside style={{ flex: '1 1 360px', minWidth: 0, position: 'sticky', top: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '14px', overflow: 'hidden' }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--black)', fontFamily: FONT }}>Preview comandă</span>
+            <div style={{ padding: '12px 14px 12px 20px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--black)', fontFamily: FONT }}>Previzualizare mesaj</span>
+                <span style={{ fontSize: '12px', color: 'var(--gray-4)', fontFamily: FONT }}>Format WhatsApp</span>
+              </div>
               <button onClick={handleCopy}
-                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 14px', border: '1px solid var(--gray-3)', borderRadius: '7px', background: copied ? 'var(--green)' : 'transparent', cursor: 'pointer', fontSize: '13px', color: copied ? 'white' : 'var(--black)', fontFamily: FONT, transition: 'all 0.15s', fontWeight: 500 }}
-                onMouseEnter={e => { if (!copied) { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; } }}
-                onMouseLeave={e => { if (!copied) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; } }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 16px', border: 'none', borderRadius: '10px', background: copied ? 'var(--fm-ok-bg)' : 'var(--black)', color: copied ? 'var(--fm-st-green)' : 'var(--bg-page)', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: FONT, transition: 'all 0.15s' }}>
                 {copied
-                  ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiat!</>
-                  : <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Copiază</>
+                  ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiat</>
+                  : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiază</>
                 }
               </button>
             </div>
-            <div style={{ padding: '20px 24px', background: 'var(--surface)', minHeight: '220px', maxHeight: '70vh', overflowY: 'auto' }}>
+            <div style={{ padding: '18px 22px', minHeight: '220px', maxHeight: '70vh', overflowY: 'auto' }}>
               {previewLines.map((line, i) => {
-                if (line === '') return <div key={i} style={{ height: '0.8em' }} />;
+                if (line === '') return <div key={i} style={{ height: '0.7em' }} />;
                 const boldMatch = line.match(/^\*•(.*?)\*(.*)$/);
                 if (boldMatch) {
                   const label = '•' + boldMatch[1], rest = boldMatch[2].trim();
-                  return <div key={i} style={{ fontSize: '13px', color: 'var(--black)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7 }}><strong>{label}</strong>{rest ? ' ' + rest : ''}</div>;
+                  return <div key={i} style={{ fontSize: '12.5px', color: 'var(--black)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7 }}><strong style={{ fontWeight: 600 }}>{label}</strong>{rest ? ' ' + rest : ''}</div>;
                 }
-                return <div key={i} style={{ fontSize: '13px', color: 'var(--gray-4)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7 }}>{line}</div>;
+                return <div key={i} style={{ fontSize: '12.5px', color: 'var(--gray-4)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{line}</div>;
               })}
             </div>
           </div>
 
-          <div style={{ padding: '14px 18px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '12px', fontSize: '13px', color: 'var(--gray-4)', lineHeight: 1.7, fontFamily: FONT }}>
-            <strong style={{ color: 'var(--black)', fontWeight: 600 }}>Cum funcționează:</strong><br/>
-            1. Încarcă PDF-ul comenzii de transport<br/>
-            2. AI-ul extrage automat toate opririle<br/>
-            3. Adaugă opriri cu butonul <em>Adaugă oprire</em><br/>
-            4. Coordonatele se salvează automat per adresă
+          <div style={{ padding: '4px 4px 0', fontFamily: FONT }}>
+            <span style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.07em', textTransform: 'uppercase', color: 'var(--gray-4)' }}>Cum funcționează</span>
+            <ol style={{ margin: '10px 0 0', paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px', lineHeight: 1.5, color: 'var(--gray-4)' }}>
+              <li>Încarcă PDF-ul comenzii de transport.</li>
+              <li>AI-ul extrage automat toate opririle.</li>
+              <li>Completează sau adaugă opriri din Traseu.</li>
+              <li>Coordonatele se salvează per adresă, pentru data viitoare.</li>
+            </ol>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
   );

@@ -16,6 +16,11 @@ const getWeekNumber = (date = new Date()) => {
   return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 };
 
+const STATUS_COLORS = {
+  liber: '#ef4444', incarcare: '#ff7a3d', descarcare: '#ff7a3d', tranzit: '#60a5fa',
+  booked: '#4ade80', service: '#a8a8a8', acasa: '#a8a8a8',
+};
+
 function Tracking({ user, viewMode = 'card' }) {
   const { trucks, setTrucks } = useStore();
   const [loading, setLoading] = useState(true);
@@ -532,14 +537,70 @@ const handleDeleteTrip = async (truck) => {
       {/* Filter Bar: search + dropdown */}
       <div style={{
         display: 'flex',
-        gap: '10px',
+        flexWrap: 'wrap',
+        gap: '10px 12px',
         marginBottom: '24px',
         alignItems: 'center',
       }}>
+        {/* Status dropdown */}
+        <div style={{ position: 'relative', flexShrink: 0 }} ref={filterDropdownRef}>
+          <button
+            onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '8px',
+              padding: '11px 14px 11px 34px',
+              border: '1px solid var(--gray-2)',
+              borderRadius: '999px',
+              background: 'var(--surface)',
+              color: 'var(--black)',
+              fontSize: '13px', fontWeight: 600,
+              cursor: 'pointer', outline: 'none', minWidth: '180px',
+              textAlign: 'left',
+            }}
+          >
+            <span style={{ position: 'absolute', left: '14px', width: 8, height: 8, borderRadius: '50%', pointerEvents: 'none', boxSizing: 'border-box', ...(filter === 'all' ? { border: '1.5px solid var(--gray-4)' } : { background: STATUS_COLORS[filter] || 'var(--gray-4)' }) }} />
+            <span style={{ flex: 1 }}>{statusOptions.find(o => o.value === filter)?.label}</span>
+            <span style={{ fontWeight: 400, color: 'var(--gray-4)', fontVariantNumeric: 'tabular-nums' }}>{filter === 'all' ? trucks.length : trucks.filter(t => t.status === filter).length}</span>
+            <svg style={{ flexShrink: 0, transition: 'transform 0.15s', transform: filterDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          {filterDropdownOpen && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 4px)', left: 0, minWidth: '100%',
+              background: 'var(--bg-page)', border: '1px solid var(--gray-2)',
+              borderRadius: '14px', boxShadow: '0 12px 32px rgba(0,0,0,0.16)',
+              zIndex: 50, overflow: 'hidden', padding: '6px',
+            }}>
+              {statusOptions.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => filterTracking(opt.value)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left',
+                    padding: '9px 12px', border: 'none', cursor: 'pointer', borderRadius: '10px',
+                    fontSize: '13px',
+                    background: filter === opt.value ? 'var(--gray-1)' : 'transparent',
+                    color: 'var(--black)',
+                    fontWeight: filter === opt.value ? 600 : 400,
+                  }}
+                  onMouseEnter={e => { if (filter !== opt.value) e.currentTarget.style.background = 'var(--gray-1)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = filter === opt.value ? 'var(--gray-1)' : 'transparent'; }}
+                >
+                  <span style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, boxSizing: 'border-box', ...(opt.value === 'all' ? { border: '1.5px solid var(--gray-4)' } : { background: STATUS_COLORS[opt.value] || 'var(--gray-4)' }) }} />
+                  <span style={{ flex: 1 }}>{opt.label}</span>
+                  <span style={{ color: 'var(--gray-4)', fontVariantNumeric: 'tabular-nums' }}>{opt.value === 'all' ? trucks.length : trucks.filter(t => t.status === opt.value).length}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Search field */}
-        <div style={{ position: 'relative', flex: 1, maxWidth: '340px' }}>
+        <div style={{ position: 'relative', flex: '0 1 380px', minWidth: '220px' }}>
           <svg
-            style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--gray-4)' }}
+            style={{ position: 'absolute', left: '13px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: 'var(--gray-4)' }}
             width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
           >
             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
@@ -552,9 +613,9 @@ const handleDeleteTrip = async (truck) => {
             style={{
               width: '100%',
               boxSizing: 'border-box',
-              padding: '10px 10px 10px 34px',
-              border: '1px solid var(--gray-3)',
-              borderRadius: '8px',
+              padding: '11px 14px 11px 36px',
+              border: '1px solid transparent',
+              borderRadius: '999px',
               background: 'var(--gray-1)',
               color: 'var(--black)',
               fontSize: '13px',
@@ -562,7 +623,7 @@ const handleDeleteTrip = async (truck) => {
               transition: 'border-color 0.2s',
             }}
             onFocus={e => e.target.style.borderColor = '#ff7a3d'}
-            onBlur={e => e.target.style.borderColor = 'var(--gray-3)'}
+            onBlur={e => e.target.style.borderColor = 'transparent'}
           />
           {searchText && (
             <button
@@ -576,64 +637,8 @@ const handleDeleteTrip = async (truck) => {
           )}
         </div>
 
-        {/* Status dropdown */}
-        <div style={{ position: 'relative', flexShrink: 0 }} ref={filterDropdownRef}>
-          <button
-            onClick={() => setFilterDropdownOpen(!filterDropdownOpen)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '10px 12px 10px 32px',
-              border: `1px solid ${filter !== 'all' ? '#ff7a3d' : 'var(--gray-3)'}`,
-              borderRadius: '8px',
-              background: filter !== 'all' ? '#ff7a3d18' : 'var(--gray-1)',
-              color: filter !== 'all' ? '#ff7a3d' : 'var(--black)',
-              fontSize: '13px', fontWeight: filter !== 'all' ? 600 : 400,
-              cursor: 'pointer', outline: 'none', minWidth: '160px',
-              textAlign: 'left',
-            }}
-          >
-            <svg style={{ position: 'absolute', left: '10px', pointerEvents: 'none', color: filter !== 'all' ? '#ff7a3d' : 'var(--gray-4)' }}
-              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
-              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
-            </svg>
-            <span style={{ flex: 1 }}>{statusOptions.find(o => o.value === filter)?.label}</span>
-            <svg style={{ flexShrink: 0, transition: 'transform 0.15s', transform: filterDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
-              width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </button>
-          {filterDropdownOpen && (
-            <div style={{
-              position: 'absolute', top: 'calc(100% + 4px)', left: 0, minWidth: '100%',
-              background: 'var(--bg-page)', border: '1px solid var(--gray-2)',
-              borderRadius: '8px', boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-              zIndex: 50, overflow: 'hidden',
-            }}>
-              {statusOptions.map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => filterTracking(opt.value)}
-                  style={{
-                    display: 'block', width: '100%', textAlign: 'left',
-                    padding: '9px 14px', border: 'none', cursor: 'pointer',
-                    fontSize: '13px',
-                    background: filter === opt.value ? '#ff7a3d18' : 'transparent',
-                    color: filter === opt.value ? '#ff7a3d' : 'var(--black)',
-                    fontWeight: filter === opt.value ? 600 : 400,
-                  }}
-                  onMouseEnter={e => { if (filter !== opt.value) e.currentTarget.style.background = 'var(--gray-1)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = filter === opt.value ? '#ff7a3d18' : 'transparent'; }}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
         {/* Results count */}
-        <div style={{ fontSize: '12px', color: 'var(--gray-4)', flexShrink: 0, whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: '13px', color: 'var(--gray-4)', flexShrink: 0, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
           {filteredTrucks.length} / {trucks.length} vehicule
         </div>
       </div>
@@ -643,16 +648,15 @@ const handleDeleteTrip = async (truck) => {
         /* ══════════════════════════════════════════
            STANDARD VIEW
         ══════════════════════════════════════════ */
-        <div style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', overflow: 'visible' }}>
+        <div style={{ overflow: 'visible' }}>
           <table id="fleetTable" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
             <thead>
-              <tr style={{ background: 'var(--gray-1)', borderBottom: '2px solid var(--gray-2)' }}>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)', width: '185px' }}>Vehicul</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)', width: '170px' }}>Repaus</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)', width: '200px' }}>Client / Comandă</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)' }}>Încărcare</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)' }}>Descărcare</th>
-                <th style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--gray-4)' }}>Observații</th>
+              <tr>
+                <th style={{ padding: '0 14px 10px', textAlign: 'left', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray-4)', borderBottom: '1px solid var(--gray-2)', paddingLeft: '16px', width: '200px' }}>Vehicul</th>
+                <th style={{ padding: '0 14px 10px', textAlign: 'left', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray-4)', borderBottom: '1px solid var(--gray-2)', width: '170px' }}>Repaus</th>
+                <th style={{ padding: '0 14px 10px', textAlign: 'left', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray-4)', borderBottom: '1px solid var(--gray-2)' }}>Rută</th>
+                <th style={{ padding: '0 14px 10px', textAlign: 'left', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray-4)', borderBottom: '1px solid var(--gray-2)', width: '200px' }}>Client / Comandă</th>
+                <th style={{ padding: '0 14px 10px', textAlign: 'left', fontSize: '11px', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gray-4)', borderBottom: '1px solid var(--gray-2)' }}>Observații</th>
               </tr>
             </thead>
             <tbody>
@@ -681,20 +685,21 @@ const handleDeleteTrip = async (truck) => {
                 const pauseText = [dateDisplay, truck.pause_time].filter(Boolean).join(' · ');
                 const hasWeekend = truck.weekend_week === `W${getWeekNumber()}` && truck.weekend_duration;
                 const isNotLast = idx < filteredTrucks.length - 1;
+                const routeProgress = truck.status === 'descarcare' ? 100 : truck.status === 'tranzit' ? 50 : 0;
 
                 return [
                   <tr key={truck.id}
-                    className={`sv-row${rowHoverId === truck.id ? ' sv-hovered' : ''}`}
+                    className={`fm-sv-row sv-row${rowHoverId === truck.id ? ' sv-hovered' : ''}`}
                     style={{ borderBottom: isNotLast ? '1px solid var(--gray-2)' : 'none' }}
                     onMouseEnter={() => setRowHoverId(truck.id)}
                     onMouseLeave={() => setRowHoverId(null)}
                   >
                     {/* ── Vehicul TD ── */}
-                    <td style={{ padding: '8px 12px 8px 0', width: '185px', verticalAlign: 'top', borderLeft: `6px solid ${statusColor}`, position: 'relative', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                    <td style={{ padding: '8px 12px 8px 0', width: '185px', verticalAlign: 'top', borderLeft: `4px solid ${statusColor}`, position: 'relative', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
                       <div style={{ position: 'relative', paddingLeft: '12px' }}>
                         {/* Număr + meniu */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                          <span style={{ fontWeight: 800, fontSize: '14px', color: 'var(--black)', letterSpacing: '0.02em' }}>{truck.number}</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: '8px' }}><span style={{ fontWeight: 800, fontSize: '15px', color: 'var(--black)', letterSpacing: '0.02em' }}>{truck.number}</span>{truck.vehicle_type && <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--gray-4)' }}>{truck.vehicle_type}</span>}</span>
                           <button
                             onClick={(e) => { e.stopPropagation(); setOpenMenuId(isMenuOpen ? null : truck.id); setStatusDropdownId(null); }}
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '7px 10px', color: 'var(--gray-4)', display: 'flex', alignItems: 'center', borderRadius: '6px' }}
@@ -937,7 +942,25 @@ const handleDeleteTrip = async (truck) => {
                       </div>
                     </td>
 
-{/* ── Client TD ── */}
+                    {/* ── Rută TD (încărcare → descărcare) ── */}
+                    <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                      {(truck.load_location || truck.unload_location) ? (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(40px,80px) minmax(0,1fr)', columnGap: '14px', alignItems: 'start' }}>
+                          <div style={{ minWidth: 0 }}>
+                            {truck.load_location ? (<div><div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}><div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.load_location}</div>{(() => { try { const _stops=JSON.parse(truck.extra_stops||'[]').filter(x=>x.type==='load'); const _k=`${truck.id}-load`; return _stops.length>0 ? <span onClick={(e) => openStopsPopover(e,_k,_stops)} style={{ fontSize:'10px', fontWeight:700, background: stopsPopover?.key===_k ? '#ff7a3d' : 'rgba(255,122,61,0.12)', color: stopsPopover?.key===_k ? '#fff' : '#ff7a3d', padding:'1px 6px', borderRadius:'4px', marginLeft:'4px', whiteSpace:'nowrap', cursor:'pointer', userSelect:'none' }}>+{_stops.length}</span> : null; } catch { return null; } })()}<button type="button" onClick={() => handleCopyCoords(`${truck.id}-load`, truck.load_lat, truck.load_lng)} style={{ background: 'none', border: 'none', cursor: truck.load_lat && truck.load_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-load` ? '#22c55e' : 'var(--gray-4)', opacity: truck.load_lat && truck.load_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>{copiedKey === `${truck.id}-load` ? <CheckIcon /> : <CopyIcon />}</button></div><div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '4px' }}>{truck.load_date}</div><div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '4px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '7px', padding: '2px 8px 2px 6px', transition: 'border-color 0.2s' }} onMouseEnter={e => e.currentTarget.style.borderColor = '#ff7a3d'} onMouseLeave={e => { if (document.activeElement !== e.currentTarget.querySelector('input')) e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style={{ fontSize: '10px', fontWeight: 700, color: '#ff7a3d', letterSpacing: '0.04em', lineHeight: 1 }}>ETA</span></div><div style={{ width: '1px', height: '11px', background: 'var(--gray-3)', flexShrink: 0 }} /><input type="text" value={etaDrafts[`${truck.id}_load_eta`] !== undefined ? etaDrafts[`${truck.id}_load_eta`] : (truck.load_eta || '')} onChange={(e) => handleETAChange(truck, 'load_eta', e.target.value)} onFocus={(e) => { const k=`${truck.id}_load_eta`; const v=truck.load_eta||''; etaDraftsRef.current[k]=v; setEtaDrafts(p=>({...p,[k]:v})); e.currentTarget.parentElement.style.borderColor = '#ff7a3d'; }} onBlur={(e) => { handleETABlur(truck, 'load_eta'); e.currentTarget.parentElement.style.borderColor = 'var(--gray-2)'; }} placeholder="--/-- --:--" maxLength={11} style={{ fontSize: '12px', color: 'var(--black)', background: 'transparent', border: 'none', padding: 0, outline: 'none', width: '80px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }} /></div></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
+                          </div>
+                          <div aria-hidden="true" style={{ position: 'relative', height: '2px', marginTop: '9px', borderRadius: '2px', background: 'var(--gray-2)' }}>
+                            <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, borderRadius: '2px', width: `${routeProgress}%`, background: statusColor }} />
+                            <span style={{ position: 'absolute', top: '50%', left: `${routeProgress}%`, width: 10, height: 10, margin: '-5px 0 0 -5px', borderRadius: '50%', boxSizing: 'border-box', border: `2px solid ${statusColor}`, background: truck.status === 'booked' ? 'var(--surface)' : statusColor }} />
+                          </div>
+                          <div style={{ minWidth: 0 }}>
+                            {truck.unload_location ? (<div><div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}><div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.unload_location}</div>{(() => { try { const _stops=JSON.parse(truck.extra_stops||'[]').filter(x=>x.type==='unload'); const _k=`${truck.id}-unload`; return _stops.length>0 ? <span onClick={(e) => openStopsPopover(e,_k,_stops)} style={{ fontSize:'10px', fontWeight:700, background: stopsPopover?.key===_k ? '#ff7a3d' : 'rgba(255,122,61,0.12)', color: stopsPopover?.key===_k ? '#fff' : '#ff7a3d', padding:'1px 6px', borderRadius:'4px', marginLeft:'4px', whiteSpace:'nowrap', cursor:'pointer', userSelect:'none' }}>+{_stops.length}</span> : null; } catch { return null; } })()}<button type="button" onClick={() => handleCopyCoords(`${truck.id}-unload`, truck.unload_lat, truck.unload_lng)} style={{ background: 'none', border: 'none', cursor: truck.unload_lat && truck.unload_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-unload` ? '#22c55e' : 'var(--gray-4)', opacity: truck.unload_lat && truck.unload_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>{copiedKey === `${truck.id}-unload` ? <CheckIcon /> : <CopyIcon />}</button></div><div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '4px' }}>{truck.unload_date}</div><div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '4px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '7px', padding: '2px 8px 2px 6px', transition: 'border-color 0.2s' }} onMouseEnter={e => e.currentTarget.style.borderColor = '#ff7a3d'} onMouseLeave={e => { if (document.activeElement !== e.currentTarget.querySelector('input')) e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style={{ fontSize: '10px', fontWeight: 700, color: '#ff7a3d', letterSpacing: '0.04em', lineHeight: 1 }}>ETA</span></div><div style={{ width: '1px', height: '11px', background: 'var(--gray-3)', flexShrink: 0 }} /><input type="text" value={etaDrafts[`${truck.id}_eta`] !== undefined ? etaDrafts[`${truck.id}_eta`] : (truck.eta || '')} onChange={(e) => handleETAChange(truck, 'eta', e.target.value)} onFocus={(e) => { const k=`${truck.id}_eta`; const v=truck.eta||''; etaDraftsRef.current[k]=v; setEtaDrafts(p=>({...p,[k]:v})); e.currentTarget.parentElement.style.borderColor = '#ff7a3d'; }} onBlur={(e) => { handleETABlur(truck, 'eta'); e.currentTarget.parentElement.style.borderColor = 'var(--gray-2)'; }} placeholder="--/-- --:--" maxLength={11} style={{ fontSize: '12px', color: 'var(--black)', background: 'transparent', border: 'none', padding: 0, outline: 'none', width: '80px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }} /></div></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
+                          </div>
+                        </div>
+                      ) : <span style={{ color: 'var(--gray-4)', fontSize: '13px' }}>Fără cursă activă</span>}
+                    </td>
+
+                    {/* ── Client TD ── */}
                     <td style={{ padding: '8px 14px', verticalAlign: 'top', width: '200px', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
                       {truck.client ? (
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '4px' }}>
@@ -956,16 +979,6 @@ const handleDeleteTrip = async (truck) => {
                           </button>
                         </div>
                       ) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
-                    </td>
-
-                    {/* ── Încărcare TD ── */}
-                    <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
-                      {truck.load_location ? (<div><div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}><div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.load_location}</div>{(() => { try { const _stops=JSON.parse(truck.extra_stops||'[]').filter(x=>x.type==='load'); const _k=`${truck.id}-load`; return _stops.length>0 ? <span onClick={(e) => openStopsPopover(e,_k,_stops)} style={{ fontSize:'10px', fontWeight:700, background: stopsPopover?.key===_k ? '#ff7a3d' : 'rgba(255,122,61,0.12)', color: stopsPopover?.key===_k ? '#fff' : '#ff7a3d', padding:'1px 6px', borderRadius:'4px', marginLeft:'4px', whiteSpace:'nowrap', cursor:'pointer', userSelect:'none' }}>+{_stops.length}</span> : null; } catch { return null; } })()}<button type="button" onClick={() => handleCopyCoords(`${truck.id}-load`, truck.load_lat, truck.load_lng)} style={{ background: 'none', border: 'none', cursor: truck.load_lat && truck.load_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-load` ? '#22c55e' : 'var(--gray-4)', opacity: truck.load_lat && truck.load_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>{copiedKey === `${truck.id}-load` ? <CheckIcon /> : <CopyIcon />}</button></div><div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '4px' }}>{truck.load_date}</div><div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '4px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '7px', padding: '2px 8px 2px 6px', transition: 'border-color 0.2s' }} onMouseEnter={e => e.currentTarget.style.borderColor = '#ff7a3d'} onMouseLeave={e => { if (document.activeElement !== e.currentTarget.querySelector('input')) e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style={{ fontSize: '10px', fontWeight: 700, color: '#ff7a3d', letterSpacing: '0.04em', lineHeight: 1 }}>ETA</span></div><div style={{ width: '1px', height: '11px', background: 'var(--gray-3)', flexShrink: 0 }} /><input type="text" value={etaDrafts[`${truck.id}_load_eta`] !== undefined ? etaDrafts[`${truck.id}_load_eta`] : (truck.load_eta || '')} onChange={(e) => handleETAChange(truck, 'load_eta', e.target.value)} onFocus={(e) => { const k=`${truck.id}_load_eta`; const v=truck.load_eta||''; etaDraftsRef.current[k]=v; setEtaDrafts(p=>({...p,[k]:v})); e.currentTarget.parentElement.style.borderColor = '#ff7a3d'; }} onBlur={(e) => { handleETABlur(truck, 'load_eta'); e.currentTarget.parentElement.style.borderColor = 'var(--gray-2)'; }} placeholder="--/-- --:--" maxLength={11} style={{ fontSize: '12px', color: 'var(--black)', background: 'transparent', border: 'none', padding: 0, outline: 'none', width: '80px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }} /></div></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
-                    </td>
-
-                    {/* ── Descărcare TD ── */}
-                    <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
-                      {truck.unload_location ? (<div><div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '1px' }}><div style={{ fontSize: '13px', color: 'var(--black)' }}>{truck.unload_location}</div>{(() => { try { const _stops=JSON.parse(truck.extra_stops||'[]').filter(x=>x.type==='unload'); const _k=`${truck.id}-unload`; return _stops.length>0 ? <span onClick={(e) => openStopsPopover(e,_k,_stops)} style={{ fontSize:'10px', fontWeight:700, background: stopsPopover?.key===_k ? '#ff7a3d' : 'rgba(255,122,61,0.12)', color: stopsPopover?.key===_k ? '#fff' : '#ff7a3d', padding:'1px 6px', borderRadius:'4px', marginLeft:'4px', whiteSpace:'nowrap', cursor:'pointer', userSelect:'none' }}>+{_stops.length}</span> : null; } catch { return null; } })()}<button type="button" onClick={() => handleCopyCoords(`${truck.id}-unload`, truck.unload_lat, truck.unload_lng)} style={{ background: 'none', border: 'none', cursor: truck.unload_lat && truck.unload_lng ? 'pointer' : 'default', padding: '2px', display: 'flex', alignItems: 'center', color: copiedKey === `${truck.id}-unload` ? '#22c55e' : 'var(--gray-4)', opacity: truck.unload_lat && truck.unload_lng ? 1 : 0.3, transition: 'color 0.2s', flexShrink: 0 }}>{copiedKey === `${truck.id}-unload` ? <CheckIcon /> : <CopyIcon />}</button></div><div style={{ fontSize: '12px', color: 'var(--gray-4)', marginBottom: '4px' }}>{truck.unload_date}</div><div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', marginTop: '4px', background: 'var(--gray-1)', border: '1px solid var(--gray-2)', borderRadius: '7px', padding: '2px 8px 2px 6px', transition: 'border-color 0.2s' }} onMouseEnter={e => e.currentTarget.style.borderColor = '#ff7a3d'} onMouseLeave={e => { if (document.activeElement !== e.currentTarget.querySelector('input')) e.currentTarget.style.borderColor = 'var(--gray-2)'; }}><div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexShrink: 0 }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ display: 'block' }}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span style={{ fontSize: '10px', fontWeight: 700, color: '#ff7a3d', letterSpacing: '0.04em', lineHeight: 1 }}>ETA</span></div><div style={{ width: '1px', height: '11px', background: 'var(--gray-3)', flexShrink: 0 }} /><input type="text" value={etaDrafts[`${truck.id}_eta`] !== undefined ? etaDrafts[`${truck.id}_eta`] : (truck.eta || '')} onChange={(e) => handleETAChange(truck, 'eta', e.target.value)} onFocus={(e) => { const k=`${truck.id}_eta`; const v=truck.eta||''; etaDraftsRef.current[k]=v; setEtaDrafts(p=>({...p,[k]:v})); e.currentTarget.parentElement.style.borderColor = '#ff7a3d'; }} onBlur={(e) => { handleETABlur(truck, 'eta'); e.currentTarget.parentElement.style.borderColor = 'var(--gray-2)'; }} placeholder="--/-- --:--" maxLength={11} style={{ fontSize: '12px', color: 'var(--black)', background: 'transparent', border: 'none', padding: 0, outline: 'none', width: '80px', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }} /></div></div>) : <span style={{ color: 'var(--gray-3)', fontStyle: 'italic', fontSize: '13px' }}>—</span>}
                     </td>
 
                     {/* ── Observații TD ── */}
@@ -991,16 +1004,17 @@ const handleDeleteTrip = async (truck) => {
                         </td>
                         <td style={{ padding: '6px 14px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}></td>
                         <td style={{ padding: '6px 14px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(40px,80px) minmax(0,1fr)', columnGap: '14px', alignItems: 'start' }}>
+                            <div><div>{trip.load_location || '—'}</div>
+                          {(trip.load_date || trip.load_time) && <div style={{ fontSize: '11px', marginTop: '1px' }}>{trip.load_date}{trip.load_time ? ` · ${trip.load_time}` : ''}</div>}</div>
+                            <div aria-hidden="true" style={{ height: '1px', marginTop: '8px', borderTop: '1px dashed var(--gray-3)' }} />
+                            <div><div>{trip.unload_location || '—'}</div>
+                          {(trip.unload_date || trip.unload_time) && <div style={{ fontSize: '11px', marginTop: '1px' }}>{trip.unload_date}{trip.unload_time ? ` · ${trip.unload_time}` : ''}</div>}</div>
+                          </div>
+                        </td>
+                        <td style={{ padding: '6px 14px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
                           <div style={{ fontWeight: 500, color: 'var(--black)' }}>{trip.client || '—'}</div>
                           {trip.order_number && <div style={{ fontSize: '11px', marginTop: '1px' }}>{trip.order_number}</div>}
-                        </td>
-                        <td style={{ padding: '6px 14px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
-                          <div>{trip.load_location || '—'}</div>
-                          {(trip.load_date || trip.load_time) && <div style={{ fontSize: '11px', marginTop: '1px' }}>{trip.load_date}{trip.load_time ? ` · ${trip.load_time}` : ''}</div>}
-                        </td>
-                        <td style={{ padding: '6px 14px', fontSize: '12px', color: 'var(--gray-4)', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
-                          <div>{trip.unload_location || '—'}</div>
-                          {(trip.unload_date || trip.unload_time) && <div style={{ fontSize: '11px', marginTop: '1px' }}>{trip.unload_date}{trip.unload_time ? ` · ${trip.unload_time}` : ''}</div>}
                         </td>
                         <td style={{ padding: '6px 14px', verticalAlign: 'middle', borderTop: '1px dashed var(--gray-3)' }}>
                           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
