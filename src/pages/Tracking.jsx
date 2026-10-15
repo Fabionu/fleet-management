@@ -6,6 +6,7 @@ import InfoVehicleModal from '../components/InfoVehicleModal';
 import EditTripModal from '../components/EditTripModal';
 import AddTripModal from '../components/AddTripModal';
 import WeekendHistoryModal from '../components/WeekendHistoryModal';
+import StatusFx from '../components/StatusFx';
 
 // Funcție pentru a obține numărul săptămânii
 const getWeekNumber = (date = new Date()) => {
@@ -696,7 +697,8 @@ const handleDeleteTrip = async (truck) => {
                   >
                     {/* ── Vehicul TD ── */}
                     <td style={{ padding: '8px 12px 8px 0', width: '185px', verticalAlign: 'top', borderLeft: `4px solid ${statusColor}`, position: 'relative', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
-                      <div style={{ position: 'relative', paddingLeft: '12px' }}>
+                      <StatusFx status={truck.status} />
+                      <div style={{ position: 'relative', zIndex: 1, paddingLeft: '12px' }}>
                         {/* Număr + meniu */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
                           <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: '8px' }}><span style={{ fontWeight: 800, fontSize: '15px', color: 'var(--black)', letterSpacing: '0.02em' }}>{truck.number}</span>{truck.vehicle_type && <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--gray-4)' }}>{truck.vehicle_type}</span>}</span>
