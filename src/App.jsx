@@ -192,6 +192,14 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
+  const tabStyle = (active) => ({
+    display: 'inline-flex', alignItems: 'center', minHeight: '40px', padding: '0 16px',
+    borderRadius: '999px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+    fontSize: '14px', fontWeight: active ? 600 : 400,
+    background: active ? 'var(--gray-1)' : 'transparent',
+    color: active ? 'var(--black)' : 'var(--gray-4)',
+  });
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -209,30 +217,65 @@ function App() {
         boxShadow: '0 8px 30px var(--shadow)',
         position: 'relative',
       }}>
-        {/* Theme Toggle */}
-        <button 
-          onClick={toggleTheme}
-          style={{
-            position: 'absolute',
-            top: '24px',
-            right: '24px',
-            background: 'transparent',
-            border: 'none',
-            fontSize: '24px',
-            cursor: 'pointer',
-            color: 'var(--black)',
-            transition: 'opacity 0.2s',
-            padding: '8px'
-          }}
-          onMouseEnter={(e) => e.target.style.opacity = '0.7'}
-          onMouseLeave={(e) => e.target.style.opacity = '1'}
-        >
-          {theme === 'dark' ? '☼' : '☾'}
-        </button>
+        {/* Header universal — wordmark, navigare, controale, efect live */}
+        <header className="fm-hero" style={{
+          display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between',
+          gap: '12px 24px', padding: '10px 12px 10px 18px', marginBottom: '28px',
+          border: '1px solid var(--gray-2)', borderRadius: '14px', background: 'var(--surface)',
+          zIndex: 100,
+        }}>
+          <div className="fm-hero-fx" aria-hidden="true"><span className="fm-sheen" /></div>
 
+          {(() => {
+            const name = (user.organizationName && user.organizationName !== 'Default') ? user.organizationName : 'Fleet Management';
+            const [first, ...rest] = name.split(' ');
+            return (
+              <button onClick={() => changePage('tracking')} aria-label={name} style={{ display: 'inline-flex', alignItems: 'baseline', gap: '6px', background: 'transparent', border: 'none', padding: '6px 0', cursor: 'pointer', lineHeight: 1, fontFamily: 'inherit' }}>
+                <span style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--black)' }}>{first}</span>
+                <span style={{ fontSize: '20px', fontWeight: 300, letterSpacing: '-0.02em', color: 'var(--gray-4)' }}>
+                  {rest.join(' ')}<span style={{ color: 'var(--fm-accent)', fontWeight: 800 }}>.</span>
+                </span>
+              </button>
+            );
+          })()}
 
-        {/* Controls bar — Bell + User menu (un singur card integrat) */}
-        <div style={{ position: 'absolute', top: '28px', right: '80px', zIndex: 101, display: 'flex', alignItems: 'stretch', background: 'var(--gray-1)', border: '1px solid var(--gray-3)', borderRadius: '10px' }}>
+          <nav aria-label="Principal" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            {canView('viewTracking') && (
+              <button className="fm-tab" onClick={() => changePage('tracking')} aria-current={currentPage === 'tracking' ? 'page' : undefined} style={tabStyle(currentPage === 'tracking')}>Status flotă</button>
+            )}
+            {canView('viewRegistru') && (
+              <button className="fm-tab" onClick={() => changePage('curse')} aria-current={currentPage === 'curse' ? 'page' : undefined} style={tabStyle(currentPage === 'curse')}>Registru</button>
+            )}
+            {canView('viewGenerare') && (
+              <button className="fm-tab" onClick={() => changePage('generare')} aria-current={currentPage === 'generare' ? 'page' : undefined} style={tabStyle(currentPage === 'generare')}>Generare</button>
+            )}
+            {canView('viewChat') && (
+              <button className="fm-tab" onClick={() => changePage('chat')} aria-current={currentPage === 'chat' ? 'page' : undefined} style={tabStyle(currentPage === 'chat')}>Chat</button>
+            )}
+            {canView('viewReports') && (
+              <button className="fm-tab" onClick={() => changePage('rapoarte')} aria-current={currentPage === 'rapoarte' ? 'page' : undefined} style={tabStyle(currentPage === 'rapoarte')}>Rapoarte</button>
+            )}
+            {(user.role === 'admin' || user.permissions?.accessAdmin) && (
+              <button className="fm-tab" onClick={() => changePage('admin')} aria-current={currentPage === 'admin' ? 'page' : undefined} style={tabStyle(currentPage === 'admin')}>Panou admin</button>
+            )}
+          </nav>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              onClick={toggleTheme}
+              aria-label="Schimbă tema"
+              style={{ width: '40px', height: '40px', borderRadius: '50%', border: 'none', background: 'transparent', color: 'var(--gray-4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+            >
+              {theme === 'dark' ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+              )}
+            </button>
+
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'stretch', borderRadius: '10px' }}>
 
           {/* ── Clopoțel alerte ── */}
           <div ref={bellRef} style={{ position: 'relative' }}>
@@ -278,7 +321,7 @@ function App() {
                         fontSize: 10, fontWeight: 700,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         padding: '0 3px', boxSizing: 'border-box',
-                        border: '1.5px solid var(--gray-1)', lineHeight: 1,
+                        border: '1.5px solid var(--surface)', lineHeight: 1,
                       }}>
                         {badgeCount > 9 ? '9+' : badgeCount}
                       </span>
@@ -371,19 +414,19 @@ function App() {
                 display: 'flex', alignItems: 'center', gap: '12px',
                 background: 'transparent', border: 'none',
                 borderRadius: '0 9px 9px 0',
-                padding: '10px 14px', cursor: 'pointer', transition: 'background 0.2s',
+                padding: '6px 10px', cursor: 'pointer', transition: 'background 0.2s',
               }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-2)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ position: 'relative', width: '32px', height: '32px', flexShrink: 0 }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#ff7a3d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: 600, fontSize: '14px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--gray-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--black)', fontWeight: 600, fontSize: '13px' }}>
                   {user.first_name ? user.first_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
                   {user.last_name ? user.last_name.charAt(0).toUpperCase() : ''}
                 </div>
                 <div
                   title={socketConnected ? 'Timp real activ' : 'Reconectare...'}
-                  style={{ position: 'absolute', bottom: 0, right: 0, width: 9, height: 9, borderRadius: '50%', background: socketConnected ? '#22c55e' : '#f59e0b', border: '2px solid var(--gray-1)', transition: 'background 0.4s' }}
+                  style={{ position: 'absolute', bottom: 0, right: 0, width: 9, height: 9, borderRadius: '50%', background: socketConnected ? '#22c55e' : '#f59e0b', border: '2px solid var(--surface)', transition: 'background 0.4s' }}
                 />
               </div>
               <div style={{ textAlign: 'left' }}>
@@ -448,169 +491,9 @@ function App() {
             )}
           </div>
 
-        </div>
-
-        {/* Header */}
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{
-           display: 'flex',
-           alignItems: 'center',
-           marginBottom: '16px',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff7a3d" strokeWidth="2">
-                <rect x="1" y="5" width="15" height="10" rx="2"/>
-                <path d="M16 8h3l3 3v4h-3"/>
-                <circle cx="5.5" cy="17.5" r="2.5"/>
-                <circle cx="18.5" cy="17.5" r="2.5"/>
-              </svg>
-              <div>
-                <h1 style={{
-                  fontSize: '22px',
-                  fontWeight: 700,
-                  color: 'var(--black)',
-                  letterSpacing: '-0.02em',
-                  margin: 0,
-                }}>
-                  {(user.organizationName && user.organizationName !== 'Default') ? user.organizationName : 'Fleet Management'}
-                </h1>
-              </div>
             </div>
-           </div>
-
-        {/* Tabs */}
-        <div style={{ display: 'flex', gap: '8px', borderBottom: '2px solid var(--gray-2)' }}>
-            {canView('viewTracking') && (
-            <button
-              onClick={() => changePage('tracking')}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                borderBottom: `2px solid ${currentPage === 'tracking' ? '#ff7a3d' : 'transparent'}`,
-                padding: '12px 20px',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: currentPage === 'tracking' ? '#ff7a3d' : 'var(--gray-4)',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                marginBottom: '-2px'
-              }}
-            >
-              Status flotă
-            </button>
-            )}
-            {canView('viewRegistru') && (
-            <button
-              onClick={() => changePage('curse')}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                borderBottom: `2px solid ${currentPage === 'curse' ? '#ff7a3d' : 'transparent'}`,
-                padding: '12px 20px',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: currentPage === 'curse' ? '#ff7a3d' : 'var(--gray-4)',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                marginBottom: '-2px'
-              }}
-            >
-              Registru
-            </button>
-            )}
-            {canView('viewGenerare') && (
-            <button
-              onClick={() => changePage('generare')}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                borderBottom: `2px solid ${currentPage === 'generare' ? '#ff7a3d' : 'transparent'}`,
-                padding: '12px 20px',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: currentPage === 'generare' ? '#ff7a3d' : 'var(--gray-4)',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                marginBottom: '-2px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '7px',
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="12" y1="18" x2="12" y2="12"/>
-                <line x1="9" y1="15" x2="15" y2="15"/>
-              </svg>
-              Generare
-            </button>
-            )}
-            {canView('viewChat') && (
-            <button
-              onClick={() => changePage('chat')}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                borderBottom: `2px solid ${currentPage === 'chat' ? '#ff7a3d' : 'transparent'}`,
-                padding: '12px 20px',
-                fontSize: '14px',
-                fontWeight: 600,
-                color: currentPage === 'chat' ? '#ff7a3d' : 'var(--gray-4)',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                marginBottom: '-2px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '7px',
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-              </svg>
-              Chat
-            </button>
-            )}
-            {canView('viewReports') && (
-              <button
-                onClick={() => changePage('rapoarte')}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: `2px solid ${currentPage === 'rapoarte' ? '#ff7a3d' : 'transparent'}`,
-                  padding: '12px 20px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: currentPage === 'rapoarte' ? '#ff7a3d' : 'var(--gray-4)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  marginBottom: '-2px'
-                }}
-              >
-                Rapoarte
-              </button>
-            )}
-            {(user.role === 'admin' || user.permissions?.accessAdmin) && (
-              <button
-                onClick={() => changePage('admin')}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  borderBottom: `2px solid ${currentPage === 'admin' ? '#ff7a3d' : 'transparent'}`,
-                  padding: '12px 20px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  color: currentPage === 'admin' ? '#ff7a3d' : 'var(--gray-4)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  marginBottom: '-2px'
-                }}
-              >
-                Panou admin
-              </button>
-            )}
           </div>
-        </div>
+        </header>
 
         {/* Page Content */}
         {currentPage === 'generare' && canView('viewGenerare') && <GenerareComanda user={user} />}
