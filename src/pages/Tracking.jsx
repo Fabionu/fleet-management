@@ -696,7 +696,7 @@ const handleDeleteTrip = async (truck) => {
                     onMouseLeave={() => setRowHoverId(null)}
                   >
                     {/* ── Vehicul TD ── */}
-                    <td style={{ padding: '8px 12px 8px 0', width: '185px', verticalAlign: 'top', borderLeft: `4px solid ${statusColor}`, position: 'relative', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                    <td style={{ padding: '8px 12px 8px 0', width: '185px', verticalAlign: 'top', borderLeft: `4px solid ${statusColor}`, position: 'relative', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'transparent', transition: 'background 0.15s' }}>
                       <StatusFx status={truck.status} />
                       <div style={{ position: 'relative', zIndex: 1, paddingLeft: '12px' }}>
                         {/* Număr + meniu */}
@@ -714,7 +714,7 @@ const handleDeleteTrip = async (truck) => {
                         {/* Status trigger */}
                         <div
                           onClick={(e) => { e.stopPropagation(); setStatusDropdownId(isOpen ? null : truck.id); setOpenMenuId(null); }}
-                          style={{ display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', padding: '3px 6px', borderRadius: '6px', background: isOpen ? 'var(--btn-hover)' : 'transparent', transition: 'background 0.15s', userSelect: 'none' }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', padding: '3px 6px', marginLeft: '-6px', borderRadius: '8px', background: isOpen ? 'var(--btn-hover)' : 'transparent', transition: 'background 0.15s', userSelect: 'none' }}
                           onMouseEnter={e => e.currentTarget.style.background = 'var(--btn-hover)'}
                           onMouseLeave={e => e.currentTarget.style.background = isOpen ? 'var(--btn-hover)' : 'transparent'}
                         >
@@ -724,18 +724,19 @@ const handleDeleteTrip = async (truck) => {
                         </div>
                         {/* Status dropdown */}
                         {isOpen && (
-                          <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.18)', zIndex: 1000, overflow: 'hidden', minWidth: '160px' }}>
+                          <div onMouseDown={e => e.stopPropagation()} style={{ position: 'absolute', top: 'calc(100% + 6px)', left: '6px', minWidth: '210px', background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '12px', boxShadow: '0 12px 32px rgba(0,0,0,0.22)', zIndex: 1000, padding: '6px', display: 'flex', flexDirection: 'column', animation: 'fm-menu 0.16s ease-out' }}>
                             {statusOptions.filter(o => o.value !== 'all').map(opt => {
                               const optColor = opt.value === 'liber' ? '#ef4444' : opt.value === 'incarcare' ? '#ff7a3d' : opt.value === 'descarcare' ? '#ff7a3d' : opt.value === 'tranzit' ? '#60a5fa' : opt.value === 'booked' ? '#4ade80' : '#a8a8a8';
                               const isActive = truck.status === opt.value;
                               return (
                                 <button key={opt.value} onClick={(e) => { e.stopPropagation(); handleUpdate(truck, 'status', opt.value); setStatusDropdownId(null); }}
-                                  style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '10px 14px', background: isActive ? 'var(--gray-1)' : 'transparent', border: 'none', textAlign: 'left', fontSize: '13px', color: 'var(--black)', cursor: 'pointer', borderLeft: isActive ? `3px solid ${optColor}` : '3px solid transparent', transition: 'background 0.15s', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '10px', width: '100%', minHeight: '36px', padding: '0 12px', background: isActive ? 'var(--gray-1)' : 'transparent', border: 'none', borderRadius: '8px', textAlign: 'left', fontSize: '13px', fontWeight: isActive ? 600 : 400, color: 'var(--black)', cursor: 'pointer', transition: 'background 0.15s', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif" }}
                                   onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'var(--gray-1)'; }}
                                   onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                                 >
                                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: optColor, flexShrink: 0 }} />
-                                  {opt.label}
+                                  <span style={{ flex: 1 }}>{opt.label}</span>
+                                  {isActive && <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
                                 </button>
                               );
                             })}
@@ -755,7 +756,7 @@ const handleDeleteTrip = async (truck) => {
                     </td>
 
                     {/* ── Repaus TD ── */}
-                    <td style={{ padding: '8px 14px', verticalAlign: 'top', width: '170px', position: 'relative', zIndex: (isPauseOpen || weekendEditId === truck.id) ? 100 : 'auto', overflow: 'visible', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                    <td style={{ padding: '8px 14px', verticalAlign: 'top', width: '170px', position: 'relative', zIndex: (isPauseOpen || weekendEditId === truck.id) ? 100 : 'auto', overflow: 'visible', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'transparent', transition: 'background 0.15s' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
                         {/* Pauza 9h */}
                         <div data-pause-form onMouseDown={e => e.stopPropagation()} style={{ position: 'relative' }}>
@@ -779,15 +780,15 @@ const handleDeleteTrip = async (truck) => {
                               onMouseDown={e => e.stopPropagation()}
                               style={{
                                 position: 'absolute',
-                                top: 'calc(100% + 4px)',
+                                top: 'calc(100% + 6px)',
                                 left: 0,
-                                right: 0,
-                                background: 'var(--bg-page)',
+                                width: '224px',
+                                background: 'var(--surface)',
                                 border: '1px solid var(--gray-2)',
-                                borderRadius: '8px',
-                                boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+                                borderRadius: '12px',
+                                boxShadow: '0 12px 32px rgba(0,0,0,0.22)',
                                 zIndex: 200,
-                                padding: '10px',
+                                padding: '12px',
                                 display: 'flex',
                                 flexDirection: 'column',
                                 gap: '6px',
@@ -810,7 +811,7 @@ const handleDeleteTrip = async (truck) => {
                                     if (val.length > 5) val = val.slice(0, 5);
                                     setPauseFormData(p => ({ ...p, date: val }));
                                   }}
-                                  style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', fontSize: '12px', padding: '4px 6px', border: '1px solid var(--gray-2)', borderRadius: '6px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none' }}
+                                  style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', fontSize: '13px', padding: '0 10px', height: '34px', border: '1px solid var(--gray-2)', borderRadius: '8px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none' }}
                                 />
                               </div>
                               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -827,17 +828,17 @@ const handleDeleteTrip = async (truck) => {
                                     if (val.length > 5) val = val.slice(0, 5);
                                     setPauseFormData(p => ({ ...p, time: val }));
                                   }}
-                                  style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', fontSize: '12px', padding: '4px 6px', border: '1px solid var(--gray-2)', borderRadius: '6px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none' }}
+                                  style={{ flex: 1, minWidth: 0, boxSizing: 'border-box', fontSize: '13px', padding: '0 10px', height: '34px', border: '1px solid var(--gray-2)', borderRadius: '8px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none' }}
                                 />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }}>
                                 <button
                                   onClick={() => handleSavePause(truck)}
-                                  style={{ width: '100%', padding: '5px', fontSize: '11px', background: 'var(--orange)', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#fff', fontWeight: 600 }}
+                                  style={{ width: '100%', height: '34px', padding: '0', fontSize: '12px', background: 'var(--black)', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--bg-page)', fontWeight: 600 }}
                                 >Salvare</button>
                                 <button
                                   onClick={() => { setPauseEditId(null); }}
-                                  style={{ width: '100%', padding: '5px', fontSize: '11px', background: 'transparent', border: '1px solid var(--gray-2)', borderRadius: '6px', cursor: 'pointer', color: 'var(--gray-4)' }}
+                                  style={{ width: '100%', height: '34px', padding: '0', fontSize: '12px', background: 'transparent', border: '1px solid var(--gray-2)', borderRadius: '8px', cursor: 'pointer', color: 'var(--gray-4)' }}
                                 >Anulare</button>
                               </div>
                             </div>
@@ -899,13 +900,13 @@ const handleDeleteTrip = async (truck) => {
                               onMouseDown={e => e.stopPropagation()}
                               style={{
                                 position: 'absolute',
-                                top: 'calc(100% + 4px)',
+                                top: 'calc(100% + 6px)',
                                 left: 0,
-                                right: 0,
-                                background: 'var(--bg-page)',
+                                width: '224px',
+                                background: 'var(--surface)',
                                 border: '1px solid var(--gray-2)',
-                                borderRadius: '10px',
-                                boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+                                borderRadius: '12px',
+                                boxShadow: '0 12px 32px rgba(0,0,0,0.22)',
                                 zIndex: 200,
                                 padding: '12px',
                                 overflow: 'hidden',
@@ -917,7 +918,7 @@ const handleDeleteTrip = async (truck) => {
                               <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
                                 {['45H', '24H'].map(d => (
                                   <button key={d} onClick={() => setWeekendFormData(p => ({ ...p, duration: d }))}
-                                    style={{ padding: '3px 8px', fontSize: '11px', borderRadius: '5px', border: weekendFormData.duration === d ? '2px solid var(--orange)' : '1px solid var(--gray-3)', background: weekendFormData.duration === d ? 'rgba(234,88,12,0.08)' : 'transparent', cursor: 'pointer', fontWeight: weekendFormData.duration === d ? 700 : 400, color: weekendFormData.duration === d ? 'var(--orange)' : 'var(--black)' }}>{d}</button>
+                                    style={{ flex: 1, height: '30px', fontSize: '12px', borderRadius: '8px', border: weekendFormData.duration === d ? '1px solid var(--fm-accent)' : '1px solid var(--gray-2)', background: weekendFormData.duration === d ? 'var(--fm-accent-soft)' : 'transparent', cursor: 'pointer', fontWeight: weekendFormData.duration === d ? 700 : 400, color: 'var(--black)' }}>{d}</button>
                                 ))}
                               </div>
                               <div style={{ fontSize: '11px', color: 'var(--gray-4)', marginBottom: '4px' }}>Zi:</div>
@@ -935,8 +936,8 @@ const handleDeleteTrip = async (truck) => {
                               }}
                                 style={{ width: '100%', padding: '4px 6px', fontSize: '12px', border: '1px solid var(--gray-2)', borderRadius: '6px', background: 'var(--bg-page)', color: 'var(--black)', outline: 'none', boxSizing: 'border-box', marginBottom: '8px' }} />
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                <button onClick={() => handleSaveWeekend(truck, weekendFormData)} style={{ width: '100%', padding: '5px', fontSize: '11px', background: 'var(--orange)', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#fff', fontWeight: 600 }}>Salvare</button>
-                                <button onClick={() => { setWeekendEditId(null); }} style={{ width: '100%', padding: '5px', fontSize: '11px', background: 'transparent', border: '1px solid var(--gray-2)', borderRadius: '6px', cursor: 'pointer', color: 'var(--gray-4)' }}>Anulare</button>
+                                <button onClick={() => handleSaveWeekend(truck, weekendFormData)} style={{ width: '100%', height: '34px', padding: '0', fontSize: '12px', background: 'var(--black)', border: 'none', borderRadius: '8px', cursor: 'pointer', color: 'var(--bg-page)', fontWeight: 600 }}>Salvare</button>
+                                <button onClick={() => { setWeekendEditId(null); }} style={{ width: '100%', height: '34px', padding: '0', fontSize: '12px', background: 'transparent', border: '1px solid var(--gray-2)', borderRadius: '8px', cursor: 'pointer', color: 'var(--gray-4)' }}>Anulare</button>
                               </div>
                             </div>
                           )}
@@ -945,7 +946,7 @@ const handleDeleteTrip = async (truck) => {
                     </td>
 
                     {/* ── Rută TD (încărcare → descărcare) ── */}
-                    <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                    <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'transparent', transition: 'background 0.15s' }}>
                       {(truck.load_location || truck.unload_location) ? (
                         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(40px,80px) minmax(0,1fr)', columnGap: '14px', alignItems: 'start' }}>
                           <div style={{ minWidth: 0 }}>
@@ -963,7 +964,7 @@ const handleDeleteTrip = async (truck) => {
                     </td>
 
                     {/* ── Client TD ── */}
-                    <td style={{ padding: '8px 14px', verticalAlign: 'top', width: '200px', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                    <td style={{ padding: '8px 14px', verticalAlign: 'top', width: '200px', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'transparent', transition: 'background 0.15s' }}>
                       {truck.client ? (
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '4px' }}>
                           <div>
@@ -984,7 +985,7 @@ const handleDeleteTrip = async (truck) => {
                     </td>
 
                     {/* ── Observații TD ── */}
-                    <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'var(--surface)', transition: 'background 0.15s' }}>
+                    <td style={{ padding: '8px 14px', verticalAlign: 'top', background: rowHoverId === truck.id ? 'var(--sv-hover)' : 'transparent', transition: 'background 0.15s' }}>
                       <textarea value={truck.observations || ''} onChange={(e) => handleUpdate(truck, 'observations', e.target.value)} rows="2"
                         style={{ width: '100%', minWidth: '160px', padding: '4px 6px', border: 'none', borderBottom: '1px solid transparent', borderRadius: '0', fontSize: '13px', background: 'transparent', color: 'var(--gray-4)', resize: 'none', outline: 'none', fontFamily: "'SF Pro Display',-apple-system,BlinkMacSystemFont,sans-serif", transition: 'border-color 0.2s, color 0.2s' }}
                         onFocus={(e) => { e.target.style.borderBottom = '1px solid var(--gray-3)'; e.target.style.color = 'var(--black)'; }}

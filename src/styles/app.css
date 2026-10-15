@@ -1419,3 +1419,5 @@ body.card-view tbody tr td {
   .fm-fx-wash, .fm-fx-beam, .fm-fx-streak, .fm-fx-mote { animation: none; }
   .fm-fx-streak, .fm-fx-mote { display: none; }
 }
+
+@keyframes fm-menu { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
