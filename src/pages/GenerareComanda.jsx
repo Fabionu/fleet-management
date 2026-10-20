@@ -423,7 +423,7 @@ export default function GenerareComanda({ user }) {
   const deleteStop     = (id) => setStops(prev => prev.filter(s => s.id !== id));
   const addStop        = (type) => setStops(prev => [...prev, newStop(type)]);
   const changeStopType = (id, newType) => setStops(prev => prev.map(s => s.id === id ? { ...s, type: newType } : s));
-  const canDeleteStop  = (stop) => stops.filter(s => s.type === stop.type).length > 1;
+  const canDeleteStop  = (stop) => stop.type === 'vama' || stops.filter(s => s.type === stop.type).length > 1;
 
   const copyAddr = (stopId) => {
     const s = stops.find(st => st.id === stopId);
@@ -491,7 +491,7 @@ export default function GenerareComanda({ user }) {
   const previewLines = buildWhatsApp(fields, stops).split('\n');
 
   return (
-    <div style={{ paddingTop: '28px', fontFamily: FONT }}>
+    <div style={{ paddingTop: '28px', fontFamily: FONT, maxWidth: '1340px', margin: '0 auto' }}>
 
       {/* Modal PDF */}
       {showPdfModal && (
