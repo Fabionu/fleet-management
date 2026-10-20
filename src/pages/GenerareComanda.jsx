@@ -527,8 +527,8 @@ export default function GenerareComanda({ user }) {
         </button>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'flex-start' }}>
-        <div style={{ flex: '999 1 560px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'flex-start', maxWidth: '1340px' }}>
+        <div style={{ flex: '1 1 600px', maxWidth: '820px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
           {/* 01 — Document */}
           <section style={{ paddingBottom: '24px', borderBottom: '1px solid var(--gray-2)' }}>
@@ -636,7 +636,7 @@ export default function GenerareComanda({ user }) {
         </div>
 
         {/* Previzualizare */}
-        <aside style={{ flex: '1 1 360px', minWidth: 0, position: 'sticky', top: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <aside style={{ flex: '1 1 360px', maxWidth: '480px', minWidth: 0, position: 'sticky', top: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '14px', overflow: 'hidden' }}>
             <div style={{ padding: '12px 14px 12px 20px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
