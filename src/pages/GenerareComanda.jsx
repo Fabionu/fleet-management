@@ -87,15 +87,15 @@ function buildWhatsApp(fields, stops) {
 // ── Styles ────────────────────────────────────────────────────
 const inputStyle = {
   width: '100%', boxSizing: 'border-box',
-  padding: '8px 12px', fontSize: '13px',
-  border: '1px solid transparent', borderRadius: '8px',
+  padding: '14px 16px', minHeight: '50px', fontSize: '16px',
+  border: '1px solid transparent', borderRadius: '12px',
   background: 'var(--gray-1)', color: 'var(--black)',
   outline: 'none', fontFamily: FONT, transition: 'border-color 0.15s',
 };
 const labelStyle = {
-  fontSize: '11px', fontWeight: 600, color: 'var(--gray-4)',
+  fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)',
   textTransform: 'uppercase', letterSpacing: '0.07em',
-  marginBottom: '4px', display: 'block', fontFamily: FONT,
+  marginBottom: '7px', display: 'block', fontFamily: FONT,
 };
 const iconBtn = {
   background: 'transparent', border: 'none', cursor: 'pointer',
@@ -146,7 +146,7 @@ function TypeSelector({ type, onChange }) {
     <div ref={ref} style={{ position: 'relative' }}>
       <button
         onClick={() => setOpen(v => !v)}
-        style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '3px 8px', border: '1px solid var(--gray-3)', borderRadius: '5px', background: 'transparent', cursor: 'pointer', fontSize: '11px', fontWeight: 600, color: current.color, fontFamily: FONT, transition: 'all 0.12s', letterSpacing: '0.04em' }}
+        style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 14px', border: '1px solid var(--gray-3)', borderRadius: '8px', background: 'transparent', cursor: 'pointer', fontSize: '13px', fontWeight: 600, color: current.color, fontFamily: FONT, transition: 'all 0.12s', letterSpacing: '0.04em' }}
         onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-1)'; e.currentTarget.style.borderColor = 'var(--gray-4)'; }}
         onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'var(--gray-3)'; }}
       >
@@ -232,7 +232,7 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
       {/* controls: type selector left, reorder+delete right */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '-4px' }}>
         <TypeSelector type={stop.type} onChange={(newType) => onChangeType(stop.id, newType)} />
@@ -377,7 +377,7 @@ function SectionTitle({ num, title, extra, right }) {
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '14px' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
         <span style={{ fontSize: '12px', color: 'var(--gray-4)', fontVariantNumeric: 'tabular-nums' }}>{num}</span>
-        <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600, color: 'var(--black)' }}>{title}</h3>
+        <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: 'var(--black)' }}>{title}</h3>
         {extra && <span style={{ fontSize: '13px', color: 'var(--gray-4)' }}>{extra}</span>}
       </div>
       {right}
@@ -386,9 +386,9 @@ function SectionTitle({ num, title, extra, right }) {
 }
 
 const ghostBtn = {
-  display: 'inline-flex', alignItems: 'center', gap: '7px', padding: '8px 14px',
-  border: '1px solid var(--gray-2)', borderRadius: '10px', background: 'transparent',
-  cursor: 'pointer', fontSize: '13px', color: 'var(--black)', fontFamily: FONT,
+  display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 18px', minHeight: '46px', boxSizing: 'border-box',
+  border: '1px solid var(--gray-2)', borderRadius: '12px', background: 'transparent',
+  cursor: 'pointer', fontSize: '14px', color: 'var(--black)', fontFamily: FONT,
 };
 
 // ── Main component ────────────────────────────────────────────
@@ -528,7 +528,7 @@ export default function GenerareComanda({ user }) {
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'flex-start', maxWidth: '1340px' }}>
-        <div style={{ flex: '1 1 600px', maxWidth: '820px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: '1 1 880px', maxWidth: '940px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
           {/* 01 — Document */}
           <section style={{ paddingBottom: '24px', borderBottom: '1px solid var(--gray-2)' }}>
@@ -543,8 +543,13 @@ export default function GenerareComanda({ user }) {
               <div style={{ position: 'relative', overflow: 'hidden', isolation: 'isolate', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '14px 16px', padding: '14px 16px', border: '1px solid var(--gray-2)', borderRadius: '14px', background: 'var(--surface)' }}
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}>
                 <HackStream />
-                <span style={{ width: '44px', height: '44px', flexShrink: 0, borderRadius: '10px', background: 'var(--gray-1)', color: 'var(--black)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span className="fm-bw" style={{ position: 'relative', width: '52px', height: '52px', flexShrink: 0 }}>
+                  <span style={{ width: '52px', height: '52px', borderRadius: '12px', background: 'var(--gray-1)', color: error ? 'var(--black)' : 'var(--fm-st-green)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {error
+                      ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                      : <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>}
+                  </span>
+                  {!error && [0, 45, 90, 135, 180, 225, 270, 315].map(a => <span key={a} className="fm-sp2" aria-hidden="true" style={{ '--a': `${a}deg` }} />)}
                 </span>
                 <div style={{ flex: '1 1 200px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: '3px' }}>
                   <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--black)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fileName}</span>
@@ -571,7 +576,7 @@ export default function GenerareComanda({ user }) {
                 onMouseEnter={() => setHoverDrop(true)} onMouseLeave={() => setHoverDrop(false)}
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
                 style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '30px 20px', border: `1.5px dashed ${(dragOver || hoverDrop) ? 'var(--fm-accent)' : 'var(--gray-3)'}`, borderRadius: '14px', background: dragOver ? 'var(--fm-accent-soft)' : 'transparent', color: 'var(--gray-4)', cursor: 'pointer', fontFamily: FONT, transition: 'all 0.2s' }}>
-                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6M9 15l3-3 3 3"/></svg>
+                <svg className="fm-bob" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path className="fm-arrow" d="M12 18v-6M9 15l3-3 3 3" style={{ stroke: 'var(--fm-accent)' }}/></svg>
                 <span style={{ fontSize: '14px', color: 'var(--black)' }}><span style={{ color: 'var(--fm-accent)', fontWeight: 600 }}>Alege un PDF</span> sau trage-l aici</span>
                 <span style={{ fontSize: '12px' }}>Comanda de transport, un singur fișier PDF</span>
                 {error && <span style={{ fontSize: '12px', color: 'var(--red)' }}>{error}</span>}
@@ -609,13 +614,13 @@ export default function GenerareComanda({ user }) {
               </div>
             } />
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px 32px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', gap: '24px' }}>
               {[
-                { type: 'incarcare',  label: 'Încărcare',  color: 'var(--green)',  list: incarcari,  add: 'Adaugă încărcare',  basis: '1 1 300px', delay: '0s' },
-                { type: 'descarcare', label: 'Descărcare', color: 'var(--orange)', list: descarcari, add: 'Adaugă descărcare', basis: '1 1 300px', delay: '-1.2s' },
+                { type: 'incarcare',  label: 'Încărcare',  color: 'var(--green)',  list: incarcari,  add: 'Adaugă încărcare',  basis: '1 1 340px', delay: '0s' },
+                { type: 'descarcare', label: 'Descărcare', color: 'var(--orange)', list: descarcari, add: 'Adaugă descărcare', basis: '1 1 340px', delay: '-1.2s' },
                 ...(vami.length > 0 ? [{ type: 'vama', label: 'Vamă', color: 'var(--blue)', list: vami, add: 'Adaugă vamă', basis: '1 1 100%', delay: '-2.4s' }] : []),
               ].map(col => (
-                <div key={col.type} style={{ flex: col.basis, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                <div key={col.type} style={{ flex: col.basis, minWidth: 0, display: 'flex', flexDirection: 'column', padding: '24px', border: '1px solid var(--gray-2)', borderRadius: '18px', background: 'var(--surface)' }}>
                   <ColHeader label={col.label} color={col.color} count={col.list.length} delay={col.delay} />
                   {col.list.map((stop, idx) => (
                     <div key={stop.id} style={idx > 0 ? { marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed var(--gray-2)' } : undefined}>
@@ -636,30 +641,30 @@ export default function GenerareComanda({ user }) {
         </div>
 
         {/* Previzualizare */}
-        <aside style={{ flex: '1 1 360px', maxWidth: '480px', minWidth: 0, position: 'sticky', top: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <aside style={{ flex: '1 1 380px', maxWidth: '460px', minWidth: 0, position: 'sticky', top: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '14px', overflow: 'hidden' }}>
-            <div style={{ padding: '12px 14px 12px 20px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+            <div style={{ padding: '18px 20px 18px 28px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--black)', fontFamily: FONT }}>Previzualizare mesaj</span>
-                <span style={{ fontSize: '12px', color: 'var(--gray-4)', fontFamily: FONT }}>Format WhatsApp</span>
+                <span style={{ fontSize: '17px', fontWeight: 600, color: 'var(--black)', fontFamily: FONT }}>Previzualizare mesaj</span>
+                <span style={{ fontSize: '13px', color: 'var(--gray-4)', fontFamily: FONT }}>Format WhatsApp</span>
               </div>
               <button onClick={handleCopy}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 16px', border: 'none', borderRadius: '10px', background: copied ? 'var(--fm-ok-bg)' : 'var(--black)', color: copied ? 'var(--fm-st-green)' : 'var(--bg-page)', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: FONT, transition: 'all 0.15s' }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '13px 20px', border: 'none', borderRadius: '12px', background: copied ? 'var(--fm-ok-bg)' : 'var(--black)', color: copied ? 'var(--fm-st-green)' : 'var(--bg-page)', cursor: 'pointer', fontSize: '15px', fontWeight: 500, fontFamily: FONT, transition: 'all 0.15s' }}>
                 {copied
                   ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiat</>
                   : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiază</>
                 }
               </button>
             </div>
-            <div style={{ padding: '18px 22px', minHeight: '220px', maxHeight: '70vh', overflowY: 'auto' }}>
+            <div style={{ padding: '26px 28px', minHeight: '420px', maxHeight: '70vh', overflowY: 'auto' }}>
               {previewLines.map((line, i) => {
                 if (line === '') return <div key={i} style={{ height: '0.7em' }} />;
                 const boldMatch = line.match(/^\*•(.*?)\*(.*)$/);
                 if (boldMatch) {
                   const label = '•' + boldMatch[1], rest = boldMatch[2].trim();
-                  return <div key={i} style={{ fontSize: '12.5px', color: 'var(--black)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7 }}><strong style={{ fontWeight: 600 }}>{label}</strong>{rest ? ' ' + rest : ''}</div>;
+                  return <div key={i} style={{ fontSize: '15px', color: 'var(--black)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7 }}><strong style={{ fontWeight: 600 }}>{label}</strong>{rest ? ' ' + rest : ''}</div>;
                 }
-                return <div key={i} style={{ fontSize: '12.5px', color: 'var(--gray-4)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{line}</div>;
+                return <div key={i} style={{ fontSize: '15px', color: 'var(--gray-4)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{line}</div>;
               })}
             </div>
           </div>

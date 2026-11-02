@@ -1421,3 +1421,14 @@ body.card-view tbody tr td {
 }
 
 @keyframes fm-menu { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+
+/* Generare — pictogramă plutitoare în zona de încărcare */
+.fm-bob { animation: fm-bob 2.4s ease-in-out infinite; }
+.fm-arrow { animation: fm-rise 2.4s ease-in-out infinite; }
+@keyframes fm-bob { 0%, 100% { transform: translateY(4px); } 50% { transform: translateY(-8px); } }
+@keyframes fm-rise { 0%, 100% { opacity: 0.2; transform: translateY(5px); } 50% { opacity: 1; transform: translateY(-3px); } }
+
+/* Generare — scântei în jurul bifei după încărcare */
+.fm-sp2 { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: var(--fm-accent); opacity: 0; pointer-events: none; animation: fm-sp2 3s ease-out infinite; }
+@keyframes fm-sp2 { 0%, 10% { opacity: 0; transform: rotate(var(--a)) translateX(12px); } 25% { opacity: 1; } 60%, 100% { opacity: 0; transform: rotate(var(--a)) translateX(34px); } }
+@media (prefers-reduced-motion: reduce) { .fm-bob, .fm-arrow, .fm-sp2 { animation: none; } }
