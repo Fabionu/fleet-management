@@ -491,7 +491,7 @@ export default function GenerareComanda({ user }) {
   const previewLines = buildWhatsApp(fields, stops).split('\n');
 
   return (
-    <div style={{ paddingTop: '28px', fontFamily: FONT }}>
+    <div style={{ paddingTop: '28px', fontFamily: FONT, maxWidth: '1560px', margin: '0 auto' }}>
 
       {/* Modal PDF */}
       {showPdfModal && (
@@ -520,7 +520,7 @@ export default function GenerareComanda({ user }) {
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'flex-start' }}>
-        <div style={{ flex: '1 1 440px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: '1 1 440px', maxWidth: '1000px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
           {/* 01 — Document */}
           <section style={{ paddingBottom: '20px', borderBottom: '1px solid var(--fm-line)' }}>
