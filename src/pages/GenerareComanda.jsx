@@ -491,7 +491,7 @@ export default function GenerareComanda({ user }) {
   const previewLines = buildWhatsApp(fields, stops).split('\n');
 
   return (
-    <div style={{ paddingTop: '28px', fontFamily: FONT, maxWidth: '1340px', margin: '0 auto' }}>
+    <div style={{ paddingTop: '28px', fontFamily: FONT }}>
 
       {/* Modal PDF */}
       {showPdfModal && (
@@ -519,8 +519,8 @@ export default function GenerareComanda({ user }) {
         <p style={{ fontSize: '14px', color: 'var(--gray-4)', margin: '8px 0 0', maxWidth: '620px', lineHeight: 1.5, fontFamily: FONT }}>Încarcă PDF-ul comenzii de transport, AI-ul completează câmpurile, iar tu trimiți mesajul gata formatat pe WhatsApp.</p>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'flex-start', maxWidth: '1340px' }}>
-        <div style={{ flex: '1 1 440px', maxWidth: '940px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'flex-start' }}>
+        <div style={{ flex: '1 1 440px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
           {/* 01 — Document */}
           <section style={{ paddingBottom: '24px', borderBottom: '1px solid var(--fm-line)' }}>
@@ -639,7 +639,7 @@ export default function GenerareComanda({ user }) {
         </div>
 
         {/* Previzualizare */}
-        <aside style={{ flex: '1 1 360px', maxWidth: '520px', minWidth: 0, position: 'sticky', top: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <aside style={{ flex: '1 1 360px', maxWidth: '560px', minWidth: 0, position: 'sticky', top: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ background: 'var(--fm-card-bg)', border: '1px solid var(--fm-line)', borderRadius: '14px', overflow: 'hidden' }}>
             <div style={{ padding: '18px 20px 18px 28px', borderBottom: '1px solid var(--fm-line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
