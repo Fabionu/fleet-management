@@ -1330,6 +1330,9 @@ body.card-view tbody tr td {
   --fm-st-green: #15803d;
   --fm-ok-bg: #e9f6ee;
   --fm-hack: #15803d;
+  --fm-field-bg: #f0f0ec;
+  --fm-card-bg: #ffffff;
+  --fm-line: #e8e8e4;
   --fm-wa-chat-bg: #efeae2;
   --fm-wa-bubble: #d9fdd3;
   --fm-wa-text: #111b21;
@@ -1342,6 +1345,9 @@ body.card-view tbody tr td {
   --fm-st-green: #4ade80;
   --fm-ok-bg: #132519;
   --fm-hack: #4ade80;
+  --fm-field-bg: #282826;
+  --fm-card-bg: #1a1a18;
+  --fm-line: #323230;
   --fm-wa-chat-bg: #0b141a;
   --fm-wa-bubble: #005c4b;
   --fm-wa-text: #e9edef;

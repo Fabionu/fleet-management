@@ -89,7 +89,7 @@ const inputStyle = {
   width: '100%', boxSizing: 'border-box',
   padding: '14px 16px', minHeight: '50px', fontSize: '16px',
   border: '1px solid transparent', borderRadius: '12px',
-  background: 'var(--gray-1)', color: 'var(--black)',
+  background: 'var(--fm-field-bg)', color: 'var(--black)',
   outline: 'none', fontFamily: FONT, transition: 'border-color 0.15s',
 };
 const labelStyle = {
@@ -387,7 +387,7 @@ function SectionTitle({ num, title, extra, right }) {
 
 const ghostBtn = {
   display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 18px', minHeight: '46px', boxSizing: 'border-box',
-  border: '1px solid var(--gray-2)', borderRadius: '12px', background: 'transparent',
+  border: '1px solid var(--fm-line)', borderRadius: '12px', background: 'transparent',
   cursor: 'pointer', fontSize: '14px', color: 'var(--black)', fontFamily: FONT,
 };
 
@@ -519,11 +519,11 @@ export default function GenerareComanda({ user }) {
         <p style={{ fontSize: '14px', color: 'var(--gray-4)', margin: '8px 0 0', maxWidth: '620px', lineHeight: 1.5, fontFamily: FONT }}>Încarcă PDF-ul comenzii de transport, AI-ul completează câmpurile, iar tu trimiți mesajul gata formatat pe WhatsApp.</p>
       </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'flex-start', maxWidth: '1340px' }}>
-        <div style={{ flex: '1 1 880px', maxWidth: '940px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'flex-start', maxWidth: '1340px' }}>
+        <div style={{ flex: '1 1 440px', maxWidth: '940px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
           {/* 01 — Document */}
-          <section style={{ paddingBottom: '24px', borderBottom: '1px solid var(--gray-2)' }}>
+          <section style={{ paddingBottom: '24px', borderBottom: '1px solid var(--fm-line)' }}>
             <SectionTitle num="01" title="Document" />
             <input ref={fileRef} type="file" accept=".pdf" style={{ display: 'none' }} onChange={handleFileInput} />
             {loading ? (
@@ -583,7 +583,7 @@ export default function GenerareComanda({ user }) {
           </section>
 
           {/* 02 — Detalii comandă */}
-          <section style={{ padding: '24px 0', borderBottom: '1px solid var(--gray-2)' }}>
+          <section style={{ padding: '24px 0', borderBottom: '1px solid var(--fm-line)' }}>
             <SectionTitle num="02" title="Detalii comandă" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px 16px' }}>
               <Field label="Număr comandă" value={fields.order_number} onChange={setField('order_number')} />
@@ -618,7 +618,7 @@ export default function GenerareComanda({ user }) {
                 { type: 'descarcare', label: 'Descărcare', color: 'var(--orange)', list: descarcari, add: 'Adaugă descărcare', basis: '1 1 340px', delay: '-1.2s' },
                 ...(vami.length > 0 ? [{ type: 'vama', label: 'Vamă', color: 'var(--blue)', list: vami, add: 'Adaugă vamă', basis: '1 1 100%', delay: '-2.4s' }] : []),
               ].map(col => (
-                <div key={col.type} style={{ flex: col.basis, minWidth: 0, display: 'flex', flexDirection: 'column', padding: '24px', border: '1px solid var(--gray-2)', borderRadius: '18px', background: 'var(--surface)' }}>
+                <div key={col.type} style={{ flex: col.basis, minWidth: 0, display: 'flex', flexDirection: 'column', padding: '24px', border: '1px solid var(--fm-line)', borderRadius: '18px', background: 'var(--fm-card-bg)' }}>
                   <ColHeader label={col.label} color={col.color} count={col.list.length} delay={col.delay} />
                   {col.list.map((stop, idx) => (
                     <div key={stop.id} style={idx > 0 ? { marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed var(--gray-2)' } : undefined}>
@@ -639,9 +639,9 @@ export default function GenerareComanda({ user }) {
         </div>
 
         {/* Previzualizare */}
-        <aside style={{ flex: '1 1 460px', maxWidth: '520px', minWidth: 0, position: 'sticky', top: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '14px', overflow: 'hidden' }}>
-            <div style={{ padding: '18px 20px 18px 28px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+        <aside style={{ flex: '1 1 360px', maxWidth: '520px', minWidth: 0, position: 'sticky', top: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ background: 'var(--fm-card-bg)', border: '1px solid var(--fm-line)', borderRadius: '14px', overflow: 'hidden' }}>
+            <div style={{ padding: '18px 20px 18px 28px', borderBottom: '1px solid var(--fm-line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                 <span style={{ fontSize: '17px', fontWeight: 600, color: 'var(--black)', fontFamily: FONT }}>Previzualizare mesaj</span>
                 <span style={{ fontSize: '13px', color: 'var(--gray-4)', fontFamily: FONT }}>Format WhatsApp</span>
