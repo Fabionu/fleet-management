@@ -1451,3 +1451,70 @@ body.card-view tbody tr td {
 .fm-reset-ic { transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
 .fm-reset-btn:hover .fm-reset-ic { transform: rotate(-360deg); }
 @media (prefers-reduced-motion: reduce) { .fm-reset-ic { transition: none; } .fm-reset-btn:hover .fm-reset-ic { transform: none; } }
+
+/* ══════════════════════════════════════════
+   Generare comandă — „Design Apple” (comutator iOS)
+   ══════════════════════════════════════════ */
+:root, :root[data-theme="light"] {
+  --ap-bg: #f5f5f7;
+  --ap-card: #ffffff;
+  --ap-fill: #f5f5f7;
+  --ap-text: #1d1d1f;
+  --ap-sub: #6e6e73;
+  --ap-sep: #d2d2d7;
+  --ap-dash: #c7c7cc;
+  --ap-accent: #0071e3;
+  --ap-on-accent: #ffffff;
+  --ap-tint: rgba(0, 113, 227, 0.1);
+  --ap-ring: 0, 113, 227;
+  --ap-green: #248a3d;
+  --ap-green-tint: rgba(36, 138, 61, 0.12);
+  --ap-orange: #c93400;
+  --ap-orange-tint: rgba(201, 52, 0, 0.1);
+  --ap-blue: #0071e3;
+  --ap-blue-tint: rgba(0, 113, 227, 0.1);
+  --ap-red: #d70015;
+  --ap-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  --ap-switch-on: #34c759;
+  --ap-switch-off: #e9e9ea;
+  --ap-knob: #ffffff;
+}
+:root[data-theme="dark"] {
+  --ap-bg: #000000;
+  --ap-card: #1c1c1e;
+  --ap-fill: #2c2c2e;
+  --ap-text: #f5f5f7;
+  --ap-sub: #98989d;
+  --ap-sep: #3a3a3c;
+  --ap-dash: #545458;
+  --ap-accent: #2997ff;
+  --ap-on-accent: #ffffff;
+  --ap-tint: rgba(41, 151, 255, 0.16);
+  --ap-ring: 41, 151, 255;
+  --ap-green: #30d158;
+  --ap-green-tint: rgba(48, 209, 88, 0.16);
+  --ap-orange: #ff9f0a;
+  --ap-orange-tint: rgba(255, 159, 10, 0.16);
+  --ap-blue: #64d2ff;
+  --ap-blue-tint: rgba(100, 210, 255, 0.16);
+  --ap-red: #ff453a;
+  --ap-shadow: none;
+  --ap-switch-on: #30d158;
+  --ap-switch-off: #39393d;
+  --ap-knob: #ffffff;
+}
+.ap-input::placeholder { color: var(--ap-sub); opacity: 0.85; }
+.ap-row:focus-within label { color: var(--ap-accent); }
+.ap-press { transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.15s; }
+.ap-press:active { transform: scale(0.97); }
+.ap-switch { transition: background 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.ap-switch-knob { transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.ap-doc-tile { animation: ap-float 1.6s ease-in-out infinite, ap-ring 1.6s ease-out infinite; }
+.ap-doc-arrow { transform-box: fill-box; animation: ap-arrow 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite; }
+@keyframes ap-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes ap-ring { 0% { box-shadow: 0 0 0 0 rgba(var(--ap-ring), 0.35); } 100% { box-shadow: 0 0 0 12px rgba(var(--ap-ring), 0); } }
+@keyframes ap-arrow { 0% { transform: translateY(5px); opacity: 0.2; } 65% { transform: translateY(-2px); opacity: 1; } 100% { transform: translateY(-5px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .ap-doc-tile, .ap-doc-arrow { animation: none; }
+  .ap-switch, .ap-switch-knob, .ap-press { transition: none; }
+}

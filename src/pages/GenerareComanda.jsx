@@ -1,4 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { makeAddrKey, useCoordsCache, WhatsAppBubble, DesignSwitch } from './generareShared';
+import GenerareComandaApple from './GenerareComandaApple';
 
 const FONT = "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif";
 
@@ -17,10 +19,6 @@ const newStop = (type) => ({
 
 const EMPTY_FIELDS = { order_number: '', client: '' };
 const DEFAULT_STOPS = () => [newStop('incarcare'), newStop('descarcare')];
-
-// Normalize address key for cache lookup
-const makeAddrKey = (street, city) =>
-  [street, city].filter(Boolean).map(s => s.trim().toLowerCase()).join('|');
 
 const DIRECT_RE = /^(asap|direct|directly)$/i;
 function fmtTime(t) {
@@ -183,53 +181,7 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
   const isVama = stop.type === 'vama';
   const set = (key) => (val) => onUpdate(stop.id, key, val);
 
-  // Coordinate cache state
-  const [cachedCoords, setCachedCoords] = useState(null);
-  const [coordsSaved,  setCoordsSaved]  = useState(false);
-  const [savingCoords, setSavingCoords] = useState(false);
-
-  // Check cache when street/city changes (only if coords not filled)
-  useEffect(() => {
-    if (isVama) return;
-    const key = makeAddrKey(stop.street, stop.city);
-    if (!key || stop.coords) { setCachedCoords(null); return; }
-    const timer = setTimeout(async () => {
-      try {
-        const token = localStorage.getItem('authToken');
-        const res = await fetch(`/api/location-cache?q=${encodeURIComponent(key)}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        setCachedCoords(data.coords || null);
-      } catch { setCachedCoords(null); }
-    }, 600);
-    return () => clearTimeout(timer);
-  }, [stop.street, stop.city, stop.coords, isVama]);
-
-  const handleSaveCoords = async () => {
-    const key = makeAddrKey(stop.street, stop.city);
-    if (!key || !stop.coords) return;
-    setSavingCoords(true);
-    try {
-      const token = localStorage.getItem('authToken');
-      await fetch('/api/location-cache', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          address_key: key,
-          display_name: [stop.company, stop.street, stop.city].filter(Boolean).join(', '),
-          coords: stop.coords,
-        }),
-      });
-      setCoordsSaved(true);
-    } finally { setSavingCoords(false); }
-  };
-
-  useEffect(() => { setCoordsSaved(false); }, [stop.coords]);
-
-  const handleApplyCache = () => {
-    if (cachedCoords) { onUpdate(stop.id, 'coords', cachedCoords); setCachedCoords(null); }
-  };
+  const { cachedCoords, coordsSaved, savingCoords, handleSaveCoords, handleApplyCache } = useCoordsCache(stop, onUpdate);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -404,6 +356,8 @@ export default function GenerareComanda({ user }) {
   const [pdfDataUrl, setPdfDataUrl] = useState('');
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [copiedAddr, setCopiedAddr] = useState(null);
+  const [appleUI, setAppleUI] = useState(() => { try { return localStorage.getItem('generareDesign') === 'apple'; } catch { return false; } });
+  const toggleDesign = () => setAppleUI(v => { const n = !v; try { localStorage.setItem('generareDesign', n ? 'apple' : 'classic'); } catch { /* ignore */ } return n; });
   const fileRef = useRef();
 
   const setField = (key) => (val) => setFields(f => ({ ...f, [key]: val }));
@@ -513,6 +467,18 @@ export default function GenerareComanda({ user }) {
         </div>
       )}
 
+      <DesignSwitch on={appleUI} onToggle={toggleDesign} />
+
+      {appleUI ? (
+        <GenerareComandaApple
+          fields={fields} setField={setField} stops={stops} incarcari={incarcari} descarcari={descarcari} vami={vami}
+          updateStop={updateStop} moveStop={moveStop} deleteStop={deleteStop} addStop={addStop} changeStopType={changeStopType}
+          canDeleteStop={canDeleteStop} copiedAddr={copiedAddr} copyAddr={copyAddr}
+          loading={loading} error={error} fileName={fileName} pdfDataUrl={pdfDataUrl} setShowPdfModal={setShowPdfModal}
+          fileRef={fileRef} handleFileInput={handleFileInput} handleDrop={handleDrop} dragOver={dragOver} setDragOver={setDragOver}
+          handleReset={handleReset} swapStops={swapStops} handleCopy={handleCopy} copied={copied} previewLines={previewLines}
+        />
+      ) : (<>
       {/* Titlu */}
       <div style={{ marginBottom: '20px' }}>
         <h2 style={{ fontSize: '26px', fontWeight: 300, color: 'var(--black)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: FONT }}>Generare <strong style={{ fontWeight: 600 }}>comandă</strong></h2>
@@ -655,27 +621,7 @@ export default function GenerareComanda({ user }) {
               </button>
             </div>
             <div style={{ padding: '20px 24px 28px', minHeight: '420px', maxHeight: '70vh', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--fm-wa-chat-bg)', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <div style={{ position: 'relative', maxWidth: '92%', boxSizing: 'border-box', padding: '6px 7px 8px 9px', background: 'var(--fm-wa-bubble)', color: 'var(--fm-wa-text)', borderRadius: '7.5px 0 7.5px 7.5px', boxShadow: '0 1px 0.5px rgba(11, 20, 26, 0.13)', fontFamily: "'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: '14.2px', lineHeight: '19px' }}>
-                <span aria-hidden="true" style={{ position: 'absolute', top: 0, right: '-8px', width: '8px', height: '13px', background: 'var(--fm-wa-bubble)', clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
-                {previewLines.map((line, i) => {
-                  const isLast = i === previewLines.length - 1;
-                  if (line === '') return <div key={i} style={{ height: '19px' }} />;
-                  const boldMatch = line.match(/^\*•(.*?)\*(.*)$/);
-                  const body = boldMatch
-                    ? <><strong style={{ fontWeight: 700 }}>{'•' + boldMatch[1]}</strong>{boldMatch[2].trim() ? ' ' + boldMatch[2].trim() : ''}</>
-                    : line;
-                  return (
-                    <div key={i}>
-                      {body}
-                      {isLast && <span aria-hidden="true" style={{ display: 'inline-block', width: '66px' }} />}
-                    </div>
-                  );
-                })}
-                <div style={{ position: 'absolute', right: '7px', bottom: '3px', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', lineHeight: '15px', color: 'var(--fm-wa-meta)' }}>
-                  <span>{new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}</span>
-                  <svg aria-hidden="true" width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#53bdeb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 5.5l3.2 3.2L10.5 1.5"/><path d="M6 8.2l.5.5L12.8 1.5"/></svg>
-                </div>
-              </div>
+              <WhatsAppBubble lines={previewLines} />
             </div>
           </div>
 
@@ -690,6 +636,7 @@ export default function GenerareComanda({ user }) {
           </div>
         </aside>
       </div>
+      </>)}
     </div>
   );
 }
