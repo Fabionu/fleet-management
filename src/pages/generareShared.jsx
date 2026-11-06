@@ -89,7 +89,7 @@ export function DesignSwitch({ on, onToggle }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
       <span id="design-switch-label" style={{ fontSize: '14px', fontWeight: 500, color: 'var(--black)' }}>Design Apple</span>
-      <button type="button" role="switch" aria-checked={on} aria-labelledby="design-switch-label" onClick={onToggle} className="ap-switch"
+      <button type="button" role="switch" aria-checked={on} aria-labelledby="design-switch-label" onClick={onToggle} className={`ap-switch${on ? ' is-on' : ''}`}
         style={{ position: 'relative', flex: '0 0 51px', width: '51px', height: '31px', padding: 0, border: 'none', borderRadius: '999px', background: on ? 'var(--ap-switch-on)' : 'var(--ap-switch-off)', cursor: 'pointer' }}>
         <span aria-hidden="true" className="ap-switch-knob" style={{ position: 'absolute', top: '2px', left: '2px', width: '27px', height: '27px', borderRadius: '50%', background: 'var(--ap-knob)', boxShadow: '0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16)', transform: on ? 'translateX(20px)' : 'translateX(0)' }} />
       </button>
