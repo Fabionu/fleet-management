@@ -514,17 +514,9 @@ export default function GenerareComanda({ user }) {
       )}
 
       {/* Titlu */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', marginBottom: '28px' }}>
-        <div style={{ maxWidth: '620px' }}>
-          <h2 style={{ fontSize: '32px', fontWeight: 300, color: 'var(--black)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: FONT }}>Generare <strong style={{ fontWeight: 600 }}>comandă</strong></h2>
-          <p style={{ fontSize: '14px', color: 'var(--gray-4)', margin: '8px 0 0', lineHeight: 1.5, fontFamily: FONT }}>Încarcă PDF-ul comenzii de transport, AI-ul completează câmpurile, iar tu trimiți mesajul gata formatat pe WhatsApp.</p>
-        </div>
-        <button onClick={handleReset} style={{ ...ghostBtn, padding: '10px 16px', fontSize: '14px' }}
-          onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
-          onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
-          Resetează
-        </button>
+      <div style={{ marginBottom: '28px' }}>
+        <h2 style={{ fontSize: '32px', fontWeight: 300, color: 'var(--black)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: FONT }}>Generare <strong style={{ fontWeight: 600 }}>comandă</strong></h2>
+        <p style={{ fontSize: '14px', color: 'var(--gray-4)', margin: '8px 0 0', maxWidth: '620px', lineHeight: 1.5, fontFamily: FONT }}>Încarcă PDF-ul comenzii de transport, AI-ul completează câmpurile, iar tu trimiți mesajul gata formatat pe WhatsApp.</p>
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '40px', alignItems: 'flex-start', maxWidth: '1340px' }}>
@@ -582,6 +574,12 @@ export default function GenerareComanda({ user }) {
                 {error && <span style={{ fontSize: '12px', color: 'var(--red)' }}>{error}</span>}
               </button>
             )}
+            <button onClick={handleReset} className="fm-reset-btn" style={{ ...ghostBtn, marginTop: '12px', padding: '15px 26px', minHeight: '56px', borderRadius: '14px', fontSize: '16px', fontWeight: 500 }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+              <svg className="fm-reset-ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+              Resetează
+            </button>
           </section>
 
           {/* 02 — Detalii comandă */}
@@ -614,7 +612,7 @@ export default function GenerareComanda({ user }) {
               </div>
             } />
 
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', gap: '24px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'stretch', gap: '24px' }}>
               {[
                 { type: 'incarcare',  label: 'Încărcare',  color: 'var(--green)',  list: incarcari,  add: 'Adaugă încărcare',  basis: '1 1 340px', delay: '0s' },
                 { type: 'descarcare', label: 'Descărcare', color: 'var(--orange)', list: descarcari, add: 'Adaugă descărcare', basis: '1 1 340px', delay: '-1.2s' },
@@ -628,7 +626,7 @@ export default function GenerareComanda({ user }) {
                       <StopBlock stop={stop} index={idx} total={col.list.length} onUpdate={updateStop} onMove={(i, dir) => moveStop(col.type, i, dir)} onDelete={deleteStop} canDelete={canDeleteStop(stop)} onChangeType={changeStopType} copiedId={copiedAddr} onCopyAddr={copyAddr} />
                     </div>
                   ))}
-                  <button onClick={() => addStop(col.type)} style={{ ...ghostBtn, alignSelf: 'flex-start', marginTop: '12px', border: '1px dashed var(--gray-3)' }}
+                  <button onClick={() => addStop(col.type)} style={{ ...ghostBtn, alignSelf: 'flex-start', marginTop: 'auto', border: '1px dashed var(--gray-3)' }}
                     onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -641,7 +639,7 @@ export default function GenerareComanda({ user }) {
         </div>
 
         {/* Previzualizare */}
-        <aside style={{ flex: '1 1 380px', maxWidth: '460px', minWidth: 0, position: 'sticky', top: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <aside style={{ flex: '1 1 460px', maxWidth: '520px', minWidth: 0, position: 'sticky', top: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--gray-2)', borderRadius: '14px', overflow: 'hidden' }}>
             <div style={{ padding: '18px 20px 18px 28px', borderBottom: '1px solid var(--gray-2)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -656,16 +654,28 @@ export default function GenerareComanda({ user }) {
                 }
               </button>
             </div>
-            <div style={{ padding: '26px 28px', minHeight: '420px', maxHeight: '70vh', overflowY: 'auto' }}>
-              {previewLines.map((line, i) => {
-                if (line === '') return <div key={i} style={{ height: '0.7em' }} />;
-                const boldMatch = line.match(/^\*•(.*?)\*(.*)$/);
-                if (boldMatch) {
-                  const label = '•' + boldMatch[1], rest = boldMatch[2].trim();
-                  return <div key={i} style={{ fontSize: '15px', color: 'var(--black)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7 }}><strong style={{ fontWeight: 600 }}>{label}</strong>{rest ? ' ' + rest : ''}</div>;
-                }
-                return <div key={i} style={{ fontSize: '15px', color: 'var(--gray-4)', fontFamily: "'SF Mono','Fira Code',monospace", lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{line}</div>;
-              })}
+            <div style={{ padding: '20px 24px 28px', minHeight: '420px', maxHeight: '70vh', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--fm-wa-chat-bg)', display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <div style={{ position: 'relative', maxWidth: '92%', boxSizing: 'border-box', padding: '6px 7px 8px 9px', background: 'var(--fm-wa-bubble)', color: 'var(--fm-wa-text)', borderRadius: '7.5px 0 7.5px 7.5px', boxShadow: '0 1px 0.5px rgba(11, 20, 26, 0.13)', fontFamily: "'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif", fontSize: '14.2px', lineHeight: '19px' }}>
+                <span aria-hidden="true" style={{ position: 'absolute', top: 0, right: '-8px', width: '8px', height: '13px', background: 'var(--fm-wa-bubble)', clipPath: 'polygon(0 0, 100% 0, 0 100%)' }} />
+                {previewLines.map((line, i) => {
+                  const isLast = i === previewLines.length - 1;
+                  if (line === '') return <div key={i} style={{ height: '19px' }} />;
+                  const boldMatch = line.match(/^\*•(.*?)\*(.*)$/);
+                  const body = boldMatch
+                    ? <><strong style={{ fontWeight: 700 }}>{'•' + boldMatch[1]}</strong>{boldMatch[2].trim() ? ' ' + boldMatch[2].trim() : ''}</>
+                    : line;
+                  return (
+                    <div key={i}>
+                      {body}
+                      {isLast && <span aria-hidden="true" style={{ display: 'inline-block', width: '66px' }} />}
+                    </div>
+                  );
+                })}
+                <div style={{ position: 'absolute', right: '7px', bottom: '3px', display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', lineHeight: '15px', color: 'var(--fm-wa-meta)' }}>
+                  <span>{new Date().toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}</span>
+                  <svg aria-hidden="true" width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="#53bdeb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M1 5.5l3.2 3.2L10.5 1.5"/><path d="M6 8.2l.5.5L12.8 1.5"/></svg>
+                </div>
+              </div>
             </div>
           </div>
 
