@@ -87,15 +87,15 @@ function buildWhatsApp(fields, stops) {
 // ── Styles ────────────────────────────────────────────────────
 const inputStyle = {
   width: '100%', boxSizing: 'border-box',
-  padding: '14px 16px', minHeight: '50px', fontSize: '16px',
-  border: '1px solid transparent', borderRadius: '12px',
+  padding: '10px 13px', minHeight: '40px', fontSize: '14px',
+  border: '1px solid transparent', borderRadius: '10px',
   background: 'var(--fm-field-bg)', color: 'var(--black)',
   outline: 'none', fontFamily: FONT, transition: 'border-color 0.15s',
 };
 const labelStyle = {
-  fontSize: '12px', fontWeight: 600, color: 'var(--gray-4)',
+  fontSize: '11px', fontWeight: 600, color: 'var(--gray-4)',
   textTransform: 'uppercase', letterSpacing: '0.07em',
-  marginBottom: '7px', display: 'block', fontFamily: FONT,
+  marginBottom: '5px', display: 'block', fontFamily: FONT,
 };
 const iconBtn = {
   background: 'transparent', border: 'none', cursor: 'pointer',
@@ -232,7 +232,7 @@ function StopBlock({ stop, index, total, onUpdate, onMove, onDelete, canDelete, 
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {/* controls: type selector left, reorder+delete right */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '-4px' }}>
         <TypeSelector type={stop.type} onChange={(newType) => onChangeType(stop.id, newType)} />
@@ -377,7 +377,7 @@ function SectionTitle({ num, title, extra, right }) {
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '14px' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
         <span style={{ fontSize: '12px', color: 'var(--gray-4)', fontVariantNumeric: 'tabular-nums' }}>{num}</span>
-        <h3 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: 'var(--black)' }}>{title}</h3>
+        <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 600, color: 'var(--black)' }}>{title}</h3>
         {extra && <span style={{ fontSize: '13px', color: 'var(--gray-4)' }}>{extra}</span>}
       </div>
       {right}
@@ -386,9 +386,9 @@ function SectionTitle({ num, title, extra, right }) {
 }
 
 const ghostBtn = {
-  display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 18px', minHeight: '46px', boxSizing: 'border-box',
-  border: '1px solid var(--fm-line)', borderRadius: '12px', background: 'transparent',
-  cursor: 'pointer', fontSize: '14px', color: 'var(--black)', fontFamily: FONT,
+  display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', minHeight: '36px', boxSizing: 'border-box',
+  border: '1px solid var(--fm-line)', borderRadius: '10px', background: 'transparent',
+  cursor: 'pointer', fontSize: '13px', color: 'var(--black)', fontFamily: FONT,
 };
 
 // ── Main component ────────────────────────────────────────────
@@ -514,16 +514,16 @@ export default function GenerareComanda({ user }) {
       )}
 
       {/* Titlu */}
-      <div style={{ marginBottom: '28px' }}>
-        <h2 style={{ fontSize: '32px', fontWeight: 300, color: 'var(--black)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: FONT }}>Generare <strong style={{ fontWeight: 600 }}>comandă</strong></h2>
-        <p style={{ fontSize: '14px', color: 'var(--gray-4)', margin: '8px 0 0', maxWidth: '620px', lineHeight: 1.5, fontFamily: FONT }}>Încarcă PDF-ul comenzii de transport, AI-ul completează câmpurile, iar tu trimiți mesajul gata formatat pe WhatsApp.</p>
+      <div style={{ marginBottom: '20px' }}>
+        <h2 style={{ fontSize: '26px', fontWeight: 300, color: 'var(--black)', margin: 0, letterSpacing: '-0.02em', lineHeight: 1.15, fontFamily: FONT }}>Generare <strong style={{ fontWeight: 600 }}>comandă</strong></h2>
+        <p style={{ fontSize: '13px', color: 'var(--gray-4)', margin: '6px 0 0', maxWidth: '620px', lineHeight: 1.5, fontFamily: FONT }}>Încarcă PDF-ul comenzii de transport, AI-ul completează câmpurile, iar tu trimiți mesajul gata formatat pe WhatsApp.</p>
       </div>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px', alignItems: 'flex-start' }}>
         <div style={{ flex: '1 1 440px', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
 
           {/* 01 — Document */}
-          <section style={{ paddingBottom: '24px', borderBottom: '1px solid var(--fm-line)' }}>
+          <section style={{ paddingBottom: '20px', borderBottom: '1px solid var(--fm-line)' }}>
             <SectionTitle num="01" title="Document" />
             <input ref={fileRef} type="file" accept=".pdf" style={{ display: 'none' }} onChange={handleFileInput} />
             {loading ? (
@@ -567,23 +567,23 @@ export default function GenerareComanda({ user }) {
               <button onClick={() => fileRef.current?.click()}
                 onMouseEnter={() => setHoverDrop(true)} onMouseLeave={() => setHoverDrop(false)}
                 onDragOver={e => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={handleDrop}
-                style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '30px 20px', border: `1.5px dashed ${(dragOver || hoverDrop) ? 'var(--fm-accent)' : 'var(--gray-3)'}`, borderRadius: '14px', background: dragOver ? 'var(--fm-accent-soft)' : 'transparent', color: 'var(--gray-4)', cursor: 'pointer', fontFamily: FONT, transition: 'all 0.2s' }}>
-                <svg className="fm-bob" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path className="fm-arrow" d="M12 18v-6M9 15l3-3 3 3" style={{ stroke: 'var(--fm-accent)' }}/></svg>
+                style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '22px 20px', border: `1.5px dashed ${(dragOver || hoverDrop) ? 'var(--fm-accent)' : 'var(--gray-3)'}`, borderRadius: '14px', background: dragOver ? 'var(--fm-accent-soft)' : 'transparent', color: 'var(--gray-4)', cursor: 'pointer', fontFamily: FONT, transition: 'all 0.2s' }}>
+                <svg className="fm-bob" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path className="fm-arrow" d="M12 18v-6M9 15l3-3 3 3" style={{ stroke: 'var(--fm-accent)' }}/></svg>
                 <span style={{ fontSize: '14px', color: 'var(--black)' }}><span style={{ color: 'var(--fm-accent)', fontWeight: 600 }}>Alege un PDF</span> sau trage-l aici</span>
                 <span style={{ fontSize: '12px' }}>Comanda de transport, un singur fișier PDF</span>
                 {error && <span style={{ fontSize: '12px', color: 'var(--red)' }}>{error}</span>}
               </button>
             )}
-            <button onClick={handleReset} className="fm-reset-btn" style={{ ...ghostBtn, marginTop: '12px', padding: '15px 26px', minHeight: '56px', borderRadius: '14px', fontSize: '16px', fontWeight: 500 }}
+            <button onClick={handleReset} className="fm-reset-btn" style={{ ...ghostBtn, marginTop: '10px', padding: '10px 18px', minHeight: '42px', borderRadius: '12px', fontSize: '14px', fontWeight: 500 }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
-              <svg className="fm-reset-ic" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+              <svg className="fm-reset-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
               Resetează
             </button>
           </section>
 
           {/* 02 — Detalii comandă */}
-          <section style={{ padding: '24px 0', borderBottom: '1px solid var(--fm-line)' }}>
+          <section style={{ padding: '20px 0', borderBottom: '1px solid var(--fm-line)' }}>
             <SectionTitle num="02" title="Detalii comandă" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px 16px' }}>
               <Field label="Număr comandă" value={fields.order_number} onChange={setField('order_number')} />
@@ -592,7 +592,7 @@ export default function GenerareComanda({ user }) {
           </section>
 
           {/* 03 — Traseu */}
-          <section style={{ paddingTop: '24px' }}>
+          <section style={{ paddingTop: '20px' }}>
             <SectionTitle num="03" title="Traseu" extra={`${stops.length} opriri`} right={
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {vami.length === 0 && (
@@ -618,7 +618,7 @@ export default function GenerareComanda({ user }) {
                 { type: 'descarcare', label: 'Descărcare', color: 'var(--orange)', list: descarcari, add: 'Adaugă descărcare', basis: '1 1 340px', delay: '-1.2s' },
                 ...(vami.length > 0 ? [{ type: 'vama', label: 'Vamă', color: 'var(--blue)', list: vami, add: 'Adaugă vamă', basis: '1 1 100%', delay: '-2.4s' }] : []),
               ].map(col => (
-                <div key={col.type} style={{ flex: col.basis, minWidth: 0, display: 'flex', flexDirection: 'column', padding: '24px', border: '1px solid var(--fm-line)', borderRadius: '18px', background: 'var(--fm-card-bg)' }}>
+                <div key={col.type} style={{ flex: col.basis, minWidth: 0, display: 'flex', flexDirection: 'column', padding: '20px', border: '1px solid var(--fm-line)', borderRadius: '16px', background: 'var(--fm-card-bg)' }}>
                   <ColHeader label={col.label} color={col.color} count={col.list.length} delay={col.delay} />
                   {col.list.map((stop, idx) => (
                     <div key={stop.id} style={idx > 0 ? { marginTop: '16px', paddingTop: '16px', borderTop: '1px dashed var(--gray-2)' } : undefined}>
@@ -643,11 +643,11 @@ export default function GenerareComanda({ user }) {
           <div style={{ background: 'var(--fm-card-bg)', border: '1px solid var(--fm-line)', borderRadius: '14px', overflow: 'hidden' }}>
             <div style={{ padding: '18px 20px 18px 28px', borderBottom: '1px solid var(--fm-line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                <span style={{ fontSize: '17px', fontWeight: 600, color: 'var(--black)', fontFamily: FONT }}>Previzualizare mesaj</span>
+                <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--black)', fontFamily: FONT }}>Previzualizare mesaj</span>
                 <span style={{ fontSize: '13px', color: 'var(--gray-4)', fontFamily: FONT }}>Format WhatsApp</span>
               </div>
               <button onClick={handleCopy}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '13px 20px', border: 'none', borderRadius: '12px', background: copied ? 'var(--fm-ok-bg)' : 'var(--black)', color: copied ? 'var(--fm-st-green)' : 'var(--bg-page)', cursor: 'pointer', fontSize: '15px', fontWeight: 500, fontFamily: FONT, transition: 'all 0.15s' }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '10px 16px', border: 'none', borderRadius: '10px', background: copied ? 'var(--fm-ok-bg)' : 'var(--black)', color: copied ? 'var(--fm-st-green)' : 'var(--bg-page)', cursor: 'pointer', fontSize: '13px', fontWeight: 500, fontFamily: FONT, transition: 'all 0.15s' }}>
                 {copied
                   ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Copiat</>
                   : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiază</>
