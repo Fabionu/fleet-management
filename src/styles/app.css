@@ -1478,6 +1478,14 @@ body.card-view tbody tr td {
   --ap-switch-on: #34c759;
   --ap-switch-off: #e9e9ea;
   --ap-knob: #ffffff;
+  --ap-accent-hover: #0a7cf0;
+  --ap-glow: rgba(0, 113, 227, 0.35);
+  --ap-tint-soft: rgba(0, 113, 227, 0.09);
+  --ap-tint-strong: rgba(0, 113, 227, 0.18);
+  --ap-fill-hover: #e8e8ed;
+  --ap-green-fill: rgba(36, 138, 61, 0.14);
+  --ap-green-hover: rgba(36, 138, 61, 0.1);
+  --ap-on-green: #ffffff;
 }
 :root[data-theme="dark"] {
   --ap-bg: #000000;
@@ -1502,6 +1510,14 @@ body.card-view tbody tr td {
   --ap-switch-on: #30d158;
   --ap-switch-off: #39393d;
   --ap-knob: #ffffff;
+  --ap-accent-hover: #409cff;
+  --ap-glow: rgba(41, 151, 255, 0.4);
+  --ap-tint-soft: rgba(41, 151, 255, 0.16);
+  --ap-tint-strong: rgba(41, 151, 255, 0.26);
+  --ap-fill-hover: #3a3a3c;
+  --ap-green-fill: rgba(48, 209, 88, 0.16);
+  --ap-green-hover: rgba(48, 209, 88, 0.12);
+  --ap-on-green: #000000;
 }
 .ap-input::placeholder { color: var(--ap-sub); opacity: 0.85; }
 .ap-row:focus-within label { color: var(--ap-accent); }
@@ -1517,4 +1533,54 @@ body.card-view tbody tr td {
 @media (prefers-reduced-motion: reduce) {
   .ap-doc-tile, .ap-doc-arrow { animation: none; }
   .ap-switch, .ap-switch-knob, .ap-press { transition: none; }
+}
+
+/* Design Apple — hover & animații (la fel ca în canvas) */
+.ap-pill-tint, .ap-pill-fill, .ap-icon-btn { transition: background-color .2s, transform .15s cubic-bezier(.2,.8,.2,1); }
+.ap-pill-tint:hover { background-color: var(--ap-tint-strong) !important; }
+.ap-pill-fill:hover, .ap-icon-btn:hover:not(:disabled) { background-color: var(--ap-fill-hover) !important; }
+.ap-chip { transition: filter .2s; }
+.ap-chip:hover { filter: brightness(.94); }
+[data-theme="dark"] .ap-chip:hover { filter: brightness(1.2); }
+.ap-primary { position: relative; overflow: hidden; transition: background-color .25s, box-shadow .3s cubic-bezier(.2,.8,.2,1), transform .2s cubic-bezier(.2,.8,.2,1); }
+.ap-primary:not(.is-copied):hover { background-color: var(--ap-accent-hover) !important; box-shadow: 0 8px 20px var(--ap-glow); transform: translateY(-1px); }
+.ap-primary::after { content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%; background: linear-gradient(105deg, transparent, rgba(255,255,255,.35), transparent); transform: skewX(-20deg); transition: left .6s cubic-bezier(.2,.8,.2,1); pointer-events: none; }
+.ap-primary:not(.is-copied):hover::after { left: 130%; }
+.ap-primary svg { transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+.ap-primary:not(.is-copied):hover svg { transform: translateY(-1px) scale(1.12); }
+.ap-link { margin-left: -8px; padding: 0 14px 0 8px !important; border-radius: 999px; transition: background-color .25s cubic-bezier(.2,.8,.2,1), transform .15s cubic-bezier(.2,.8,.2,1); }
+.ap-link:hover { background-color: var(--ap-tint) !important; }
+.ap-link:active { background-color: var(--ap-tint-strong) !important; }
+.ap-link svg { transition: transform .4s cubic-bezier(.2,.8,.2,1); }
+.ap-link:hover svg { transform: rotate(90deg) scale(1.1); }
+.ap-action { margin-left: -14px; width: calc(100% + 14px) !important; padding-left: 14px !important; border-top-color: transparent !important; border-radius: 0 0 12px 12px; background-image: linear-gradient(var(--ap-sep), var(--ap-sep)) !important; background-size: calc(100% - 14px) .5px !important; background-position: right top !important; background-repeat: no-repeat !important; transition: background-color .25s cubic-bezier(.2,.8,.2,1); }
+.ap-action:hover:not(:disabled) { background-color: var(--ap-tint-soft) !important; }
+.ap-action:active:not(:disabled) { background-color: var(--ap-tint-strong) !important; }
+.ap-action svg { transition: transform .3s cubic-bezier(.2,.8,.2,1); }
+.ap-action:hover svg { transform: translateX(3px) scale(1.12); }
+.ap-save, .ap-saved { border-radius: 0 !important; }
+.ap-save:hover svg, .ap-saved:hover svg { transform: none; }
+.ap-saved { cursor: default !important; }
+.ap-action.ap-saved:hover { background-color: var(--ap-green-hover) !important; }
+.ap-just-saved { position: relative; overflow: hidden; }
+.ap-js-fill { position: absolute; inset: 0; background: var(--ap-green-fill); transform-origin: left center; animation: ap-fill .5s cubic-bezier(.2,.8,.2,1) both; pointer-events: none; }
+.ap-js-badge { animation: ap-pop .45s cubic-bezier(.34,1.56,.64,1) .1s both; }
+.ap-js-badge .ap-tick { stroke-dasharray: 24; stroke-dashoffset: 24; animation: ap-draw .35s ease-out .35s forwards; }
+.ap-spark { position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: var(--ap-green); opacity: 0; animation: ap-spark .6s ease-out .35s both; }
+.ap-js-text { animation: ap-rise .35s cubic-bezier(.2,.8,.2,1) .15s both; }
+.ap-coords { transition: background-color .25s; }
+.ap-coords:hover { background-color: var(--ap-tint-soft); }
+.ap-coords:hover label { color: var(--ap-accent); }
+.ap-drop { transition: background-color .2s, border-color .2s, box-shadow .25s cubic-bezier(.2,.8,.2,1); }
+.ap-drop:hover { border-style: solid !important; border-color: var(--ap-accent) !important; background-color: var(--ap-tint-soft) !important; box-shadow: inset 0 0 0 .5px var(--ap-accent), 0 0 0 4px var(--ap-tint); }
+@keyframes ap-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes ap-pop { from { transform: scale(0); } to { transform: scale(1); } }
+@keyframes ap-draw { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+@keyframes ap-spark { 0% { opacity: 1; transform: rotate(var(--a)) translateX(8px); } 100% { opacity: 0; transform: rotate(var(--a)) translateX(20px); } }
+@keyframes ap-rise { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .ap-js-fill, .ap-js-badge, .ap-spark, .ap-js-text { animation: none; }
+  .ap-js-badge .ap-tick { animation: none; stroke-dashoffset: 0; }
+  .ap-primary::after { display: none; }
+  .ap-link svg, .ap-action svg, .ap-primary svg { transition: none; }
 }
