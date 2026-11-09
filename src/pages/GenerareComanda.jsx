@@ -357,6 +357,11 @@ export default function GenerareComanda({ user }) {
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [copiedAddr, setCopiedAddr] = useState(null);
   const [appleUI, setAppleUI] = useState(() => { try { return localStorage.getItem('generareDesign') === 'apple'; } catch { return false; } });
+  // Design Apple: fundalul paginii întregi (nu doar al secțiunii) devine --ap-bg
+  useEffect(() => {
+    document.body.classList.toggle('generare-apple', appleUI);
+    return () => document.body.classList.remove('generare-apple');
+  }, [appleUI]);
   const toggleDesign = () => setAppleUI(v => { const n = !v; try { localStorage.setItem('generareDesign', n ? 'apple' : 'classic'); } catch { /* ignore */ } return n; });
   const fileRef = useRef();
 

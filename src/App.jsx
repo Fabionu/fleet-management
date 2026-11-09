@@ -201,13 +201,13 @@ function App() {
   });
 
   return (
-    <div style={{
+    <div className="fm-shell" style={{
       minHeight: '100vh',
       background: 'var(--bg-body)',
       padding: currentPage === 'chat' ? '20px 8px 0 8px' : '20px 8px',
       fontFamily: "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif"
     }}>
-      <div style={{
+      <div className="fm-page" style={{
         maxWidth: '100%',
         margin: '0 auto',
         background: 'var(--bg-page)',

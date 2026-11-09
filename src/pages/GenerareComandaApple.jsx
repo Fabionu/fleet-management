@@ -190,7 +190,7 @@ export default function GenerareComandaApple(p) {
   };
 
   return (
-    <div style={{ background: 'var(--ap-bg)', color: 'var(--ap-text)', fontFamily: AFONT, fontWeight: 400, WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility', borderRadius: '22px', padding: '40px 36px 48px' }}>
+    <div style={{ background: 'var(--ap-bg)', color: 'var(--ap-text)', fontFamily: AFONT, fontWeight: 400, WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', textRendering: 'optimizeLegibility', padding: '16px 4px 24px' }}>
       <div style={{ maxWidth: '1440px', margin: '0 auto' }}>
 
         <header style={{ marginBottom: '32px' }}>

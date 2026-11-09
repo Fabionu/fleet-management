@@ -1593,3 +1593,8 @@ body.card-view tbody tr td {
   .ap-primary::after { display: none; }
   .ap-link svg, .ap-action svg, .ap-primary svg { transition: none; }
 }
+
+/* Design Apple — fundal pe toată pagina */
+body.generare-apple { background: var(--ap-bg); }
+body.generare-apple .fm-shell, body.generare-apple .fm-page { background: var(--ap-bg) !important; }
+body.generare-apple .fm-page { border-color: var(--ap-sep) !important; }
