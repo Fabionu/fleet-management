@@ -84,15 +84,19 @@ export function WhatsAppBubble({ lines }) {
   );
 }
 
-// iOS-style switch to toggle between the classic and the Apple design
-export function DesignSwitch({ on, onToggle }) {
+// Rând „Design Apple” din meniul contului: comutator iOS (în stilul clasic sau Apple al meniului)
+export function DesignToggleRow({ on, onToggle, apple }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
-      <span id="design-switch-label" style={{ fontSize: '14px', fontWeight: 500, color: 'var(--black)' }}>Design Apple</span>
-      <button type="button" role="switch" aria-checked={on} aria-labelledby="design-switch-label" onClick={onToggle} className={`ap-switch${on ? ' is-on' : ''}`}
-        style={{ position: 'relative', flex: '0 0 51px', width: '51px', height: '31px', padding: 0, border: 'none', borderRadius: '999px', background: on ? 'var(--ap-switch-on)' : 'var(--ap-switch-off)', cursor: 'pointer' }}>
-        <span aria-hidden="true" className="ap-switch-knob" style={{ position: 'absolute', top: '2px', left: '2px', width: '27px', height: '27px', borderRadius: '50%', background: 'var(--ap-knob)', boxShadow: '0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16)', transform: on ? 'translateX(20px)' : 'translateX(0)' }} />
-      </button>
-    </div>
+    <button type="button" role="menuitemcheckbox" aria-checked={on} onClick={onToggle}
+      className={`ap-tg-row${apple ? ' ap-menu-item' : ''}`}
+      style={apple ? undefined : { width: '100%', padding: '12px 16px', background: 'transparent', border: 'none', textAlign: 'left', fontSize: '14px', color: 'var(--black)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', transition: 'background 0.2s' }}
+      onMouseEnter={apple ? undefined : e => { e.currentTarget.style.background = 'var(--gray-1)'; }}
+      onMouseLeave={apple ? undefined : e => { e.currentTarget.style.background = 'transparent'; }}>
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={apple ? 1.8 : 2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/><path d="M19 15l.7 1.8 1.8.7-1.8.7L19 20l-.7-1.8-1.8-.7 1.8-.7z"/></svg>
+      <span style={{ flex: 1 }}>Design Apple</span>
+      <span className={`ap-tg-track${on ? ' is-on' : ''}`} aria-hidden="true">
+        <span className="ap-tg-knob" style={{ transform: on ? 'translateX(16px)' : 'translateX(0)' }} />
+      </span>
+    </button>
   );
 }

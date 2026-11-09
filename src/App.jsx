@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import Login from './pages/Login';
 import Tracking from './pages/Tracking';
 import Admin from './pages/Admin';
@@ -6,6 +6,7 @@ import Curse from './pages/Curse';
 import Dashboard from './pages/Dashboard';
 import ChatPanel from './components/ChatPanel';
 import GenerareComanda from './pages/GenerareComanda';
+import { DesignToggleRow } from './pages/generareShared';
 import { connectSocket, disconnectSocket, getSocket } from './services/socket';
 import { api } from './services/api';
 
@@ -27,6 +28,34 @@ function App() {
 
   const userMenuRef = useRef(null);
   const bellRef     = useRef(null);
+  const navRef      = useRef(null);
+
+  // Design Apple (comutator în meniul contului) — salvat per browser
+  const [appleUI, setAppleUI] = useState(() => { try { return localStorage.getItem('generareDesign') === 'apple'; } catch { return false; } });
+  const toggleDesign = () => setAppleUI(v => { const n = !v; try { localStorage.setItem('generareDesign', n ? 'apple' : 'classic'); } catch { /* ignore */ } return n; });
+  const [pill, setPill] = useState({ x: 0, w: 0, ready: false });
+
+  // Fundal pe toată pagina doar pentru Generare în Design Apple
+  useEffect(() => {
+    document.body.classList.toggle('generare-apple', appleUI && currentPage === 'generare');
+    return () => document.body.classList.remove('generare-apple');
+  }, [appleUI, currentPage]);
+
+  // Pastila care alunecă sub tab-ul activ (Design Apple)
+  useLayoutEffect(() => {
+    if (!appleUI || !isAuthenticated) return;
+    const nav = navRef.current;
+    if (!nav) return;
+    const measure = () => {
+      const el = nav.querySelector('[aria-current="page"]');
+      setPill(p => el ? { x: el.offsetLeft, w: el.offsetWidth, ready: p.ready } : { ...p, w: 0 });
+    };
+    measure();
+    const raf = requestAnimationFrame(() => setPill(p => ({ ...p, ready: true })));
+    window.addEventListener('resize', measure);
+    if (document.fonts?.ready) document.fonts.ready.then(measure);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', measure); };
+  }, [appleUI, isAuthenticated, currentPage, user]);
 
 
   // Helper function to change page and save to localStorage
@@ -192,7 +221,12 @@ function App() {
     return <Login onLogin={handleLogin} />;
   }
 
-  const tabStyle = (active) => ({
+  const tabStyle = (active) => appleUI ? ({
+    position: 'relative', display: 'inline-flex', alignItems: 'center', minHeight: '34px', padding: '0 14px',
+    borderRadius: '9px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+    fontSize: '14px', fontWeight: active ? 600 : 500, background: 'transparent',
+    color: active ? 'var(--ap-text)' : 'var(--ap-sub)',
+  }) : ({
     display: 'inline-flex', alignItems: 'center', minHeight: '40px', padding: '0 16px',
     borderRadius: '999px', border: 'none', cursor: 'pointer', fontFamily: 'inherit',
     fontSize: '14px', fontWeight: active ? 600 : 400,
@@ -218,28 +252,39 @@ function App() {
         position: 'relative',
       }}>
         {/* Header universal — wordmark, navigare, controale, efect live */}
-        <header className="fm-hero" style={{
+        <header className={`fm-hero${appleUI ? ' ap-nav-header' : ''}`} style={appleUI ? {
+          display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between',
+          gap: '12px 24px', padding: '8px 12px 8px 18px', marginBottom: '28px',
+          border: '0.5px solid var(--ap-sep)', borderRadius: '16px', background: 'var(--ap-bar)',
+          backdropFilter: 'saturate(180%) blur(20px)', WebkitBackdropFilter: 'saturate(180%) blur(20px)',
+          position: 'sticky', top: '12px', zIndex: 100,
+        } : {
           display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between',
           gap: '12px 24px', padding: '10px 12px 10px 18px', marginBottom: '28px',
           border: '1px solid var(--gray-2)', borderRadius: '14px', background: 'var(--surface)',
           zIndex: 100,
         }}>
-          <div className="fm-hero-fx" aria-hidden="true"><span className="fm-sheen" /></div>
+          {!appleUI && <div className="fm-hero-fx" aria-hidden="true"><span className="fm-sheen" /></div>}
 
           {(() => {
             const name = (user.organizationName && user.organizationName !== 'Default') ? user.organizationName : 'Fleet Management';
             const [first, ...rest] = name.split(' ');
             return (
               <button onClick={() => changePage('tracking')} aria-label={name} style={{ display: 'inline-flex', alignItems: 'baseline', gap: '6px', background: 'transparent', border: 'none', padding: '6px 0', cursor: 'pointer', lineHeight: 1, fontFamily: 'inherit' }}>
-                <span style={{ fontSize: '20px', fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--black)' }}>{first}</span>
-                <span style={{ fontSize: '20px', fontWeight: 300, letterSpacing: '-0.02em', color: 'var(--gray-4)' }}>
-                  {rest.join(' ')}<span style={{ color: 'var(--fm-accent)', fontWeight: 800 }}>.</span>
+                <span style={{ fontSize: '20px', fontWeight: appleUI ? 600 : 800, letterSpacing: appleUI ? '-0.02em' : '-0.03em', color: appleUI ? 'var(--ap-text)' : 'var(--black)' }}>{first}</span>
+                <span style={{ fontSize: '20px', fontWeight: 300, letterSpacing: '-0.02em', color: appleUI ? 'var(--ap-sub)' : 'var(--gray-4)' }}>
+                  {rest.join(' ')}<span style={{ color: appleUI ? 'var(--ap-accent)' : 'var(--fm-accent)', fontWeight: appleUI ? 600 : 800 }}>.</span>
                 </span>
               </button>
             );
           })()}
 
-          <nav aria-label="Principal" style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+          <nav ref={navRef} aria-label="Principal" style={appleUI
+            ? { position: 'relative', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '2px', padding: '3px', borderRadius: '12px', background: 'var(--ap-seg)' }
+            : { display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+            {appleUI && (
+              <span className="ap-pill" aria-hidden="true" style={{ position: 'absolute', top: '3px', bottom: '3px', left: 0, width: pill.w, opacity: pill.w ? 1 : 0, transform: `translateX(${pill.x}px)`, transition: pill.ready ? undefined : 'none' }} />
+            )}
             {canView('viewTracking') && (
               <button className="fm-tab" onClick={() => changePage('tracking')} aria-current={currentPage === 'tracking' ? 'page' : undefined} style={tabStyle(currentPage === 'tracking')}>Status flotă</button>
             )}
@@ -264,7 +309,8 @@ function App() {
             <button
               onClick={toggleTheme}
               aria-label="Schimbă tema"
-              style={{ width: '40px', height: '40px', borderRadius: '50%', border: 'none', background: 'transparent', color: 'var(--gray-4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              className={appleUI ? 'ap-icon' : undefined}
+              style={{ width: '40px', height: '40px', borderRadius: '50%', border: 'none', background: 'transparent', color: appleUI ? 'var(--ap-sub)' : 'var(--gray-4)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--gray-1)'}
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
@@ -298,12 +344,13 @@ function App() {
                   <button
                     onClick={() => { setAlertsOpen(o => !o); setUserMenuOpen(false); }}
                     title="Alerte documente"
+                    className={appleUI ? 'ap-icon' : undefined}
                     style={{
-                      height: '100%', padding: '0 13px',
+                      height: appleUI ? '40px' : '100%', width: appleUI ? '40px' : undefined, padding: appleUI ? 0 : '0 13px',
                       background: 'transparent', border: 'none', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', position: 'relative',
-                      color: alertsOpen ? '#ff7a3d' : 'var(--gray-4)',
-                      borderRadius: '9px 0 0 9px',
+                      display: 'flex', alignItems: 'center', justifyContent: appleUI ? 'center' : undefined, position: 'relative',
+                      color: alertsOpen ? (appleUI ? 'var(--ap-accent)' : '#ff7a3d') : (appleUI ? 'var(--ap-sub)' : 'var(--gray-4)'),
+                      borderRadius: appleUI ? '50%' : '9px 0 0 9px',
                       transition: 'color 0.15s, background 0.15s',
                     }}
                     onMouseEnter={e => { e.currentTarget.style.background = 'var(--gray-2)'; e.currentTarget.style.color = alertsOpen ? '#ff7a3d' : 'var(--black)'; }}
@@ -404,13 +451,18 @@ function App() {
           </div>
 
           {/* ── Separator vertical ── */}
-          <div style={{ width: '1px', background: 'var(--gray-3)', margin: '8px 0' }} />
+          <div style={appleUI ? { width: '0.5px', height: '24px', alignSelf: 'center', margin: '0 8px', background: 'var(--ap-sep)' } : { width: '1px', background: 'var(--gray-3)', margin: '8px 0' }} />
 
           {/* ── Buton user ── */}
           <div ref={userMenuRef} style={{ position: 'relative' }}>
             <button
               onClick={() => { setUserMenuOpen(!userMenuOpen); setAlertsOpen(false); }}
-              style={{
+              className={appleUI ? 'ap-icon' : undefined}
+              style={appleUI ? {
+                display: 'flex', alignItems: 'center', gap: '10px', minHeight: '44px',
+                background: 'transparent', border: 'none', borderRadius: '999px',
+                padding: '4px 10px 4px 4px', cursor: 'pointer', transition: 'background 0.2s',
+              } : {
                 display: 'flex', alignItems: 'center', gap: '12px',
                 background: 'transparent', border: 'none',
                 borderRadius: '0 9px 9px 0',
@@ -420,7 +472,7 @@ function App() {
               onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
               <div style={{ position: 'relative', width: '32px', height: '32px', flexShrink: 0 }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--gray-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--black)', fontWeight: 600, fontSize: '13px' }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: appleUI ? 'linear-gradient(180deg, #5e5ce6, var(--ap-accent))' : 'var(--gray-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: appleUI ? '#ffffff' : 'var(--black)', fontWeight: 600, fontSize: '13px' }}>
                   {user.first_name ? user.first_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
                   {user.last_name ? user.last_name.charAt(0).toUpperCase() : ''}
                 </div>
@@ -430,22 +482,58 @@ function App() {
                 />
               </div>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--black)', whiteSpace: 'nowrap' }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: appleUI ? 'var(--ap-text)' : 'var(--black)', whiteSpace: 'nowrap' }}>
                   {(user.first_name || user.last_name)
                     ? [user.first_name, user.last_name].filter(Boolean).join(' ')
                     : user.username}
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--gray-4)', whiteSpace: 'nowrap' }}>
-                  @{user.username} · {user.role === 'admin' ? 'Administrator' : user.role === 'dispatcher' ? 'Dispecer' : 'Contabil'}
+                <div style={{ fontSize: '12px', color: appleUI ? 'var(--ap-sub)' : 'var(--gray-4)', whiteSpace: 'nowrap' }}>
+                  {appleUI ? '' : `@${user.username} · `}{user.role === 'admin' ? 'Administrator' : user.role === 'dispatcher' ? 'Dispecer' : 'Contabil'}
                 </div>
               </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gray-4)" strokeWidth="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
+              {appleUI ? (
+                <svg aria-hidden="true" width="10" height="12" viewBox="0 0 10 14" fill="none" stroke="var(--ap-sub)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M2 5l3-3 3 3M2 9l3 3 3-3"/></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gray-4)" strokeWidth="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              )}
             </button>
 
-            {/* Dropdown Menu */}
-            {userMenuOpen && (
+            {/* Dropdown Menu — Design Apple */}
+            {userMenuOpen && appleUI && (
+              <div role="menu" aria-label="Cont" className="ap-menu" style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, zIndex: 1000, width: 248, boxSizing: 'border-box', padding: 6, borderRadius: 14, background: 'var(--ap-menu-bg)', backdropFilter: 'saturate(180%) blur(24px)', WebkitBackdropFilter: 'saturate(180%) blur(24px)', border: '0.5px solid var(--ap-menu-border)', boxShadow: 'var(--ap-menu-shadow)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 10px 12px' }}>
+                  <span style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(180deg, #5e5ce6, var(--ap-accent))', color: '#fff', fontSize: 15, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {(user.first_name || user.username || '?').charAt(0).toUpperCase()}
+                  </span>
+                  <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.25, minWidth: 0 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--ap-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{(user.first_name || user.last_name) ? [user.first_name, user.last_name].filter(Boolean).join(' ') : user.username}</span>
+                    <span style={{ fontSize: 12, color: 'var(--ap-sub)' }}>@{user.username} · {user.role === 'admin' ? 'Administrator' : user.role === 'dispatcher' ? 'Dispecer' : 'Contabil'}</span>
+                  </span>
+                </div>
+                <div className="ap-menu-sep" style={{ margin: '0 4px 6px' }} />
+                {currentPage === 'tracking' && (
+                  <button type="button" role="menuitem" className="ap-menu-item" onClick={toggleTrackingView}>
+                    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      {trackingView === 'card'
+                        ? <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>
+                        : <><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>}
+                    </svg>
+                    {trackingView === 'card' ? 'Standard View' : 'Card View'}
+                  </button>
+                )}
+                <DesignToggleRow apple on={appleUI} onToggle={toggleDesign} />
+                <div className="ap-menu-sep" style={{ margin: '6px 4px' }} />
+                <button type="button" role="menuitem" className="ap-menu-item ap-menu-danger" onClick={handleLogout}>
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                  Delogare
+                </button>
+              </div>
+            )}
+
+            {/* Dropdown Menu — clasic */}
+            {userMenuOpen && !appleUI && (
               <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: '0', background: 'var(--bg-page)', border: '1px solid var(--gray-2)', borderRadius: '8px', boxShadow: '0 4px 12px var(--shadow)', minWidth: '100%', zIndex: 1000, overflow: 'hidden' }}>
                 {currentPage === 'tracking' && (
                   <button
@@ -473,6 +561,7 @@ function App() {
                     )}
                   </button>
                 )}
+                <DesignToggleRow on={appleUI} onToggle={toggleDesign} />
                 <div style={{ height: '1px', background: 'var(--gray-2)' }} />
                 <button
                   onClick={handleLogout}
@@ -496,7 +585,7 @@ function App() {
         </header>
 
         {/* Page Content */}
-        {currentPage === 'generare' && canView('viewGenerare') && <GenerareComanda user={user} />}
+        {currentPage === 'generare' && canView('viewGenerare') && <GenerareComanda user={user} appleUI={appleUI} />}
         {currentPage === 'tracking' && canView('viewTracking') && <Tracking user={user} viewMode={trackingView} />}
         {currentPage === 'curse'    && canView('viewRegistru') && <Curse user={user} />}
         {currentPage === 'rapoarte' && canView('viewReports')  && <Dashboard user={user} />}

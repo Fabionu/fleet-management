@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { makeAddrKey, useCoordsCache, WhatsAppBubble, DesignSwitch } from './generareShared';
+import { makeAddrKey, useCoordsCache, WhatsAppBubble } from './generareShared';
 import GenerareComandaApple from './GenerareComandaApple';
 
 const FONT = "'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif";
@@ -344,7 +344,7 @@ const ghostBtn = {
 };
 
 // ── Main component ────────────────────────────────────────────
-export default function GenerareComanda({ user }) {
+export default function GenerareComanda({ user, appleUI = false }) {
   const [fields, setFields]         = useState(EMPTY_FIELDS);
   const [stops,  setStops]          = useState(DEFAULT_STOPS);
   const [loading, setLoading]       = useState(false);
@@ -356,13 +356,6 @@ export default function GenerareComanda({ user }) {
   const [pdfDataUrl, setPdfDataUrl] = useState('');
   const [showPdfModal, setShowPdfModal] = useState(false);
   const [copiedAddr, setCopiedAddr] = useState(null);
-  const [appleUI, setAppleUI] = useState(() => { try { return localStorage.getItem('generareDesign') === 'apple'; } catch { return false; } });
-  // Design Apple: fundalul paginii întregi (nu doar al secțiunii) devine --ap-bg
-  useEffect(() => {
-    document.body.classList.toggle('generare-apple', appleUI);
-    return () => document.body.classList.remove('generare-apple');
-  }, [appleUI]);
-  const toggleDesign = () => setAppleUI(v => { const n = !v; try { localStorage.setItem('generareDesign', n ? 'apple' : 'classic'); } catch { /* ignore */ } return n; });
   const fileRef = useRef();
 
   const setField = (key) => (val) => setFields(f => ({ ...f, [key]: val }));
@@ -471,8 +464,6 @@ export default function GenerareComanda({ user }) {
           </div>
         </div>
       )}
-
-      <DesignSwitch on={appleUI} onToggle={toggleDesign} />
 
       {appleUI ? (
         <GenerareComandaApple
